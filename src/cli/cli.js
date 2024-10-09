@@ -2,6 +2,7 @@
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { exists, findPackageRoot } from './util.js';
+import * as BuildCommand from './commands/build.js';
 
 const command = process.argv.slice(2)[0];
 
@@ -24,6 +25,11 @@ if (!(await exists(configFile))) throw new Error('Could not find SnowCMS config 
 
 switch (command) {
   case 'build':
+    BuildCommand.run({
+      cmsSrcDir,
+      userDir,
+      mode: 'production'
+    });
     break;
   case 'dev':
     break;
