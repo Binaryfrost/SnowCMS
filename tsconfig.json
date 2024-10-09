@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "outDir": "./dist/",
+    "module": "es2020",
+    "target": "es6",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowUmdGlobalAccess": true,
+    "paths": {
+      "#types/*": ["./types/*"]
+    }
+  }
+}

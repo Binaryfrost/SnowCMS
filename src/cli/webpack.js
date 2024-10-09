@@ -1,0 +1,131 @@
+import path from 'path';
+import webpack from 'webpack';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
+
+/**
+ * @callback WebpackFunction
+ * @param {import('./webpack').WebpackOptions} options
+ * @returns {import('webpack').Configuration}
+ */
+
+/** @type {WebpackFunction} */
+const BASE_WEBPACK_TEMPLATE = (opts) => ({
+  context: opts.cmsSrcDir,
+  mode: opts.mode,
+  output: {
+    clean: true,
+    filename: 'main.js',
+    chunkFilename: '[name].[contenthash].js'
+  },
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss', '.sass'],
+    modules: ['node_modules']
+  },
+  module: {
+    rules: [{
+      test: /\.(j|t)sx?$/,
+      loader: 'babel-loader',
+      options: {
+        presets: [
+          '@babel/preset-env',
+          '@babel/preset-react',
+          '@babel/preset-typescript'
+        ]
+      }
+    }, {
+      test: /\.css$/,
+      use: [
+        MiniCssExtractPlugin.loader,
+        'css-loader',
+        {
+          loader: 'postcss-loader',
+          options: {
+            postcssOptions: {
+              plugins: [
+                'autoprefixer'
+              ]
+            }
+          }
+        }
+      ]
+    }, {
+      test: /\.png$/,
+      type: 'asset/resource'
+    }]
+  },
+  optimization: {
+    splitChunks: {
+      hidePathInfo: true,
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          enforce: true,
+          name: 'vendor',
+          filename: '[name].[contenthash].js',
+          reuseExistingChunk: true
+        }
+      },
+      maxSize: 50000
+    },
+    minimizer: [
+      new TerserPlugin(),
+      new CssMinimizerPlugin()
+    ]
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].[contenthash].css'
+    }),
+    new webpack.ProvidePlugin({
+      React: 'react'
+    })
+  ]
+});
+
+// TODO: Figure out dev server
+// Possibly have the `snowcms dev` command run webpack.watch and restart the Express server whenever there's a change?
+// Then have the client config proxy to the server. Also, only use express.static in production builds.
+// WebPack ignores devServer property when called through the API, so need to pass the devServer config to the API.
+
+/** @type {WebpackFunction} */
+export function getWebpackServerConfig(opts) {
+  const baseConfig = BASE_WEBPACK_TEMPLATE(opts);
+  return {
+    ...baseConfig,
+    target: 'node',
+    entry: './server/index.ts',
+    output: {
+      ...baseConfig.output,
+      path: path.join(opts.userDir, 'dist', 'server')
+    }
+  };
+}
+
+/** @type {WebpackFunction} */
+export function getWebpackClientConfig(opts) {
+  const baseConfig = BASE_WEBPACK_TEMPLATE(opts);
+  return {
+    ...baseConfig,
+    entry: './client/index.ts',
+    output: {
+      ...baseConfig.output,
+      path: path.join(opts.userDir, 'dist', 'client'),
+      publicPath: '/assets/'
+    },
+    devServer: {
+      port: 3081,
+      // HMR doesn't work with module chunks
+      hot: false,
+      proxy: [{
+        context: () => true,
+        target: 'http://localhost:3080'
+      }],
+      static: false,
+      client: {
+        overlay: true
+      }
+    }
+  };
+}
