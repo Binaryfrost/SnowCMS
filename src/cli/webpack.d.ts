@@ -5,6 +5,7 @@ export interface WebpackOptions {
   cmsSrcDir: string
   mode: 'development' | 'production'
   configPath: string
+  pluginConfigPath?: string
 }
 
 export function getWebpackServerConfig(opts: WebpackOptions): Promise<Configuration>;

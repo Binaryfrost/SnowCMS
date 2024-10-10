@@ -1,8 +1,7 @@
 import type { IRoute } from 'express';
-import type { NormalizedConfig } from '../config';
+import type { PluginConfig } from '../config';
 import { type Input } from './InputRegistry';
 import { Role } from './User';
-import type { ClientConfig } from '../client/client-config';
 
 class PluginLogger {
   private readonly name: string;
@@ -61,7 +60,7 @@ export interface Plugin {
   hooks: Hooks
 }
 
-export function loadPlugins(config: NormalizedConfig | ClientConfig) {
+export function loadPlugins(config: PluginConfig) {
   config.plugins.forEach((plugin) => {
     const logger = new PluginLogger(plugin.name);
 

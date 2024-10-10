@@ -1,9 +1,12 @@
-import type { ClientConfig } from '../client/client-config';
-import type { NormalizedConfig } from '../config';
 import { registerBuiltInInputs } from './inputs';
 import { loadPlugins } from './plugins';
 
-export default function setup(config: NormalizedConfig | ClientConfig) {
+export default async function setup() {
   registerBuiltInInputs();
-  loadPlugins(config);
+
+  if (__SNOWCMS_PLUGIN_CONFIG_FILE__) {
+    const pluginConfig = await import(__SNOWCMS_PLUGIN_CONFIG_FILE__);
+    console.log(pluginConfig);
+    loadPlugins(pluginConfig.default);
+  }
 }

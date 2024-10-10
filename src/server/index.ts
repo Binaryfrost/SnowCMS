@@ -6,11 +6,8 @@ const configFile = require(__SNOWCMS_CONFIG_FILE__);
 const config: NormalizedConfig = configFile.default;
 console.log(config);
 
-setup(config);
+setup();
 
 // Using a dynamic import forces Webpack to code split the rest of the app
 const server = await import('./server');
 server.start(config);
-
-// Required for top-level await to work
-export {};

@@ -23,12 +23,20 @@ interface Config {
       secretAccessKey: string,
       publicUrl: string
     }
-  },
-  plugins?: Plugin[]
+  }
 }
 
-// Mark all as required, but keep plugin hooks optional
-export type NormalizedConfig = Omit<DeepRequired<Config>, 'plugins'> & { plugins: Plugin[] }
+/*
+ * There's no way of preventing Webpack from including the whole config file
+ * in the client bundle, so to prevent secrets from being leaked, plugins
+ * are loaded in a completely separate config file. It's not an ideal
+ * solution, but it works as long as one of the files doesn't import the other.
+ */
+export interface PluginConfig {
+  plugins: Plugin[]
+}
+
+export type NormalizedConfig = DeepRequired<Config>
 
 export const defineConfig = (config: Config): NormalizedConfig => ({
   ...config,
@@ -37,6 +45,8 @@ export const defineConfig = (config: Config): NormalizedConfig => ({
     ...config.media,
     maxSize: config.media.maxSize || 50000000,
     maxStorage: config.media.maxStorage || 5000000000
-  },
-  plugins: config.plugins || []
+  }
 });
+
+// To provide types in config file
+export const definePluginConfig = (config: PluginConfig) => config;

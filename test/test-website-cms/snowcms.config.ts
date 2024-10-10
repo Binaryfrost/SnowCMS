@@ -1,5 +1,4 @@
 import { defineConfig } from '../../src/index';
-import testPlugin from './test-plugin';
 
 export default defineConfig({
   // Ignored in development
@@ -31,8 +30,5 @@ export default defineConfig({
       secretAccessKey: '',
       publicUrl: ''
     }
-  },
-  plugins: [
-    testPlugin
-  ]
+  }
 });

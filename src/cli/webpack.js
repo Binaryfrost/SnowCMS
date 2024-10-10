@@ -83,6 +83,8 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
     }),
     new webpack.DefinePlugin({
       __SNOWCMS_CONFIG_FILE__: JSON.stringify(opts.configPath),
+      __SNOWCMS_PLUGIN_CONFIG_FILE__: opts.pluginConfigPath &&
+        JSON.stringify(opts.pluginConfigPath),
       __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production'
     })
   ]
