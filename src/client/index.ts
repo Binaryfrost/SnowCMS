@@ -1,6 +1,7 @@
 import InputRegistry from '../common/InputRegistry';
-import { registerBuiltInInputs } from '../common/inputs';
+import setup from '../common/setup';
+import config from './client-config';
 
-registerBuiltInInputs();
+setup(config);
 
-console.log(InputRegistry.getInput('text'));
+console.log(InputRegistry.getAllInputs());

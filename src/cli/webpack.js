@@ -7,11 +7,11 @@ import TerserPlugin from 'terser-webpack-plugin';
 /**
  * @callback WebpackFunction
  * @param {import('./webpack').WebpackOptions} options
- * @returns {import('webpack').Configuration}
+ * @returns {Promise<import('webpack').Configuration>}
  */
 
 /** @type {WebpackFunction} */
-const BASE_WEBPACK_TEMPLATE = (opts) => ({
+const BASE_WEBPACK_TEMPLATE = async (opts) => ({
   context: opts.cmsSrcDir,
   mode: opts.mode,
   output: {
@@ -80,6 +80,10 @@ const BASE_WEBPACK_TEMPLATE = (opts) => ({
     }),
     new webpack.ProvidePlugin({
       React: 'react'
+    }),
+    new webpack.DefinePlugin({
+      __SNOWCMS_CONFIG_FILE__: JSON.stringify(opts.configPath),
+      __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production'
     })
   ]
 });
@@ -90,25 +94,33 @@ const BASE_WEBPACK_TEMPLATE = (opts) => ({
 // WebPack ignores devServer property when called through the API, so need to pass the devServer config to the API.
 
 /** @type {WebpackFunction} */
-export function getWebpackServerConfig(opts) {
-  const baseConfig = BASE_WEBPACK_TEMPLATE(opts);
+export async function getWebpackServerConfig(opts) {
+  const baseConfig = await BASE_WEBPACK_TEMPLATE(opts);
   return {
     ...baseConfig,
     target: 'node',
-    entry: './server/index.ts',
+    entry: './src/server/index.ts',
     output: {
       ...baseConfig.output,
-      path: path.join(opts.userDir, 'dist', 'server')
+      path: path.join(opts.userDir, 'dist', 'server'),
+      module: true,
+      chunkFormat: 'module'
+    },
+    externalsPresets: {
+      node: true
+    },
+    experiments: {
+      outputModule: true
     }
   };
 }
 
 /** @type {WebpackFunction} */
-export function getWebpackClientConfig(opts) {
-  const baseConfig = BASE_WEBPACK_TEMPLATE(opts);
+export async function getWebpackClientConfig(opts) {
+  const baseConfig = await BASE_WEBPACK_TEMPLATE(opts);
   return {
     ...baseConfig,
-    entry: './client/index.ts',
+    entry: './src/client/index.ts',
     output: {
       ...baseConfig.output,
       path: path.join(opts.userDir, 'dist', 'client'),

@@ -1,10 +1,5 @@
 import type { DeepRequired } from 'utility-types';
-
-interface Plugin {
-  name: string
-  // TODO: Add hook types
-  hooks: Record<string, () => void>
-}
+import type { Plugin } from './common/plugins';
 
 interface Config {
   port?: number,
@@ -32,8 +27,10 @@ interface Config {
   plugins?: Plugin[]
 }
 
-// TODO: Test
-export const defineConfig = (config: Config): DeepRequired<Config> => ({
+// Mark all as required, but keep plugin hooks optional
+export type NormalizedConfig = Omit<DeepRequired<Config>, 'plugins'> & { plugins: Plugin[] }
+
+export const defineConfig = (config: Config): NormalizedConfig => ({
   ...config,
   port: config.port || 8030,
   media: {

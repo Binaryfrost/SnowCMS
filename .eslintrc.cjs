@@ -37,7 +37,8 @@ module.exports = {
     'no-console': 'off',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'warn',
-    'no-return-assign': 'off'
+    'no-return-assign': 'off',
+    'no-undef': 'off'
   },
   plugins: [
     '@typescript-eslint'

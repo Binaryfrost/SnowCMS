@@ -104,5 +104,11 @@ export default {
     }
 
     return InputRegistry.get(id);
+  },
+  getAllInputs(): Record<string, Input<any, any>> {
+    return [...InputRegistry.entries()].reduce((a, [key, input]) => ({
+      ...a,
+      [key]: input
+    }), {});
   }
 };

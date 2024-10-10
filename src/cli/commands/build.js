@@ -2,9 +2,9 @@ import webpack from 'webpack';
 import { getWebpackClientConfig, getWebpackServerConfig } from '../webpack.js';
 
 /** @param {import('../webpack').WebpackOptions} opts */
-export function run(opts) {
-  const clientConfig = getWebpackClientConfig(opts);
-  const serverConfig = getWebpackServerConfig(opts);
+export async function run(opts) {
+  const clientConfig = await getWebpackClientConfig(opts);
+  const serverConfig = await getWebpackServerConfig(opts);
 
   console.log('client', clientConfig);
   console.log('server', serverConfig);

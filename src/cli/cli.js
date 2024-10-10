@@ -25,10 +25,11 @@ if (!(await exists(configFile))) throw new Error('Could not find SnowCMS config 
 
 switch (command) {
   case 'build':
-    BuildCommand.run({
+    await BuildCommand.run({
       cmsSrcDir,
       userDir,
-      mode: 'production'
+      mode: 'production',
+      configPath: configFile
     });
     break;
   case 'dev':
