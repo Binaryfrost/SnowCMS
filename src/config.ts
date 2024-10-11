@@ -40,7 +40,7 @@ export type NormalizedConfig = DeepRequired<Config>
 
 export const defineConfig = (config: Config): NormalizedConfig => ({
   ...config,
-  port: config.port || 8030,
+  port: config.port || 3080,
   media: {
     ...config.media,
     maxSize: config.media.maxSize || 50000000,

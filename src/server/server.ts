@@ -18,8 +18,13 @@ export function start(config: NormalizedConfig) {
     res.json(input);
   });
 
-  app.listen(config.port, () => {
-    console.log(`Listening on port ${config.port}`);
+  /*
+   * Because the config file is a TypeScript file, it can't be loaded by the CLI
+   * so the Webpack dev server config can't adapt to the port being changed.
+   */
+  const port = __SNOWCMS_IS_PRODUCTION__ ? config.port : 8030;
+  app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
 
     callHook('start', {
       addInput: InputRegistry.addInput,
