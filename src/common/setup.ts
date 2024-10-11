@@ -6,7 +6,7 @@ export default async function setup() {
 
   if (__SNOWCMS_PLUGIN_CONFIG_FILE__) {
     const pluginConfig = await import(__SNOWCMS_PLUGIN_CONFIG_FILE__);
-    console.log(pluginConfig);
+    console.log(pluginConfig.default);
     loadPlugins(pluginConfig.default);
   }
 }

@@ -62,6 +62,12 @@ export interface Plugin {
 
 export function loadPlugins(config: PluginConfig) {
   config.plugins.forEach((plugin) => {
+    if (!plugin.name.match(/^[0-9A-Za-z\-_]$/)) {
+      console.error(`Failed to load plugin ${plugin.name}. ` +
+        'Plugin name must be alpha-numeric and may contain a hyphen or underscore.');
+      return;
+    }
+
     const logger = new PluginLogger(plugin.name);
 
     Object.entries(plugin.hooks).forEach(([hookName, hook]: [keyof Hooks, Hooks[keyof Hooks]]) => {
@@ -74,6 +80,8 @@ export function loadPlugins(config: PluginConfig) {
         ...props,
         logger
       }));
+
+      console.log(`Loaded plugin ${plugin.name}`);
     });
   });
 }

@@ -24,7 +24,8 @@ export function start(config: NormalizedConfig) {
    */
   const port = __SNOWCMS_IS_PRODUCTION__ ? config.port : 8030;
   app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
+    console.log(__SNOWCMS_IS_PRODUCTION__ ? `Listening on port ${port}` :
+      'Dev server listening on port 3081');
 
     callHook('start', {
       addInput: InputRegistry.addInput,
