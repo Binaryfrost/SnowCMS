@@ -62,7 +62,7 @@ export interface Plugin {
 
 export function loadPlugins(config: PluginConfig) {
   config.plugins.forEach((plugin) => {
-    if (!plugin.name.match(/^[0-9A-Za-z\-_]$/)) {
+    if (!plugin.name.match(/^[0-9A-Za-z\-_]+$/)) {
       console.error(`Failed to load plugin ${plugin.name}. ` +
         'Plugin name must be alpha-numeric and may contain a hyphen or underscore.');
       return;
