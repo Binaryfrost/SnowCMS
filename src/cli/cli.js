@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { exists, findPackageRoot } from './util.js';
 import * as BuildCommand from './commands/build.js';
+import * as DevCommand from './commands/dev.js';
 
 const command = process.argv.slice(2)[0];
 
@@ -34,8 +35,16 @@ switch (command) {
       configPath: configFile,
       pluginConfigPath: await exists(pluginConfigFile) ? pluginConfigFile : null
     });
+    console.log('after build');
     break;
   case 'dev':
+    await DevCommand.run({
+      cmsSrcDir,
+      userDir,
+      mode: 'development',
+      configPath: configFile,
+      pluginConfigPath: await exists(pluginConfigFile) ? pluginConfigFile : null
+    });
     break;
   default:
     throw new Error('Unknown command');

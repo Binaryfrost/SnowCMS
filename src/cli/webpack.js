@@ -55,6 +55,7 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
       type: 'asset/resource'
     }]
   },
+  ignoreWarnings: [() => true],
   optimization: {
     splitChunks: {
       hidePathInfo: true,
@@ -113,7 +114,16 @@ export async function getWebpackServerConfig(opts) {
     },
     experiments: {
       outputModule: true
-    }
+    },
+    /*
+     * Dependencies that can be run by Node without
+     * being built don't need to be included in
+     * the bundle. Only React components and libraries
+     * need to be included in the bundle.
+     */
+    externals: [
+      'express'
+    ]
   };
 }
 
