@@ -35,7 +35,6 @@ switch (command) {
       configPath: configFile,
       pluginConfigPath: await exists(pluginConfigFile) ? pluginConfigFile : null
     });
-    console.log('after build');
     break;
   case 'dev':
     await DevCommand.run({

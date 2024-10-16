@@ -55,7 +55,6 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
       type: 'asset/resource'
     }]
   },
-  ignoreWarnings: [() => true],
   optimization: {
     splitChunks: {
       hidePathInfo: true,
