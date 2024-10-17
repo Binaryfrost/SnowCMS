@@ -136,19 +136,6 @@ export async function getWebpackClientConfig(opts) {
       ...baseConfig.output,
       path: path.join(opts.userDir, 'dist', 'client'),
       publicPath: '/assets/'
-    },
-    devServer: {
-      port: 3081,
-      // HMR doesn't work with module chunks
-      hot: false,
-      proxy: [{
-        context: () => true,
-        target: 'http://localhost:3080'
-      }],
-      static: false,
-      client: {
-        overlay: true
-      }
     }
   };
 }

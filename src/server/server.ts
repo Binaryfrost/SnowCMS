@@ -6,10 +6,8 @@ import { callHook } from '../common/plugins';
 
 export function start(config: NormalizedConfig) {
   const app = express();
-
-  if (__SNOWCMS_IS_PRODUCTION__) {
-    app.use('/assets', express.static('../client'));
-  }
+  // TODO: Caching in production for all but main.js
+  app.use('/assets', express.static('../client'));
 
   // This is just for testing
   app.get('/api/inputs', (req, res) => {
@@ -18,14 +16,9 @@ export function start(config: NormalizedConfig) {
     res.json(input);
   });
 
-  /*
-   * Because the config file is a TypeScript file, it can't be loaded by the CLI
-   * so the Webpack dev server config can't adapt to the port being changed.
-   */
-  const port = __SNOWCMS_IS_PRODUCTION__ ? config.port : 8030;
-  app.listen(port, () => {
-    console.log(__SNOWCMS_IS_PRODUCTION__ ? `Listening on port ${port}` :
-      'Dev server listening on port 3081');
+  app.listen(config.port, () => {
+    console.log(`${__SNOWCMS_IS_PRODUCTION__ ? 'Listening' :
+      'Dev server listening'} on port ${config.port}`);
 
     callHook('start', {
       addInput: InputRegistry.addInput,

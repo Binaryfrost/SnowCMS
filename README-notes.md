@@ -1,4 +1,5 @@
 - The server build will contain the config, including sensitive fields. Keep this bundle private or use environmental variables.
 - The client build shouldn't contain the config, only the plugin config. Keep the config and plugin config files separate to avoid leaking sensitive information into the client build.
 - Anti-virus software can prevent the build command from working. If this happens, either temporarily disable the anti-virus software or add an exclusion.
-- The configured port is ignored in development.
+- The `snowcms build` command will build an optimized, production ready instance of the CMS. This will include a `node_modules` directory with only the dependencies required at runtime.
+- The `snowcms dev` command will create a development build, start the server, and restart the server whenever any files change. As this is intended for development, no runtime dependencies will be copied and the build will not be optimized.
