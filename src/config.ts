@@ -2,27 +2,34 @@ import type { DeepRequired } from 'utility-types';
 import type { Plugin } from './common/plugins';
 
 interface Config {
-  port?: number,
-  secret: string,
+  port?: number
+  secret: string
   sso: {
-    clientId: string,
-    clientSecret: string,
-    authUrl: string,
-    tokenUrl: string,
-    userInfoUrl: string,
+    clientId: string
+    clientSecret: string
+    authUrl: string
+    tokenUrl: string
+    userInfoUrl: string
     logoutUrl: string
-  },
+  }
   media: {
-    maxSize?: number,
-    maxStorage?: number,
+    maxSize?: number
+    maxStorage?: number
     s3: {
-      endpoint: string,
-      region: string,
-      bucket: string,
-      accessKeyId: string,
-      secretAccessKey: string,
+      endpoint: string
+      region: string
+      bucket: string
+      accessKeyId: string
+      secretAccessKey: string
       publicUrl: string
     }
+  }
+  database: {
+    hostname: string
+    port?: number
+    database: string
+    username: string
+    password: string
   }
 }
 
@@ -45,6 +52,10 @@ export const defineConfig = (config: Config): NormalizedConfig => ({
     ...config.media,
     maxSize: config.media.maxSize || 50000000,
     maxStorage: config.media.maxStorage || 5000000000
+  },
+  database: {
+    ...config.database,
+    port: config.port || 3306
   }
 });
 

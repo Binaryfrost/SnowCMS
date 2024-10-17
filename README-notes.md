@@ -1,0 +1,4 @@
+- The server build will contain the config, including sensitive fields. Keep this bundle private or use environmental variables.
+- The client build shouldn't contain the config, only the plugin config. Keep the config and plugin config files separate to avoid leaking sensitive information into the client build.
+- Anti-virus software can prevent the build command from working. If this happens, either temporarily disable the anti-virus software or add an exclusion.
+- The configured port is ignored in development.

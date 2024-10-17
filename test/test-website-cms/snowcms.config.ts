@@ -30,5 +30,11 @@ export default defineConfig({
       secretAccessKey: '',
       publicUrl: ''
     }
+  },
+  database: {
+    hostname: '',
+    database: '',
+    username: '',
+    password: ''
   }
 });
