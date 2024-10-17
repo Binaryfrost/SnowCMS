@@ -317,14 +317,15 @@ Data is the serialized input data for the Collection Entry.
 
 ## Media (Future Update)
 
-|   Name    |  Type  | References  |             Note             |
-| --------- | ------ | ----------- | ---------------------------- |
-| id        | string |             | Primary key                  |
-| websiteId | string | websites.id |                              |
-| fileName  | string |             | Name after file*             |
-| fileSize  | int    |             | Size of file in bytes        |
-| thumbName | string |             | Name of thumbnail*, nullable |
-| timestamp | string |             | Unix timestamp               |
+|     Name     |  Type  | References  |             Note             |
+| ------------ | ------ | ----------- | ---------------------------- |
+| id           | string |             | Primary key                  |
+| websiteId    | string | websites.id |                              |
+| origFileName | string |             | Original file name           |
+| fileName     | string |             | Name after file upload*      |
+| fileSize     | int    |             | Size of file in bytes        |
+| thumbName    | string |             | Name of thumbnail*, nullable |
+| timestamp    | string |             | Unix timestamp               |
 
 *File name as stored in S3; should be sanitized and include at least part of ID or timestamp to avoid overwriting existing files
 
