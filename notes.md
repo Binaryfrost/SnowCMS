@@ -212,8 +212,8 @@ interface StartHook {
 /*
    * Events (* one of [website, collection, collectionInput, collectionEntry]):
    * - *Create
-   * - *BeforeModify
-   * - *AfterModify
+   * - *BeforeModify (called before saving data in database, useful for validating input)
+   * - *AfterModify (called after saving data in database)
    * - *Delete
    * 
    * Hooks may be async or synchronous. Allow modifying data in synchronous create and beforeModify hooks.
