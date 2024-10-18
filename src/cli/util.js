@@ -15,6 +15,7 @@ export async function findPackageRoot(dir) {
   if (await exists(packageJson)) return dir;
 
   const upOneLevel = path.join(dir, '..');
+  // At the root of the file system going up one level won't change the path
   if (dir === upOneLevel) throw new Error('Failed to find package root');
   return findPackageRoot(upOneLevel);
 }

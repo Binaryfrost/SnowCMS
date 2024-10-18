@@ -31,9 +31,6 @@ interface BaseInput<T, S> {
   serialize: (data: T) => string
   deserialize: (data: string) => T
 
-  // TODO: Add hook to alert other Inputs that this Input has changed (useful for a slug input)
-  // Possibly forwardRef? That would solve the getInputValues() issue as well
-
   // Called client-side to render input in CMS; remember to call useImperativeHandle with InputRef object if the Input has a value
   /*
    * Example usage:

@@ -278,6 +278,7 @@ The Collection Title is the Collection Input that is shown in Entry list.
 | collectionId | string | collections.id |                            |
 | name         | string |                | Name shown in CMS          |
 | description  | string |                | Shown below name, nullable |
+| fieldName    | string |                | Name used in API response  |
 | input        | string |                | Input Registry ID          |
 | inputConfig  | string |                | Passed to input, nullable  |
 | order        | int    |                | See below                  |

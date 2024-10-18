@@ -3,6 +3,7 @@ import webpack from 'webpack';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
+import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
 
 /**
  * @callback WebpackFunction
@@ -10,13 +11,15 @@ import TerserPlugin from 'terser-webpack-plugin';
  * @returns {Promise<import('webpack').Configuration>}
  */
 
+const SERVER_DIST = (dir) => path.join(dir, 'dist', 'server');
+const CLIENT_DIST = (dir) => path.join(dir, 'dist', 'client');
+
 /** @type {WebpackFunction} */
 const BASE_WEBPACK_TEMPLATE = async (opts) => ({
   context: opts.cmsSrcDir,
   mode: opts.mode,
   output: {
     clean: true,
-    filename: 'main.js',
     chunkFilename: '[name].[contenthash].js'
   },
   resolve: {
@@ -90,11 +93,6 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
   ]
 });
 
-// TODO: Figure out dev server
-// Possibly have the `snowcms dev` command run webpack.watch and restart the Express server whenever there's a change?
-// Then have the client config proxy to the server. Also, only use express.static in production builds.
-// WebPack ignores devServer property when called through the API, so need to pass the devServer config to the API.
-
 /** @type {WebpackFunction} */
 export async function getWebpackServerConfig(opts) {
   const baseConfig = await BASE_WEBPACK_TEMPLATE(opts);
@@ -104,8 +102,9 @@ export async function getWebpackServerConfig(opts) {
     entry: './src/server/index.ts',
     output: {
       ...baseConfig.output,
-      path: path.join(opts.userDir, 'dist', 'server'),
+      path: SERVER_DIST(opts.userDir),
       module: true,
+      filename: 'server.js',
       chunkFormat: 'module'
     },
     externalsPresets: {
@@ -115,10 +114,9 @@ export async function getWebpackServerConfig(opts) {
       outputModule: true
     },
     /*
-     * Dependencies that can be run by Node without
-     * being built don't need to be included in
-     * the bundle. Only React components and libraries
-     * need to be included in the bundle.
+     * Dependencies that can be run by Node without being built don't need to be included in
+     * the bundle as they can be copied to the dist directory after compilation.
+     * Only React components and libraries need to be included in the bundle.
      */
     externals: [
       'express'
@@ -134,8 +132,13 @@ export async function getWebpackClientConfig(opts) {
     entry: './src/client/index.ts',
     output: {
       ...baseConfig.output,
-      path: path.join(opts.userDir, 'dist', 'client'),
-      publicPath: '/assets/'
-    }
+      path: CLIENT_DIST(opts.userDir),
+      publicPath: '/assets/',
+      filename: 'main.[contenthash].js'
+    },
+    plugins: [
+      ...baseConfig.plugins,
+      new WebpackManifestPlugin()
+    ]
   };
 }

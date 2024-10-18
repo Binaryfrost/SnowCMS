@@ -27,10 +27,9 @@ interface Hook {
   logger: PluginLogger
 }
 
-interface StartHook extends Hook {
-  addInput<T>(input: Input<T>): void
+interface ServerStartHook extends Hook {
   /*
-   * Register Express routes at /c/{plugin_name}/{path}
+   * Register Express routes
    * Minimum role, leave blank to allow unauthenticated access (restricted using app.use() on route)
    *
    * Returns Express route (https://expressjs.com/en/4x/api.html#app.route)
@@ -38,9 +37,15 @@ interface StartHook extends Hook {
   registerRoute(path: string, role?: Role): IRoute
 }
 
+interface SetupHook extends Hook {
+  addInput<T = any>(input: Input<T>): void;
+}
+
 interface Hooks {
-  start?: (hook: StartHook) => void
-  test?: (hook: {a: string}) => void
+  /** Called server-side */
+  serverStart?: (hook: ServerStartHook) => void
+  /** Called client-side on page load and server-side on startup */
+  setup?: (hook: SetupHook) => void
 }
 
 type HookRegistryFunction<T> = (props: Omit<T, 'logger'>) => void
@@ -75,7 +80,7 @@ export function loadPlugins(config: PluginConfig) {
         HookRegistry.set(hookName, []);
       }
 
-      // @ts-ignore
+      // @ts-expect-error
       HookRegistry.get(hookName).push((props) => hook({
         ...props,
         logger
