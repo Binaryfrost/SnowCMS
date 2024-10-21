@@ -199,7 +199,6 @@ Plugins are added to the config file and should return a default export. Changes
 
 ```ts
 interface StartHook {
-  addInput: (name: string, input: Input) => void
   /*
    * Register Express routes at /c/{plugin_name}/{path}
    * Minimum role, leave blank to allow unauthenticated access (restricted using app.use() on route)
@@ -218,7 +217,9 @@ interface StartHook {
    * - *BeforeDelete
    * - *AfterDelete
    * 
-   * Hooks may be async or synchronous. Allow modifying data in before hooks, which can also be used for validating input by throwing an error.
+   * Hooks may be async or synchronous. Allow modifying data in synchronous before hooks,
+   * which can also be used for validating input by throwing an error. Modifying data and
+   * input validation may not be done in async hooks.
    * 
    * Also have:
    * - serverStart: Allow registering routes from this hook
