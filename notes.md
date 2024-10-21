@@ -210,16 +210,19 @@ interface StartHook {
 }
 
 /*
-   * Events (* one of [website, collection, collectionInput, collectionEntry]):
-   * - *Create
+   * Events (* one of [website, collection, collectionInput, collectionEntry, media]):
+   * - *BeforeCreate
+   * - *AfterCreate
    * - *BeforeModify (called before saving data in database, useful for validating input)
    * - *AfterModify (called after saving data in database)
-   * - *Delete
+   * - *BeforeDelete
+   * - *AfterDelete
    * 
-   * Hooks may be async or synchronous. Allow modifying data in synchronous create and beforeModify hooks.
+   * Hooks may be async or synchronous. Allow modifying data in before hooks, which can also be used for validating input by throwing an error.
    * 
    * Also have:
-   * - start: Allow registering inputs and routes from this hook
+   * - serverStart: Allow registering routes from this hook
+   * - setup: Called server-side and client-side for registering inputs
    */
 interface Hooks {
   start?: ({...}: StartHook) => void | Promise<void>
@@ -238,6 +241,8 @@ const plugin: Plugin = {
 };
 export default plugin;
 ```
+
+Do not store sensitive information in plugins as these are included in the client build. If a plugin requires sensitive information, this should be stored in a file that gets loaded at runtime.
 
 # Database
 
@@ -355,3 +360,5 @@ Only allow 15 image uploads every 5 minutes to prevent abuse. Prevent file uploa
 - /api/websites/{id}/collections/{id}/inputs/{id}/order
 - /api/websites/{id}/collections/{id}/entries
 - /api/websites/{id}/collections/{id}/entries/{id}
+- /api/websites/{id}/media
+- /api/websites/{id}/media/{id}
