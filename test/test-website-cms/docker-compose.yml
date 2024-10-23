@@ -11,10 +11,12 @@ services:
 
   cms:
     image: node:20.18
+    user: node
     depends_on:
       - db
-    working_dir: /home/node/app
-    volues: ./:/home/node/app
+    working_dir: /home/node/test/test-website-cms
+    volumes:
+      - ../../:/home/node
     ports:
       - 3080:3080
-    command: npx snowcms dev
+    command: ls
