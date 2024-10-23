@@ -1,8 +1,6 @@
-import { ActionIcon, Anchor, AppShell, Box, Burger, Divider,
-  Group, Image, ScrollArea, Stack, Text } from '@mantine/core';
+import { AppShell, Burger, Divider, Group, Image, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus } from '@tabler/icons-react';
-import { Link, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import DarkModeToggle from './components/DarkModeToggle';
 import LogoutButton from './components/LogoutButton';
 
