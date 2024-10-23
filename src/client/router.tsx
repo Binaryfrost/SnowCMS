@@ -4,7 +4,8 @@ import ErrorPage from './ErrorPage';
 export const router = createBrowserRouter([{
   lazy: () => import('./RootLayout'),
   errorElement: <ErrorPage />,
-  children: [
-
-  ]
+  children: [{
+    path: '/',
+    lazy: () => import('./pages/Websites')
+  }]
 }]);

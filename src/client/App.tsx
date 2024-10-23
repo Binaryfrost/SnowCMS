@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { MantineProvider, Tooltip, createTheme } from '@mantine/core';
+import { ActionIcon, MantineProvider, Tooltip, createTheme } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { NavigationProgress } from '@mantine/nprogress';
 import { Notifications } from '@mantine/notifications';
@@ -21,7 +21,17 @@ const theme = createTheme({
   components: {
     Tooltip: Tooltip.extend({
       defaultProps: {
-        withArrow: true
+        withArrow: true,
+        events: {
+          hover: true,
+          touch: true,
+          focus: false
+        }
+      }
+    }),
+    ActionIcon: ActionIcon.extend({
+      defaultProps: {
+        variant: 'subtle'
       }
     })
   }

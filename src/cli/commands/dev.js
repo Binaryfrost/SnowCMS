@@ -14,22 +14,29 @@ export async function run(opts) {
   const serverJs = path.join(serverConfig.output.path, serverConfig.output.filename);
   /** @type {import('child_process').ChildProcess} */
   let serverProcess;
-  async function startServer() {
-    if (serverProcess) {
-      if (!serverProcess.kill()) {
-        throw new Error('Failed to restart server');
+  async function startServer(serverHasChanges) {
+    if (serverHasChanges || !serverProcess) {
+      if (serverProcess) {
+        console.log('Restarting dev server');
+
+        if (!serverProcess.kill()) {
+          throw new Error('Failed to restart server');
+        }
       }
+
+      if (!(await exists(serverJs))) {
+        throw new Error('Server entry file does not exist');
+      }
+
+      serverProcess = fork(serverJs, {
+        cwd: serverConfig.output.path
+      });
+
+      serverProcess.on('error', console.error);
+    } else {
+      console.log('Reloading frontend');
+      serverProcess.send('CLIENT');
     }
-
-    if (!(await exists(serverJs))) {
-      throw new Error('Server entry file does not exist');
-    }
-
-    serverProcess = fork(serverJs, {
-      cwd: serverConfig.output.path
-    });
-
-    serverProcess.on('error', console.error);
   }
 
   let hash = null;
@@ -53,7 +60,11 @@ export async function run(opts) {
 
       if (!stats.hasErrors()) {
         console.log('SnowCMS development build complete');
-        startServer();
+        const [serverStats] = stats.toJson().children
+          .filter((s) => s.outputPath === serverConfig.output.path)
+          .map((s) => s.assets.filter((a) => a.emitted))
+          .map((s) => s.length > 0);
+        startServer(!!serverStats);
       }
     }
   });

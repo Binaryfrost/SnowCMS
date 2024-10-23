@@ -1,14 +1,9 @@
-import fs from 'fs/promises';
 import express from 'express';
-
 import InputRegistry from '../common/InputRegistry';
 import { type NormalizedConfig } from '../config';
 import { callHook } from '../common/plugins';
 import devServer from './dev-server';
-
-const MANIFEST: Record<string, string> = JSON.parse(await fs.readFile('../client/manifest.json', {
-  encoding: 'utf8'
-}));
+import { getManifest } from './manifest';
 
 export function start(config: NormalizedConfig) {
   const app = express();
@@ -26,8 +21,25 @@ export function start(config: NormalizedConfig) {
     devServer(config.port + 1);
   }
 
+  callHook('serverSetup', {
+    registerRoute: (path, role) => {
+      if (role) {
+        app.use(path, (req, res) => {
+          // TODO: Add role checking
+          res.status(403).json({
+            error: 'User role does not have access to that route'
+          });
+        });
+      }
+
+      return app.route(path);
+    }
+  });
+
   // Catch all GET requests that haven't already been handled and serve the CMS SPA
-  app.get('*', (req, res) => {
+  app.get('*', async (req, res) => {
+    const MANIFEST = await getManifest();
+
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -56,18 +68,7 @@ export function start(config: NormalizedConfig) {
       'Dev server listening'} on port ${config.port}`);
 
     callHook('serverStart', {
-      registerRoute: (path, role) => {
-        if (role) {
-          app.use(path, (req, res) => {
-            // TODO: Add role checking
-            res.status(403).json({
-              error: 'User role does not have access to that route'
-            });
-          });
-        }
-
-        return app.route(path);
-      }
+      port: config.port
     });
   });
 }

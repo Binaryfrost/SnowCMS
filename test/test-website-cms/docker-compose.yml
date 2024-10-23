@@ -1,0 +1,20 @@
+services:
+  db:
+    image: mysql:8.0.40
+    volumes:
+      - ./data:/var/lib/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
+      MYSQL_DATABASE: snowcms
+      MYSQL_USER: snowcms
+      MYSQL_PASSWORD: snowcms
+
+  cms:
+    image: node:20.18
+    depends_on:
+      - db
+    working_dir: /home/node/app
+    volues: ./:/home/node/app
+    ports:
+      - 3080:3080
+    command: npx snowcms dev

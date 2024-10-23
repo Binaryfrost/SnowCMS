@@ -55,7 +55,7 @@ export const defineConfig = (config: Config): NormalizedConfig => ({
   },
   database: {
     ...config.database,
-    port: config.port || 3306
+    port: config.database.port || 3306
   }
 });
 

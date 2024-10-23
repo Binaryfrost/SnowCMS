@@ -5,8 +5,8 @@ import { Plugin } from '../../src';
 const plugin: Plugin = {
   name: 'test-plugin',
   hooks: {
-    serverStart: ({ logger, registerRoute }) => {
-      logger.log('Started');
+    serverSetup: ({ logger, registerRoute }) => {
+      logger.log('Registering routes');
 
       registerRoute('/plugin-registered-route/1').get((req, res) => {
         res.end('OK');
@@ -15,6 +15,9 @@ const plugin: Plugin = {
       registerRoute('/plugin-registered-route/2', 'ADMIN').get((req, res) => {
         res.end('Restricted route');
       });
+    },
+    serverStart: ({ logger, port }) => {
+      logger.log(`Server started on port ${port}`);
     },
     setup: ({ logger, addInput }) => {
       logger.log('Registering input');

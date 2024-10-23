@@ -27,7 +27,7 @@ interface Hook {
   logger: PluginLogger
 }
 
-interface ServerStartHook extends Hook {
+interface ServerSetupHook extends Hook {
   /*
    * Register Express routes
    * Minimum role, leave blank to allow unauthenticated access (restricted using app.use() on route)
@@ -37,11 +37,17 @@ interface ServerStartHook extends Hook {
   registerRoute(path: string, role?: Role): IRoute
 }
 
+interface ServerStartHook extends Hook {
+  port: number
+}
+
 interface SetupHook extends Hook {
   addInput<T = any>(input: Input<T>): void;
 }
 
 interface Hooks {
+  /** Called server-side */
+  serverSetup?: (hook: ServerSetupHook) => void
   /** Called server-side */
   serverStart?: (hook: ServerStartHook) => void
   /** Called client-side on page load and server-side on startup */
@@ -85,8 +91,8 @@ export function loadPlugins(config: PluginConfig) {
         ...props,
         logger
       }));
-
-      console.log(`Loaded plugin ${plugin.name}`);
     });
+
+    console.log(`Loaded plugin ${plugin.name}`);
   });
 }
