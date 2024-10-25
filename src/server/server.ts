@@ -4,18 +4,40 @@ import { type NormalizedConfig } from '../config';
 import { callHook } from '../common/plugins';
 import devServer from './dev-server';
 import { getManifest } from './manifest';
+import initDb from './database/db';
+import { hasAccess } from '../common/users';
 
-export function start(config: NormalizedConfig) {
+import websiteRouter from './routes/website';
+import collectionRouter from './routes/collections';
+
+export async function start(config: NormalizedConfig) {
+  console.log('Connecting to database');
+  await initDb(config);
+
   const app = express();
   // TODO: Caching in production
   app.use('/assets', express.static('../client'));
+  app.use(express.json());
 
-  // This is just for testing
+  app.use((req, res, next) => {
+    // TODO: Read JWT from header
+    req.user = Object.freeze({
+      role: 'ADMIN',
+      websites: []
+    });
+
+    next();
+  });
+
+  // TODO: Remove; this is just for testing
   app.get('/api/inputs', (req, res) => {
     const input = InputRegistry.getAllInputs();
     console.log(input);
     res.json(input);
   });
+
+  app.use('/api/websites', websiteRouter);
+  app.use('/api/websites/:websiteId/collections', collectionRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);
@@ -24,11 +46,17 @@ export function start(config: NormalizedConfig) {
   callHook('serverSetup', {
     registerRoute: (path, role) => {
       if (role) {
-        app.use(path, (req, res) => {
+        app.use(path, (req, res, next) => {
           // TODO: Add role checking
-          res.status(403).json({
-            error: 'User role does not have access to that route'
-          });
+          if (!hasAccess(req.user, role)) {
+            res.status(403).json({
+              error: 'User role does not have access to that route'
+            });
+
+            return;
+          }
+
+          next();
         });
       }
 

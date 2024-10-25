@@ -19,7 +19,7 @@ export async function run(opts) {
       if (serverProcess) {
         console.log('Restarting dev server');
 
-        if (!serverProcess.kill()) {
+        if (serverProcess.exitCode === null && !serverProcess.kill()) {
           throw new Error('Failed to restart server');
         }
       }
@@ -33,6 +33,9 @@ export async function run(opts) {
       });
 
       serverProcess.on('error', console.error);
+      serverProcess.on('exit', (code) => {
+        console.log(`Dev server exited with code ${code}`);
+      });
     } else {
       console.log('Reloading frontend');
       serverProcess.send('CLIENT');

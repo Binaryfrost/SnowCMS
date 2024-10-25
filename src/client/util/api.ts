@@ -1,4 +1,4 @@
-import type { Role } from '../../common/User';
+import type { User } from '../../common/types/User';
 import { router } from '../router';
 
 let redirectUrl = '/';
@@ -25,12 +25,12 @@ interface RequestWithData extends RequestBase {
 
 type Request = RequestWithData | RequestWithoutData
 
-export interface HttpResponse {
+export interface HttpResponse<T = any> {
   status: number
-  body: any
+  body: T & { error?: string }
 }
 
-async function request(opts: Request): Promise<HttpResponse> {
+async function request<T>(opts: Request): Promise<HttpResponse<T>> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json'
@@ -76,16 +76,16 @@ async function request(opts: Request): Promise<HttpResponse> {
   };
 }
 
-export async function get(route: string, opts?: Opts) {
-  return request({
+export async function get<T = any>(route: string, opts?: Opts) {
+  return request<T>({
     method: 'GET',
     route,
     ...opts
   });
 }
 
-export async function post(route: string, data: FormData | object, opts?: Opts) {
-  return request({
+export async function post<T = any>(route: string, data: FormData | object, opts?: Opts) {
+  return request<T>({
     method: 'POST',
     route,
     data,
@@ -93,8 +93,8 @@ export async function post(route: string, data: FormData | object, opts?: Opts) 
   });
 }
 
-export async function patch(route: string, data: FormData | object, opts?: Opts) {
-  return request({
+export async function patch<T = any>(route: string, data: FormData | object, opts?: Opts) {
+  return request<T>({
     method: 'PATCH',
     route,
     data,
@@ -102,8 +102,8 @@ export async function patch(route: string, data: FormData | object, opts?: Opts)
   });
 }
 
-export async function put(route: string, data: FormData | object, opts?: Opts) {
-  return request({
+export async function put<T = any>(route: string, data: FormData | object, opts?: Opts) {
+  return request<T>({
     method: 'PUT',
     route,
     data,
@@ -111,8 +111,8 @@ export async function put(route: string, data: FormData | object, opts?: Opts) {
   });
 }
 
-export async function del(route: string, opts?: Opts) {
-  return request({
+export async function del<T = any>(route: string, opts?: Opts) {
+  return request<T>({
     method: 'DELETE',
     route,
     ...opts
@@ -122,19 +122,21 @@ export async function del(route: string, opts?: Opts) {
 /**
  * Only use this on pages that do not request data from the server on load
  */
+// TODO: Remove if unused
 export async function ensureUserIsLoggedIn(): Promise<HttpResponse> {
   return get('/api/is-logged-in');
 }
 
-function getJWT(): Record<string, any> | null {
+function getJWT(): User {
   const jwt = localStorage.getItem('token');
   return jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
 }
 
-export function getUsername(): string {
-  return getJWT()?.username || null;
-}
-
-export function getRole(): Role {
-  return getJWT()?.role || null;
+export function getUser(): User {
+  // TODO: Use actual JWT
+  // return getJWT();
+  return {
+    role: 'ADMIN',
+    websites: []
+  };
 }

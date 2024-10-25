@@ -8,15 +8,5 @@ services:
       MYSQL_DATABASE: snowcms
       MYSQL_USER: snowcms
       MYSQL_PASSWORD: snowcms
-
-  cms:
-    image: node:20.18
-    user: node
-    depends_on:
-      - db
-    working_dir: /home/node/test/test-website-cms
-    volumes:
-      - ../../:/home/node
     ports:
-      - 3080:3080
-    command: ls
+      - 3306:3306

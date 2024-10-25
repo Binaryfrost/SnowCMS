@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import icon from '../icon.png';
+import icon from '../assets/icon.png';
 
 interface Props {
   title: string

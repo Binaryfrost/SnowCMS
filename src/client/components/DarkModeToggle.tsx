@@ -1,6 +1,6 @@
 import { useMantineColorScheme, ActionIcon, useComputedColorScheme } from '@mantine/core';
 import { IconSun, IconMoon } from '@tabler/icons-react';
-import ButtonTooltip from './ButtonTooltip';
+import IconButton from './IconButton';
 
 export default function DarkModeToggle() {
   const { setColorScheme } = useMantineColorScheme();
@@ -8,10 +8,10 @@ export default function DarkModeToggle() {
   const toggleColorScheme = () => setColorScheme(computedColorSchme === 'dark' ? 'light' : 'dark');
 
   return (
-    <ButtonTooltip label={computedColorSchme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
+    <IconButton label={computedColorSchme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
       <ActionIcon size="lg" onClick={toggleColorScheme}>
         {computedColorSchme === 'dark' ? <IconSun /> : <IconMoon />}
       </ActionIcon>
-    </ButtonTooltip>
+    </IconButton>
   );
 }

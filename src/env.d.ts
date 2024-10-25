@@ -1,6 +1,14 @@
-/* eslint-disable no-underscore-dangle */
-declare const __SNOWCMS_CONFIG_FILE__: string;
-declare const __SNOWCMS_PLUGIN_CONFIG_FILE__: string;
-declare const __SNOWCMS_IS_PRODUCTION__: string;
+import type { User } from './common/types/User';
 
-declare module '*.png';
+declare global {
+  /* eslint-disable no-underscore-dangle */
+  const __SNOWCMS_CONFIG_FILE__: string;
+  const __SNOWCMS_PLUGIN_CONFIG_FILE__: string;
+  const __SNOWCMS_IS_PRODUCTION__: string;
+
+  namespace Express {
+    interface Request {
+      user?: User
+    }
+  }
+}

@@ -12,7 +12,8 @@ module.exports = {
     'comma-dangle': 'off',
     'max-len': ['warn', {
       code: 100,
-      ignoreComments: true
+      ignoreComments: true,
+      ignoreStrings: true
     }],
     'import/prefer-default-export': 'off',
     'import/no-unresolved': 'off',
@@ -38,7 +39,12 @@ module.exports = {
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'warn',
     'no-return-assign': 'off',
-    'no-undef': 'off'
+    'no-undef': 'off',
+    // This rule doesn't work with generic components
+    'react/jsx-props-no-multi-spaces': 'off',
+    'jsx-a11y/aria-role': ['error', {
+      ignoreNonDOM: true
+    }]
   },
   plugins: [
     '@typescript-eslint'

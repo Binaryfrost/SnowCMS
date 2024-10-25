@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ForwardRefExoticComponent, RefAttributes, FunctionComponent } from 'react';
-import { type Website } from './Website';
-import { type User } from './User';
+import { type Website } from './types/Website';
+import { type User } from './types/User';
 
 export interface InputRef<T> {
   // It's possible for the Input to not return a value (e.g. notices/alerts)

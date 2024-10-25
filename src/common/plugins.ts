@@ -1,7 +1,7 @@
 import type { IRoute } from 'express';
 import type { PluginConfig } from '../config';
 import { type Input } from './InputRegistry';
-import { Role } from './User';
+import { Role } from './types/User';
 
 class PluginLogger {
   private readonly name: string;

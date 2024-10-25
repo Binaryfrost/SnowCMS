@@ -22,6 +22,16 @@ const plugin: Plugin = {
     setup: ({ logger, addInput }) => {
       logger.log('Registering input');
 
+      /*
+       * If you need to run some code only on the server (e.g. reading a config file
+       * with sensitive information), you can do it this way
+       */
+      if (typeof window !== 'undefined') {
+        logger.log('Client-side');
+      } else {
+        logger.log('Server-side');
+      }
+
       addInput<string>({
         id: 'test-plugin-json',
         name: 'Test Plugin JSON',

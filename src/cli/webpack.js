@@ -119,7 +119,9 @@ export async function getWebpackServerConfig(opts) {
      * Only React components and libraries need to be included in the bundle.
      */
     externals: [
-      'express'
+      'express',
+      'knex',
+      'mysql'
     ]
   };
 }

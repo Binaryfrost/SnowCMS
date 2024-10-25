@@ -1,13 +1,14 @@
 import { ActionIcon } from '@mantine/core';
 import { IconLogout } from '@tabler/icons-react';
-import ButtonTooltip from './ButtonTooltip';
+import { Link } from 'react-router-dom';
+import IconButton from './IconButton';
 
 export default function LogoutButton() {
   return (
-    <ButtonTooltip label="Logout">
-      <ActionIcon size="lg">
+    <IconButton label="Logout">
+      <ActionIcon size="lg" component={Link} to="/logout">
         <IconLogout />
       </ActionIcon>
-    </ButtonTooltip>
+    </IconButton>
   );
 }

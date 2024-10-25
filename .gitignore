@@ -1,2 +1,5 @@
 node_modules
 test/**/dist
+.npm
+test/test-website-cms/data
+test/test-website-cms/.env
