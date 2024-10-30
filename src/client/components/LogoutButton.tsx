@@ -5,7 +5,7 @@ import IconButton from './IconButton';
 
 export default function LogoutButton() {
   return (
-    <IconButton label="Logout">
+    <IconButton label="Logout" desktopOnlyTooltip>
       <ActionIcon size="lg" component={Link} to="/logout">
         <IconLogout />
       </ActionIcon>

@@ -8,6 +8,8 @@ import LogoutButton from './components/LogoutButton';
 import Navbar from './components/Navbar';
 import Logo from './components/Logo';
 import CollectionsProvider from './context/CollectionsProvider';
+import GlobalSettingsButton from './components/GlobalSettingsButton';
+import WebsiteProvider from './context/WebsiteProvider';
 
 export function Component() {
   const [opened, { toggle, close }] = useDisclosure();
@@ -41,36 +43,39 @@ export function Component() {
       }}
       padding="lg"
     >
-      <CollectionsProvider>
-        <AppShell.Header>
-          <Group h="100%" px="md">
-            <Burger
-              opened={opened}
-              onClick={toggle}
-              hiddenFrom="sm"
-              size="sm"
-            />
-            <Logo />
-          </Group>
-        </AppShell.Header>
-
-        <AppShell.Navbar p="md">
-          <AppShell.Section grow component={ScrollArea}>
-            <Navbar />
-          </AppShell.Section>
-          <Divider />
-          <AppShell.Section mt="md">
-            <Group justify="center">
-              <DarkModeToggle />
-              <LogoutButton />
+      <WebsiteProvider>
+        <CollectionsProvider>
+          <AppShell.Header>
+            <Group h="100%" px="md">
+              <Burger
+                opened={opened}
+                onClick={toggle}
+                hiddenFrom="sm"
+                size="sm"
+              />
+              <Logo />
             </Group>
-          </AppShell.Section>
-        </AppShell.Navbar>
+          </AppShell.Header>
 
-        <AppShell.Main>
-          <Outlet />
-        </AppShell.Main>
-      </CollectionsProvider>
+          <AppShell.Navbar p="md">
+            <AppShell.Section grow component={ScrollArea}>
+              <Navbar />
+            </AppShell.Section>
+            <Divider />
+            <AppShell.Section mt="md">
+              <Group justify="center">
+                <DarkModeToggle />
+                <GlobalSettingsButton />
+                <LogoutButton />
+              </Group>
+            </AppShell.Section>
+          </AppShell.Navbar>
+
+          <AppShell.Main>
+            <Outlet />
+          </AppShell.Main>
+        </CollectionsProvider>
+      </WebsiteProvider>
     </AppShell>
   );
 }

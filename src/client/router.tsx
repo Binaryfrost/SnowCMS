@@ -16,6 +16,9 @@ export const router = createBrowserRouter([{
     path: '/logout',
     element: <Logout />
   }, {
+    path: '/settings',
+    lazy: () => import('./pages/Settings')
+  }, {
     path: '/websites',
     lazy: () => import('./pages/website/Websites')
   }, {
@@ -30,5 +33,8 @@ export const router = createBrowserRouter([{
   }, {
     path: '/websites/:websiteId/collections/create',
     lazy: () => import('./pages/collections/CreateCollection')
+  }, {
+    path: '/websites/:websiteId/collections/:collectionId/settings',
+    lazy: () => import('./pages/collections/EditCollection')
   }]
 }]);

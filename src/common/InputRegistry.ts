@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ForwardRefExoticComponent, RefAttributes, FunctionComponent } from 'react';
-import { type Website } from './types/Website';
-import { type User } from './types/User';
+import type { Website } from './types/Website';
+import type { Collection } from './types/Collection';
 
 export interface InputRef<T> {
   // It's possible for the Input to not return a value (e.g. notices/alerts)
@@ -20,8 +20,9 @@ interface BaseInput<T, S> {
   // Provided ID (in this example, "text")
   id: string
 
-  // Name set for this input in the Collection settings
+  // Name and description shown for this input in the Collection settings
   name: string
+  description?: string
 
   /*
    * Serialization methods, called client-side
@@ -46,7 +47,7 @@ interface BaseInput<T, S> {
    * and server-side to validate that the request does not contain input.
    * Defaults to true
    */
-  isAllowed?: (website: Website, user: User) => boolean
+  isAllowed?: (website: Website, collection: Collection) => boolean
 
   /*
    * Called server-side when page is requested through API

@@ -1,24 +1,22 @@
 /* eslint-disable no-nested-ternary */
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import { ActionIcon, Anchor, Box, Divider, Group, Stack, Text } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import { IconPlus } from '@tabler/icons-react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import NavbarCollection from './NavbarCollection';
 import NavbarWebsite from './NavbarWebsite';
 import IconButton from './IconButton';
-import { Website } from '../../common/types/Website';
 import GenericSkeleton from './GenericSkeleton';
-import { get } from '../util/api';
-import { CollectionContext } from '../context/CollectionsContext';
+import { CollectionsContext } from '../context/CollectionsContext';
+import CollectionsGetter from './CollectionsGetter';
+import { WebsiteContext } from '../context/WebsiteContext';
 
 export default function Navbar() {
   const { websiteId } = useParams();
   const location = useLocation();
-  const [website, setWebsite] = useState<Website>(null);
-  const [error, setError] = useState(null);
-  const collectionContext = useContext(CollectionContext);
-  const selectingWebsite = ['/', '/websites', '/websites/create'].includes(location.pathname);
+  const collectionContext = useContext(CollectionsContext);
+  const websiteContext = useContext(WebsiteContext);
+  const selectingWebsite = ['/', '/websites', '/websites/create', '/settings'].includes(location.pathname);
 
   /*
    * Can't use the DataGetter component here as the navbar
@@ -26,71 +24,50 @@ export default function Navbar() {
    * on some pages.
    */
   useEffect(() => {
-    setError(null);
-
     if (!websiteId) {
-      setWebsite(null);
+      websiteContext.refresh(null);
       collectionContext.refresh(null);
       return;
     }
 
-    get<Website>(`/api/websites/${websiteId}`).then((resp) => {
-      if (resp.status !== 200) {
-        const message = `Failed to load website data: ${resp.body.error || 'An error occurred'}`;
-        notifications.show({
-          message,
-          color: 'red'
-        });
-
-        setError(message);
-
-        return;
-      }
-
-      setWebsite(resp.body);
-      collectionContext.refresh(resp.body.id);
-    });
+    websiteContext.refresh(websiteId);
+    collectionContext.refresh(websiteId);
   }, [websiteId]);
 
   return (
     <Stack>
       {selectingWebsite ? (
         <Text c="dimmed">
-          Select a website on the right
+          Select a website to manage Collections and Media
         </Text>
       ) : (
-        !website ? (
-          error ? <Text c="red">{error}</Text> :
+        !websiteContext.data ? (
+          websiteContext.error ? <Text c="red">{websiteContext.error}</Text> :
           <GenericSkeleton skeletonProps={{ h: 24 }} skeletonNum={10} />
         ) : (
           <>
-            <NavbarWebsite text={website.name} />
+            <NavbarWebsite text={websiteContext.data.name} />
             <Divider />
             <Box>
-              <Group>
+              <Group justify="space-between">
                 <Text fw="bold">Collections</Text>
                 <IconButton label="Create Collection" role="SUPERUSER">
-                  <ActionIcon component={Link} to={`/websites/${website.id}/collections/create`}>
+                  <ActionIcon component={Link}
+                    to={`/websites/${websiteContext.data.id}/collections/create`}>
                     <IconPlus />
                   </ActionIcon>
                 </IconButton>
               </Group>
-              {collectionContext.loading ? (
-                <GenericSkeleton skeletonProps={{ h: 24 }} skeletonNum={5} />
-              ) : (
-                collectionContext.error ? <Text c="red">{collectionContext.error}</Text> : (
-                  collectionContext.collections.length === 0 ? (
-                    <Text>No Collections exist, or you do not have access to any</Text>
-                  ) : (
-                    <Stack ml="md" gap={4}>
-                      {collectionContext.collections.map((collection) => (
-                        <NavbarCollection key={collection.id} websiteId={website.id}
-                          collectionId={collection.id} text={collection.name} />
-                      ))}
-                    </Stack>
-                  )
-                )
-              )}
+              <CollectionsGetter skeleton={{ skeletonProps: { h: 24 }, skeletonNum: 5 }}>
+                {(collections) => (
+                  <Stack ml="md" gap={4}>
+                    {collections.map((collection) => (
+                      <NavbarCollection key={collection.id} websiteId={websiteContext.data.id}
+                        collectionId={collection.id} text={collection.name} />
+                    ))}
+                  </Stack>
+                )}
+              </CollectionsGetter>
             </Box>
             <Anchor fw="bold" to="#" component={Link}>Media</Anchor>
           </>

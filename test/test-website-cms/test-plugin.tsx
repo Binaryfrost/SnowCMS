@@ -35,6 +35,7 @@ const plugin: Plugin = {
       addInput<string>({
         id: 'test-plugin-json',
         name: 'Test Plugin JSON',
+        description: 'A plugin-added input that adds a JSON input to the Input Registry.',
 
         serialize: (data) => data,
         deserialize: (data) => data,
@@ -51,6 +52,13 @@ const plugin: Plugin = {
               defaultValue={props.value} onChange={(e) => valueRef.current = e} />
           );
         }),
+
+        isAllowed: (website, collection) => (
+          (
+            website.name.toLowerCase().includes('test') ||
+            collection.name.toLowerCase().includes('test')
+          ) && !collection.name.toLowerCase().includes('features')
+        ),
 
         renderHtml: (value) => value
       });

@@ -9,6 +9,7 @@ import { hasAccess } from '../common/users';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
+import collectionInputsRouter from './routes/collection-inputs';
 
 export async function start(config: NormalizedConfig) {
   console.log('Connecting to database');
@@ -29,15 +30,9 @@ export async function start(config: NormalizedConfig) {
     next();
   });
 
-  // TODO: Remove; this is just for testing
-  app.get('/api/inputs', (req, res) => {
-    const input = InputRegistry.getAllInputs();
-    console.log(input);
-    res.json(input);
-  });
-
   app.use('/api/websites', websiteRouter);
   app.use('/api/websites/:websiteId/collections', collectionRouter);
+  app.use('/api/websites/:websiteId/collections/:collectionId/inputs', collectionInputsRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);

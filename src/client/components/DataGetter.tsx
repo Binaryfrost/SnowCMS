@@ -3,24 +3,45 @@ import { Text } from '@mantine/core';
 import { get } from '../util/api';
 import GenericSkeleton, { type GenericSkeletonProps } from './GenericSkeleton';
 
-interface Props<T> extends GenericSkeletonProps {
+interface CommonProps extends GenericSkeletonProps {
+  skeletonComponent?: ReactNode
+}
+
+interface DataGetterProps<T> extends CommonProps {
   url: string
+  children: (data: T) => ReactNode
+}
+
+function DataGetter<T>(props: DataGetterProps<T>) {
+  const { url, children, ...other } = props;
+  return (
+    <DataGetter.Multiple<[T]> urls={[url]} {...other}>
+      {(data) => (
+        children(data[0])
+      )}
+    </DataGetter.Multiple>
+  );
+}
+
+interface MultipleDataGetterProps<T> extends GenericSkeletonProps {
+  urls: string[]
   skeletonComponent?: ReactNode
   children: (data: T) => ReactNode
 }
 
-export default function DataGetter<T>(props: Props<T>) {
+function MultipleDataGetter<T extends any[]>(props: MultipleDataGetterProps<T>) {
   const [data, setData] = useState<T>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    get<T>(props.url).then((w) => {
-      if (w.status !== 200) {
-        throw new Error(w.body.error);
+    Promise.all(props.urls.map((url) => get<T>(url))).then((resp) => {
+      if (resp.some((r) => r.status !== 200)) {
+        throw new Error(resp.filter((r) => r.status !== 200)[0].body.error);
       }
 
-      setData(w.body);
+      // @ts-ignore
+      setData(resp.map((r) => r.body));
     }).catch((err) => {
       setError(err.message || 'An error occurred');
     }).finally(() => {
@@ -39,3 +60,6 @@ export default function DataGetter<T>(props: Props<T>) {
     )
   );
 }
+
+DataGetter.Multiple = MultipleDataGetter;
+export default DataGetter;

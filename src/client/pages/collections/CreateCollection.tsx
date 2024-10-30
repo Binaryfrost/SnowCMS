@@ -5,13 +5,13 @@ import Page from '../../components/Page';
 import CollectionForm from '../../components/forms/CollectionForm';
 import { HttpResponse, post } from '../../util/api';
 import { formDataToObject, handleFormResponseNotification } from '../../util/form';
-import { CollectionContext } from '../../context/CollectionsContext';
+import { CollectionsContext } from '../../context/CollectionsContext';
 
 export function Component() {
   const { websiteId } = useParams();
   const navigate = useNavigate();
   const actionData = useActionData() as HttpResponse;
-  const collectionContext = useContext(CollectionContext);
+  const collectionContext = useContext(CollectionsContext);
 
   useEffect(() => {
     if (actionData) {
@@ -20,7 +20,7 @@ export function Component() {
       if (actionData.status === 200) {
         collectionContext.refresh(websiteId);
         // TODO: Redirect to Collection settings so user can add Collection Inputs and set title
-        navigate(`/websites/${websiteId}/collections`);
+        navigate(`/websites/${websiteId}/collections/${actionData.body.id}/settings`);
       }
     }
   }, [actionData]);

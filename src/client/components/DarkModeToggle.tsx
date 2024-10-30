@@ -8,7 +8,7 @@ export default function DarkModeToggle() {
   const toggleColorScheme = () => setColorScheme(computedColorSchme === 'dark' ? 'light' : 'dark');
 
   return (
-    <IconButton label={computedColorSchme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
+    <IconButton label={computedColorSchme === 'dark' ? 'Light Mode' : 'Dark Mode'} desktopOnlyTooltip>
       <ActionIcon size="lg" onClick={toggleColorScheme}>
         {computedColorSchme === 'dark' ? <IconSun /> : <IconMoon />}
       </ActionIcon>

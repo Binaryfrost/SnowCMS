@@ -50,14 +50,101 @@ router.post('/', async (req, res) => {
     return;
   }
 
+  const id = uuid();
+
   await db<Collection>().insert({
-    id: uuid(),
+    id,
     websiteId,
     name
   }).into('collections');
 
   res.json({
-    message: 'Collection created'
+    message: 'Collection created',
+    id
+  });
+});
+
+router.get('/:id', async (req, res) => {
+  // @ts-expect-error
+  const { websiteId, id } = req.params;
+
+  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+
+  const collection = await db()<Collection>('collections')
+    .select('id', 'websiteId', 'name')
+    .where({
+      id
+    })
+    .first();
+
+  if (!collection) {
+    res.status(404).json({
+      error: 'Collection not found'
+    });
+
+    return;
+  }
+
+  res.json(collection);
+});
+
+router.put('/:id', async (req, res) => {
+  // @ts-expect-error
+  const { websiteId, id } = req.params;
+
+  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+
+  const { name } = req.body;
+  if (!name) {
+    res.status(400).json({
+      error: 'Name is required'
+    });
+    return;
+  }
+
+  if (!(await exists('collections', id))) {
+    res.status(404).json({
+      error: 'Collection not found'
+    });
+
+    return;
+  }
+
+  await db()<Collection>('collections')
+    .where({
+      id
+    })
+    .update({
+      name
+    });
+
+  res.json({
+    message: 'Collection edited'
+  });
+});
+
+router.delete('/:id', async (req, res) => {
+  // @ts-expect-error
+  const { websiteId, id } = req.params;
+
+  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+
+  if (!(await exists('collections', id))) {
+    res.status(404).json({
+      error: 'Collection not found'
+    });
+
+    return;
+  }
+
+  await db()<Collection>('collections')
+    .where({
+      id
+    })
+    .delete();
+
+  res.json({
+    message: 'Collection deleted'
   });
 });
 

@@ -25,14 +25,17 @@ router.post('/', async (req, res) => {
     return;
   }
 
+  const id = uuid();
+
   await db<Website>().insert({
-    id: uuid(),
+    id,
     name,
     hook
   }).into('websites');
 
   res.json({
-    message: 'Website created'
+    message: 'Website created',
+    id
   });
 });
 
@@ -93,13 +96,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   if (!handleAccessControl(res, req.user, 'ADMIN')) return;
 
-  const [result] = await db()<Website>('websites')
-    .where({
-      id: req.params.id
-    })
-    .count({ count: '*' });
-
-  if (result.count === 0) {
+  if (!(await exists('websites', req.params.id))) {
     res.status(404).json({
       error: 'Website not found'
     });

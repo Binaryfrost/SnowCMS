@@ -19,6 +19,8 @@ The commands should also error if no config file exists, or if run from the CMS 
 
 Have a central registry for all inputs (built-in and plugin registered). Key by provided ID.
 
+**Important**: Inputs should not assume that the data will always be present. After an Input is added to a Collection, it may not yet have a value in Collection Entries.
+
 ```ts
 interface Input<T, S> {
   // Provided ID (in this example, "text")
@@ -220,6 +222,10 @@ interface StartHook {
    * Hooks may be async or synchronous. Allow modifying data in synchronous before hooks,
    * which can also be used for validating input by throwing an error. Modifying data and
    * input validation may not be done in async hooks.
+   * 
+   * Add reason property to event so plugins can filter when to run their code, for example:
+   * Deleting Collection Inputs would change Collection Entries, but a developer may not want
+   * to trigger a rebuild unless a specific Collection Input is changed.
    * 
    * Also have:
    * - serverStart: Allow registering routes from this hook

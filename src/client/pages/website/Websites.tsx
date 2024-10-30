@@ -5,7 +5,7 @@ import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import { type Website } from '../../../common/types/Website';
 import DataGetter from '../../components/DataGetter';
 import useRefresh from '../../util/refresh';
-import ListEntry from '../../components/forms/ListEntry';
+import ListEntry from '../../components/ListEntry';
 
 export function Component() {
   const refresh = useRefresh();
