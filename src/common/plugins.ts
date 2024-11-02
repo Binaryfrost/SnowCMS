@@ -28,9 +28,11 @@ interface Hook {
 }
 
 interface ServerSetupHook extends Hook {
-  /*
-   * Register Express routes
-   * Minimum role, leave blank to allow unauthenticated access (restricted using app.use() on route)
+  /**
+   * Register an Express route at `/c/{path}`
+   *
+   * Role is minimum required role, leave blank to allow unauthenticated access
+   * (restricted using app.use() on route)
    *
    * Returns Express route (https://expressjs.com/en/4x/api.html#app.route)
    */

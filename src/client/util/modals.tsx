@@ -59,11 +59,14 @@ interface AddInputModalOpts {
   addInput: (input: Input<any>) => void
 }
 
+export const ADD_INPUT_MODAL_ID = 'add_input_modal';
+
 export function showAddInputModal(opts: AddInputModalOpts) {
   const inputs = InputRegistry.getAllInputs();
 
   modals.open({
     title: 'Add Collection Input',
+    modalId: ADD_INPUT_MODAL_ID,
     children: (
       <Stack>
         {Object.values(inputs)

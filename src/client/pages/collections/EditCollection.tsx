@@ -1,7 +1,6 @@
 import { useContext, useEffect } from 'react';
-import { Flex, Paper, Stack, Title } from '@mantine/core';
+import { Flex, Stack, Title } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
-import { IconPlus } from '@tabler/icons-react';
 import { useActionData, useParams, type ActionFunctionArgs } from 'react-router-dom';
 import Page from '../../components/Page';
 import CollectionForm from '../../components/forms/CollectionForm';
@@ -14,20 +13,16 @@ import FormSkeleton from '../../components/FormSkeleton';
 import CollectionTitleForm from '../../components/forms/CollectionTitleForm';
 import FlexGrow from '../../components/FlexGrow';
 import useRefresh from '../../util/refresh';
-import HeaderWithAddButton from '../../components/HeaderWithAddButton';
-import { showAddInputModal } from '../../util/modals';
-import { WebsiteContext } from '../../context/WebsiteContext';
-import { Input } from '../../../common/InputRegistry';
+import CollectionInputsForm from '../../components/forms/CollectionInputsForm';
+import type { CollectionInput } from '../../../common/types/CollectionInputs';
 
 export function Component() {
   const { websiteId, collectionId } = useParams();
   const refresh = useRefresh();
   const actionData = useActionData() as HttpResponse;
   const collectionContext = useContext(CollectionsContext);
-  const websiteContext = useContext(WebsiteContext);
-  const [inputs, inputsHandlers] = useListState<Input<any>>([]);
-
-  console.log(inputs);
+  // TODO: Get Inputs for this form on load. If an Input is no longer in the registry, show an error in place of the Input in the list
+  const [inputs, inputsHandlers] = useListState<CollectionInput>([]);
 
   useEffect(() => {
     if (actionData) {
@@ -52,26 +47,12 @@ export function Component() {
                 <CollectionForm collection={collection} />
               </FlexGrow>
               <FlexGrow>
-                <CollectionTitleForm collection={collection} />
+                <CollectionTitleForm collection={collection} inputs={inputs} />
               </FlexGrow>
             </Flex>
 
-            <HeaderWithAddButton titleProps={{
-              order: 2,
-              children: 'Collection Inputs'
-            }} actionIconProps={{
-              children: <IconPlus />,
-              onClick: () => showAddInputModal({
-                website: websiteContext.data,
-                collection,
-                // TODO: Close modal and open settings (if it exists for this input) and then save input in database
-                addInput: (input) => inputsHandlers.append(input)
-              })
-            }} tooltipLabel="Add Collection Input" />
-
-            <Paper withBorder p="sm">
-              {JSON.stringify(inputs)}
-            </Paper>
+            <CollectionInputsForm collection={collection} inputs={inputs}
+              inputsHandlers={inputsHandlers} />
           </Stack>
         )}
       </DataGetter>

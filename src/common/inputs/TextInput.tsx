@@ -1,5 +1,6 @@
-import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { Checkbox, NumberInput, Stack, TextInput } from '@mantine/core';
+import { useForm } from '@mantine/form';
 import { type Input } from '../InputRegistry';
 
 interface TextInputSettings {
@@ -37,25 +38,36 @@ const input: Input<string, TextInputSettings> = {
   deserializeSettings: (data) => JSON.parse(data),
 
   renderSettings: () => forwardRef((props, ref) => {
-    const valueRef = useRef<TextInputSettings>(props.settings || {
-      maxLength: 0,
-      required: true
+    const form = useForm({
+      mode: 'uncontrolled',
+      initialValues: {
+        maxLength: props.settings?.maxLength || 0,
+        required: props.settings?.required ?? true
+      },
+      validateInputOnChange: true,
+      validate: (values) => ({
+        maxLength: values.maxLength < 0 ? 'Max length must be positive' : null
+      })
     });
 
     useImperativeHandle(ref, () => ({
-      getValues: () => valueRef.current
+      getValues: () => form.getValues(),
+      hasError: () => form.validate().hasErrors
     }));
+
+    useEffect(() => {
+      form.validate();
+    }, []);
 
     console.log('settings', props.settings);
 
     return (
       <Stack>
-        <NumberInput label="Max Length" defaultValue={props.settings.maxLength}
-          allowDecimal={false} description="Set to 0 to disable length limit"
-          // Value can be a string or number, so always convert it to string and parse as integer
-          onChange={(e) => valueRef.current.maxLength = parseInt(e.toString(), 10)} required />
-        <Checkbox label="Required" defaultChecked={props.settings.required}
-          onChange={(e) => valueRef.current.required = e.target.checked} required />
+        <NumberInput label="Max Length" allowDecimal={false}
+          description="Set to 0 to disable length limit" required
+          {...form.getInputProps('maxLength')} key={form.key('maxLength')} />
+        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
+          key={form.key('required')} />
       </Stack>
     );
   }),

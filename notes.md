@@ -19,7 +19,7 @@ The commands should also error if no config file exists, or if run from the CMS 
 
 Have a central registry for all inputs (built-in and plugin registered). Key by provided ID.
 
-**Important**: Inputs should not assume that the data will always be present. After an Input is added to a Collection, it may not yet have a value in Collection Entries.
+**Important**: Input values and settings will be null when the Input is added. After an Input is added to a Collection, it may not yet have a value in Collection Entries.
 
 ```ts
 interface Input<T, S> {
@@ -324,7 +324,7 @@ Alternatively, store the input order in an array in the Collections table.
 | ------- | ------ | -------------------- | ----------------- |
 | entryId | string | collectionEntries.id | Comp. primary key |
 | inputId | string | collectionInputs.id  | Comp. primary key |
-| data    | string |                      | Passed to input   |
+| data    | text   |                      | Passed to input   |
 
 Data is the serialized input data for the Collection Entry.
 

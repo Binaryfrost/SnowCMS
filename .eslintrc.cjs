@@ -44,6 +44,9 @@ module.exports = {
     'react/jsx-props-no-multi-spaces': 'off',
     'jsx-a11y/aria-role': ['error', {
       ignoreNonDOM: true
+    }],
+    'no-plusplus': ['error', {
+      allowForLoopAfterthoughts: true
     }]
   },
   plugins: [

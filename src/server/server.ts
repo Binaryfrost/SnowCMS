@@ -38,10 +38,13 @@ export async function start(config: NormalizedConfig) {
     devServer(config.port + 1);
   }
 
+  const pluginRouteRouter = express.Router();
+  app.use('/c', express.Router());
+
   callHook('serverSetup', {
     registerRoute: (path, role) => {
       if (role) {
-        app.use(path, (req, res, next) => {
+        pluginRouteRouter.use(path, (req, res, next) => {
           // TODO: Add role checking
           if (!hasAccess(req.user, role)) {
             res.status(403).json({

@@ -6,6 +6,7 @@ import type { Collection } from './types/Collection';
 export interface InputRef<T> {
   // It's possible for the Input to not return a value (e.g. notices/alerts)
   getValues?: () => T
+  hasError?: () => boolean
   notifyFormUpdate?: (values: Record<string, any>) => void
 }
 
