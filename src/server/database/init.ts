@@ -40,10 +40,9 @@ export default async function init(knex: Knex) {
   if (!await knex.schema.hasTable('collection_titles')) {
     console.log('Creating collection_titles table');
     await knex.schema.createTable('collection_titles', (table) => {
-      table.string('collectionId');
+      table.string('collectionId').primary();
       table.string('inputId');
 
-      table.primary(['collectionId', 'inputId']);
       table.foreign('collectionId').references('collections.id');
       table.foreign('inputId').references('collection_inputs.id');
     });

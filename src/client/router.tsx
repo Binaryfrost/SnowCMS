@@ -36,5 +36,14 @@ export const router = createBrowserRouter([{
   }, {
     path: '/websites/:websiteId/collections/:collectionId/settings',
     lazy: () => import('./pages/collections/EditCollection')
+  }, {
+    path: '/websites/:websiteId/collections/:collectionId/entries',
+    lazy: () => import('./pages/collection-entries/CollectionEntries')
+  }, {
+    path: '/websites/:websiteId/collections/:collectionId/entries/create',
+    lazy: () => import('./pages/collection-entries/CreateCollectionEntry')
+  }, {
+    path: '/websites/:websiteId/collections/:collectionId/entries/:entryId',
+    lazy: () => import('./pages/collection-entries/EditCollectionEntry')
   }]
 }]);

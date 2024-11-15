@@ -13,6 +13,7 @@ interface DeleteModalOpts {
   url: string
   id: string
   type: string
+  additional?: string
   onDelete: () => void
 }
 
@@ -23,6 +24,7 @@ export function showDeleteModal(opts: DeleteModalOpts) {
       <>
         <Text>Are you sure you want to delete {opts.type} with ID&nbsp;
           <ShortUuid uuid={opts.id} />?</Text>
+        {opts.additional && <Text mt="xs" mb="xs">{opts.additional}</Text>}
         <Text c="dimmed">This action is irreversible.</Text>
       </>
     ),

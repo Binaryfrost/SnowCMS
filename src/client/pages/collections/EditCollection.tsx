@@ -4,7 +4,7 @@ import { useListState } from '@mantine/hooks';
 import { useActionData, useParams, type ActionFunctionArgs } from 'react-router-dom';
 import Page from '../../components/Page';
 import CollectionForm from '../../components/forms/CollectionForm';
-import { HttpResponse, put } from '../../util/api';
+import { type HttpResponse, put } from '../../util/api';
 import { formDataToObject, handleFormResponseNotification } from '../../util/form';
 import { CollectionsContext } from '../../context/CollectionsContext';
 import DataGetter from '../../components/DataGetter';
@@ -15,14 +15,40 @@ import FlexGrow from '../../components/FlexGrow';
 import useRefresh from '../../util/refresh';
 import CollectionInputsForm from '../../components/forms/CollectionInputsForm';
 import type { CollectionInput } from '../../../common/types/CollectionInputs';
+import { CollectionTitle } from '../../../common/types/CollectionTitle';
+
+interface EditCollectionPageProps {
+  collection: Collection
+  collectionInputs: CollectionInput[]
+  collectionTitle: CollectionTitle
+}
+
+function EditCollectionPage({ collection, collectionInputs, collectionTitle }:
+  EditCollectionPageProps) {
+  const [inputs, inputsHandlers] = useListState<CollectionInput>(collectionInputs);
+
+  return (
+    <Stack>
+      <Flex direction={{ base: 'column', sm: 'row' }} gap="sm">
+        <FlexGrow>
+          <CollectionForm collection={collection} />
+        </FlexGrow>
+        <FlexGrow>
+          <CollectionTitleForm collectionTitle={collectionTitle} inputs={inputs} />
+        </FlexGrow>
+      </Flex>
+
+      <CollectionInputsForm collection={collection} inputs={inputs}
+        inputsHandlers={inputsHandlers} />
+    </Stack>
+  );
+}
 
 export function Component() {
   const { websiteId, collectionId } = useParams();
   const refresh = useRefresh();
   const actionData = useActionData() as HttpResponse;
   const collectionContext = useContext(CollectionsContext);
-  // TODO: Get Inputs for this form on load. If an Input is no longer in the registry, show an error in place of the Input in the list
-  const [inputs, inputsHandlers] = useListState<CollectionInput>([]);
 
   useEffect(() => {
     if (actionData) {
@@ -38,35 +64,32 @@ export function Component() {
   return (
     <Page title="Edit Collection">
       <Title>Edit Collection</Title>
-      <DataGetter<Collection> url={`/api/websites/${websiteId}/collections/${collectionId}`}
+      <DataGetter.Multiple<[Collection, CollectionInput[], CollectionTitle]> urls={[
+        `/api/websites/${websiteId}/collections/${collectionId}`,
+        `/api/websites/${websiteId}/collections/${collectionId}/inputs`,
+        `/api/websites/${websiteId}/collections/${collectionId}/title`
+      ]}
         key={collectionId} skeletonComponent={<FormSkeleton inputs={1} />}>
-        {(collection) => (
-          <Stack>
-            <Flex direction={{ base: 'column', sm: 'row' }} gap="sm">
-              <FlexGrow>
-                <CollectionForm collection={collection} />
-              </FlexGrow>
-              <FlexGrow>
-                <CollectionTitleForm collection={collection} inputs={inputs} />
-              </FlexGrow>
-            </Flex>
-
-            <CollectionInputsForm collection={collection} inputs={inputs}
-              inputsHandlers={inputsHandlers} />
-          </Stack>
+        {([collection, inputs, title]) => (
+          <EditCollectionPage collection={collection} collectionInputs={inputs}
+            collectionTitle={title} />
         )}
-      </DataGetter>
+      </DataGetter.Multiple>
     </Page>
   );
 }
 
 export async function action(args: ActionFunctionArgs) {
   const { form, ...data } = await formDataToObject(args.request);
+  const apiRoot = `/api/websites/${args.params.websiteId}/collections/${args.params.collectionId}`;
+
   switch (form) {
     case 'name':
-      return put(`/api/websites/${args.params.websiteId}/collections/${args.params.collectionId}`,
-        data);
-    // case 'title':
+      return put(apiRoot, data);
+    case 'title':
+      return put(`${apiRoot}/title`, {
+        inputId: data.title
+      });
     default:
       console.error('Not implemented yet');
       return null;

@@ -21,12 +21,7 @@ const theme = createTheme({
   components: {
     Tooltip: Tooltip.extend({
       defaultProps: {
-        withArrow: true,
-        events: {
-          hover: true,
-          touch: true,
-          focus: false
-        }
+        withArrow: true
       }
     }),
     ActionIcon: ActionIcon.extend({

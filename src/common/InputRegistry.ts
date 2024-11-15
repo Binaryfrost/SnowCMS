@@ -6,15 +6,17 @@ import type { Collection } from './types/Collection';
 export interface InputRef<T> {
   // It's possible for the Input to not return a value (e.g. notices/alerts)
   getValues?: () => T
-  hasError?: () => boolean
+  hasError?: () => boolean | Promise<boolean>
   notifyFormUpdate?: (values: Record<string, any>) => void
 }
 
-interface InputProps<T, S> {
+export interface InputProps<T, S> {
   value: T
   settings: S
   name: string
+  fieldName: string
   description?: string
+  notifyChanges: () => void
 }
 
 interface BaseInput<T, S> {
@@ -54,9 +56,9 @@ interface BaseInput<T, S> {
    * Called server-side when page is requested through API
    * with the query parameter `?render=true`.
    * If you don't want the input to be rendered as HTML,
-   * return T as JSON. You can also return a non-HTML string.
+   * return a JSON object. You can also return a non-HTML string.
    */
-  renderHtml: (value: T) => string | T
+  renderHtml: (value: T) => string | T | Object
 }
 
 interface SettingsProps<S> {

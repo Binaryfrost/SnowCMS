@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Button, Group, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { type UseListStateHandlers } from '@mantine/hooks';
@@ -13,11 +13,8 @@ interface Props {
 
 export default function CollectionInputSettingsForm({ collectionInput, close, update }: Props) {
   const settingsInput = InputRegistry.getInput(collectionInput.input);
-  console.log(collectionInput.input, settingsInput);
   const settingsRef = useRef<InputRef<any>>(null);
-  console.log('ref', settingsRef);
   const InputSettings = settingsInput.renderSettings ? settingsInput.renderSettings() : null;
-  console.log(InputSettings);
 
   const form = useForm({
     mode: 'uncontrolled',
@@ -34,7 +31,7 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
     })
   });
 
-  function save() {
+  async function save() {
     let settingsHasError = false;
     if (InputSettings && settingsRef.current) {
       const getSettingsFn = settingsRef.current.getValues;
@@ -44,9 +41,7 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
         form.setFieldValue('settings', settingsInput.serializeSettings(getSettingsFn()));
       }
 
-      settingsHasError = hasErrorFn ? hasErrorFn() : false;
-
-      console.log('error', settingsHasError);
+      settingsHasError = hasErrorFn ? await hasErrorFn() : false;
     }
 
     if (!form.validate().hasErrors && !settingsHasError) {
@@ -55,8 +50,6 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
       const formValues = form.getValues();
       update((input) => ({
         ...input,
-        // TODO: Replace with real ID
-        id: input.id.startsWith('x') ? input.id : `x${input.id}`,
         name: formValues.name,
         fieldName: formValues.fieldName,
         description: formValues.description,
@@ -67,8 +60,6 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
 
   return (
     <>
-      {JSON.stringify(settingsInput, null, 2)}
-
       <Stack gap="sm">
         <TextInput label="Name" required {...form.getInputProps('name')} key={form.key('name')} />
         <TextInput label="Field Name" required description="Used as the key in the API response"

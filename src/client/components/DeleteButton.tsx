@@ -15,7 +15,7 @@ interface Props {
 
 export default function DeleteButton(props: Props) {
   return (
-    <IconButton label={`Delete ${props.type}`} role={props.role} desktopOnlyTooltip>
+    <IconButton label={`Delete ${props.type}`} role={props.role}>
       <ActionIcon color="red" onClick={() => showDeleteModal({
         id: props.id,
         url: props.url,

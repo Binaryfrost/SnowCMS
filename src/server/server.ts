@@ -1,5 +1,4 @@
 import express from 'express';
-import InputRegistry from '../common/InputRegistry';
 import { type NormalizedConfig } from '../config';
 import { callHook } from '../common/plugins';
 import devServer from './dev-server';
@@ -10,6 +9,8 @@ import { hasAccess } from '../common/users';
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
 import collectionInputsRouter from './routes/collection-inputs';
+import collectionTitleRouter from './routes/collection-titles';
+import collectionEntriesRouter from './routes/collection-entries';
 
 export async function start(config: NormalizedConfig) {
   console.log('Connecting to database');
@@ -33,6 +34,8 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites', websiteRouter);
   app.use('/api/websites/:websiteId/collections', collectionRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/inputs', collectionInputsRouter);
+  app.use('/api/websites/:websiteId/collections/:collectionId/title', collectionTitleRouter);
+  app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);

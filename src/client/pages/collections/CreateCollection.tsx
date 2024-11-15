@@ -19,7 +19,6 @@ export function Component() {
 
       if (actionData.status === 200) {
         collectionContext.refresh(websiteId);
-        // TODO: Redirect to Collection settings so user can add Collection Inputs and set title
         navigate(`/websites/${websiteId}/collections/${actionData.body.id}/settings`);
       }
     }

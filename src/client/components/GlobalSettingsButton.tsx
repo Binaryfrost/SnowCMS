@@ -5,7 +5,7 @@ import IconButton from './IconButton';
 
 export default function GlobalSettingsButton() {
   return (
-    <IconButton label="CMS Settings" role="ADMIN" desktopOnlyTooltip>
+    <IconButton label="CMS Settings" role="ADMIN">
       <ActionIcon size="lg" component={Link} to="/settings">
         <IconSettings />
       </ActionIcon>

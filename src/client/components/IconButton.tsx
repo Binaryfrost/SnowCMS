@@ -7,11 +7,10 @@ import { hasAccess } from '../../common/users';
 export interface IconButtonProps {
   label: string
   children: ReactNode
-  desktopOnlyTooltip?: boolean
   role?: Role
 }
 
-export default function IconButton({ label, children, role, desktopOnlyTooltip }: IconButtonProps) {
+export default function IconButton({ label, children, role }: IconButtonProps) {
   const user = getUser();
 
   if (role) {
@@ -20,11 +19,7 @@ export default function IconButton({ label, children, role, desktopOnlyTooltip }
   }
 
   return (
-    <Tooltip label={label} events={desktopOnlyTooltip ? {
-      hover: true,
-      touch: false,
-      focus: false
-    } : undefined}>
+    <Tooltip label={label}>
       {children}
     </Tooltip>
   );

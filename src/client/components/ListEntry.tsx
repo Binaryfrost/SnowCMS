@@ -10,6 +10,7 @@ interface Props {
   name: string
   id: string
   type: string
+  additional?: string
   buttons: {
     delete: {
       modal: {
@@ -19,7 +20,7 @@ interface Props {
       role: Role
       keepTypeCase?: boolean
     }
-    settings: {
+    settings?: {
       url: string
       role: Role
     }
@@ -36,16 +37,19 @@ export default function ListEntry(props: Props) {
         <Box>
           <Text fw="bold" fz="lg">{props.name}</Text>
           <Text c="dimmed">ID: <ShortUuid uuid={props.id} /></Text>
+          {props.additional && <Text c="dimmed">{props.additional}</Text>}
         </Box>
         <Group>
           <DeleteButton type={props.type} role={props.buttons.delete.role} id={props.id}
             url={props.buttons.delete.modal.url} onDelete={props.buttons.delete.modal.refresh}
             keepTypeCase={props.buttons.delete.keepTypeCase} />
-          <IconButton label={`${props.type} Settings`} role={props.buttons.settings.role}>
-            <ActionIcon component={Link} to={props.buttons.settings.url}>
-              <IconSettings />
-            </ActionIcon>
-          </IconButton>
+          {props.buttons.settings && (
+            <IconButton label={`${props.type} Settings`} role={props.buttons.settings.role}>
+              <ActionIcon component={Link} to={props.buttons.settings.url}>
+                <IconSettings />
+              </ActionIcon>
+            </IconButton>
+          )}
           <IconButton label={`Select ${props.type}`}>
             <ActionIcon component={Link} to={props.buttons.enter.url}>
               <IconArrowRight />

@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import { JsonInput } from '@mantine/core';
+import { Alert, JsonInput } from '@mantine/core';
 import { Plugin } from '../../src';
 
 const plugin: Plugin = {
@@ -61,6 +61,23 @@ const plugin: Plugin = {
         ),
 
         renderHtml: (value) => value
+      });
+
+      addInput<null>({
+        id: 'test-plugin-alert',
+        name: 'Test Plugin Alert',
+        description: 'An plugin-added alert with non-configurable content',
+
+        serialize: () => '',
+        deserialize: () => null,
+
+        renderInput: () => function Component() {
+          return (
+            <Alert>Test Plugin Alert</Alert>
+          );
+        },
+
+        renderHtml: () => null
       });
     }
   }

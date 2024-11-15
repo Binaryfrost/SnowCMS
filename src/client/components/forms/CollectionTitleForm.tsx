@@ -2,23 +2,22 @@ import { Form } from 'react-router-dom';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import { Button, Group, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import type { Collection } from '../../../common/types/Collection';
 import type { CollectionInput } from '../../../common/types/CollectionInputs';
 import { onSubmit } from '../../util/form';
 import IconButton from '../IconButton';
 import { isTemporaryInput } from '../CollectionInputListItem';
+import { CollectionTitle } from '../../../common/types/CollectionTitle';
 
 interface Props {
-  collection: Collection
+  collectionTitle: CollectionTitle
   inputs: CollectionInput[]
 }
 
-export default function CollectionTitleForm({ collection, inputs }: Props) {
+export default function CollectionTitleForm({ collectionTitle, inputs }: Props) {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      // TODO: Get title
-      title: ''
+      title: collectionTitle.inputId || ''
     }
   });
 
