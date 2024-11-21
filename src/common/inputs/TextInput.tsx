@@ -41,8 +41,6 @@ const input: Input<string, TextInputSettings> = {
     console.log('settings', props.settings);
     console.log('value', props.value);
 
-    // TODO: Input validation
-
     return (
       <TextInput label={props.name} description={props.description} required={required}
         maxLength={maxLength > 1 ? maxLength : null} {...field.getInputProps()} />

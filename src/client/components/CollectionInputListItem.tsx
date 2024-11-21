@@ -48,7 +48,6 @@ export function CollectionInputListItem({ collection, website, input, openSettin
           )}
         </Box>
         <Group>
-          {/* TODO: Handle delete */}
           <IconButton label="Delete">
             <ActionIcon c="red" onClick={() => showDeleteModal({
               id: input.id,

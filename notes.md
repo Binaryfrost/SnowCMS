@@ -250,6 +250,8 @@ export default plugin;
 
 Do not store sensitive information in plugins as these are included in the client build. If a plugin requires sensitive information, this should be stored in a file that gets loaded at runtime.
 
+Plugins should not attempt to access server-side code, especially not config, even on methods that are only called server-side. Doing so may leak sensitive information into the client-side bundle.
+
 # Database
 
 Use knex [`insert(...).onConflict('id').merge()`](https://knexjs.org/guide/query-builder.html#merge) to either insert or update data, depending on whether it exists.
@@ -327,7 +329,7 @@ Alternatively, store the input order in an array in the Collections table.
 
 Data is the serialized input data for the Collection Entry.
 
-## Media (Future Update)
+## Media
 
 |     Name     |  Type  | References  |             Note             |
 | ------------ | ------ | ----------- | ---------------------------- |
@@ -342,6 +344,8 @@ Data is the serialized input data for the Collection Entry.
 *File name as stored in S3; should be sanitized and include at least part of ID or timestamp to avoid overwriting existing files
 
 Maximum file size `config.media.maxSize`. Send file size, type, and name (File Metadata) to server, which returns a pre-signed upload URL and an HMAC of File Metadata. Client uploads the file to S3 and after a successful upload, sends a confirmation request to the server with the File Metadata and HMAC which makes the server record the file in the database.
+
+~~Backblaze's S3-compatible API doesn't support pre-signed POST URLs which support restricting file size. Maybe upload the file to the server, save it in disk (to reduce memory usage), and then validate the file size before uploading it to S3 server-side. This will require additional configuration on the reverse proxy to accept larger file sizes as Nginx has a default limit of 1MB.~~ According to some posts, PUT requests now also support restricting file size.
 
 Store in S3 bucket at `/media/{websiteId}/{year}/{month}/{fileName}`.
 

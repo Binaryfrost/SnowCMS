@@ -5,7 +5,7 @@ import IconButton, { type IconButtonProps } from './IconButton';
 
 interface Props {
   titleProps: TitleProps
-  actionIconProps: ElementProps<'button', keyof ActionIconProps> & { children: ReactNode }
+  actionIconProps: ElementProps<'button', keyof ActionIconProps> & { children: ReactNode, [x: string]: any }
   tooltipLabel: string
   iconButtonProps?: Partial<IconButtonProps>
   link?: string

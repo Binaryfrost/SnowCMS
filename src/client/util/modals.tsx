@@ -8,8 +8,9 @@ import InputRegistry, { Input } from '../../common/InputRegistry';
 import IconButton from '../components/IconButton';
 import type { Website } from '../../common/types/Website';
 import type { Collection } from '../../common/types/Collection';
+import SelectMedia, { SelectMediaProps } from '../components/SelectMedia';
 
-interface DeleteModalOpts {
+export interface DeleteModalOpts {
   url: string
   id: string
   type: string
@@ -62,7 +63,6 @@ interface AddInputModalOpts {
 }
 
 export const ADD_INPUT_MODAL_ID = 'add_input_modal';
-
 export function showAddInputModal(opts: AddInputModalOpts) {
   const inputs = InputRegistry.getAllInputs();
 
@@ -93,5 +93,15 @@ export function showAddInputModal(opts: AddInputModalOpts) {
           ))}
       </Stack>
     )
+  });
+}
+
+export const SELECT_MEDIA_MODAL_ID = 'select_media_modal';
+export function showSelectMediaModal({ ...props }: SelectMediaProps) {
+  modals.open({
+    title: 'Select Media',
+    size: 'xl',
+    modalId: SELECT_MEDIA_MODAL_ID,
+    children: <SelectMedia {...props} />
   });
 }

@@ -1,9 +1,11 @@
 import knex, { type Knex } from 'knex';
-import type { NormalizedConfig } from '../../config';
 import init from './init';
+import { getConfig } from '../config/config';
 
 let k: Knex;
-export default async function initDb(config: NormalizedConfig) {
+export default async function initDb() {
+  const config = getConfig();
+
   k = knex({
     client: 'mysql2',
     connection: {

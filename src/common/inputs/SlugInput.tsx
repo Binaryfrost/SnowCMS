@@ -53,7 +53,6 @@ const input: Input<string, SlugInputSettings> = {
         const value = values[fieldName];
         if (dependentFieldValue.current === value) return;
 
-        // TODO: Don't change it if the slug already has a value
         field.setValue(slug(value, {
           fallback: false
         }));

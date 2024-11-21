@@ -11,10 +11,16 @@ import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
  * @returns {Promise<import('webpack').Configuration>}
  */
 
+/**
+ * @callback WebpackBaseFunction
+ * @param {import('./webpack').WebpackOptions & { side: 'CLIENT' | 'SERVER' }} options
+ * @returns {Promise<import('webpack').Configuration>}
+ */
+
 const SERVER_DIST = (dir) => path.join(dir, 'dist', 'server');
 const CLIENT_DIST = (dir) => path.join(dir, 'dist', 'client');
 
-/** @type {WebpackFunction} */
+/** @type {WebpackBaseFunction} */
 const BASE_WEBPACK_TEMPLATE = async (opts) => ({
   context: opts.cmsSrcDir,
   mode: opts.mode,
@@ -88,14 +94,18 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
       __SNOWCMS_CONFIG_FILE__: JSON.stringify(opts.configPath),
       __SNOWCMS_PLUGIN_CONFIG_FILE__: opts.pluginConfigPath &&
         JSON.stringify(opts.pluginConfigPath),
-      __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production'
+      __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production',
+      SNOWCMS_PUBLIC__SIDE: JSON.stringify(opts.side)
     })
   ]
 });
 
 /** @type {WebpackFunction} */
 export async function getWebpackServerConfig(opts) {
-  const baseConfig = await BASE_WEBPACK_TEMPLATE(opts);
+  const baseConfig = await BASE_WEBPACK_TEMPLATE({
+    ...opts,
+    side: 'SERVER'
+  });
   return {
     ...baseConfig,
     target: 'node',
@@ -128,7 +138,10 @@ export async function getWebpackServerConfig(opts) {
 
 /** @type {WebpackFunction} */
 export async function getWebpackClientConfig(opts) {
-  const baseConfig = await BASE_WEBPACK_TEMPLATE(opts);
+  const baseConfig = await BASE_WEBPACK_TEMPLATE({
+    ...opts,
+    side: 'CLIENT'
+  });
   return {
     ...baseConfig,
     entry: './src/client/index.ts',

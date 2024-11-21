@@ -23,9 +23,9 @@ export default defineConfig({
   // Future update
   media: {
     // Maximum size of one file
-    maxSize: 20000000, // 20 MB (default: 50MB)
+    maxSize: 20971520, // 20 MB (default: 50MB)
     // Per-website maximum storage for all files
-    // maxStorage: 5000000000, // 5GB (default)
+    // maxStorage: 5368709120, // 5GB (default)
     s3: {
       endpoint: process.env.S3_ENDPOINT,
       region: process.env.S3_REGION,

@@ -50,8 +50,8 @@ export const defineConfig = (config: Config): NormalizedConfig => ({
   port: config.port || 3080,
   media: {
     ...config.media,
-    maxSize: config.media.maxSize || 50000000,
-    maxStorage: config.media.maxStorage || 5000000000
+    maxSize: config.media.maxSize || 52428800,
+    maxStorage: config.media.maxStorage || 5368709120
   },
   database: {
     ...config.database,

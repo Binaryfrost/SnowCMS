@@ -69,7 +69,7 @@ export default function Navbar() {
                 )}
               </CollectionsGetter>
             </Box>
-            <Anchor fw="bold" to="#" component={Link}>Media</Anchor>
+            <Anchor fw="bold" to={`/websites/${websiteId}/media`} component={Link}>Media</Anchor>
           </>
         )
       )}

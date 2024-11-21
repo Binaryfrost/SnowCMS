@@ -45,5 +45,8 @@ export const router = createBrowserRouter([{
   }, {
     path: '/websites/:websiteId/collections/:collectionId/entries/:entryId',
     lazy: () => import('./pages/collection-entries/EditCollectionEntry')
+  }, {
+    path: '/websites/:websiteId/media',
+    lazy: () => import('./pages/media/Media')
   }]
 }]);

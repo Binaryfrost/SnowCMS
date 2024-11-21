@@ -62,7 +62,10 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
     localStorage.removeItem('token');
     redirectUrl = location.pathname;
     // https://github.com/remix-run/react-router/issues/9422#issuecomment-1301182219
-    router.navigate('/login');
+
+    // Uncommenting this causes the server to crash with error "document is not defined".
+    // TODO: Find solution
+    // router.navigate('/login');
     return {
       status: 401,
       body: null
@@ -116,6 +119,16 @@ export async function del<T = any>(route: string, opts?: Opts) {
     method: 'DELETE',
     route,
     ...opts
+  });
+}
+
+export async function s3Upload(url: string, type: string, data: any) {
+  return fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': type
+    },
+    body: data
   });
 }
 

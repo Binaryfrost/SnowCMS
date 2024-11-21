@@ -5,16 +5,20 @@ import devServer from './dev-server';
 import { getManifest } from './manifest';
 import initDb from './database/db';
 import { hasAccess } from '../common/users';
+import { initConfig } from './config/config';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
 import collectionInputsRouter from './routes/collection-inputs';
 import collectionTitleRouter from './routes/collection-titles';
 import collectionEntriesRouter from './routes/collection-entries';
+import mediaRouter from './routes/media';
 
 export async function start(config: NormalizedConfig) {
+  initConfig(config);
+
   console.log('Connecting to database');
-  await initDb(config);
+  await initDb();
 
   const app = express();
   // TODO: Caching in production
@@ -36,6 +40,7 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites/:websiteId/collections/:collectionId/inputs', collectionInputsRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/title', collectionTitleRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
+  app.use('/api/websites/:websiteId/media', mediaRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);

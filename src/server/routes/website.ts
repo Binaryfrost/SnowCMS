@@ -104,7 +104,7 @@ router.delete('/:id', async (req, res) => {
     return;
   }
 
-  // TODO: Delete Collections and Collection Entries
+  // TODO: Delete Collections, Collection Entries, and Media
 
   await db()<Website>('websites')
     .where({
