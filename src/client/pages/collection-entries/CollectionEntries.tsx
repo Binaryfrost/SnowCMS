@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Group, Stack, Text, TextInput } from '@mantine/core';
-import { IconPlus, IconSearch } from '@tabler/icons-react';
+import { Group, Stack, Text } from '@mantine/core';
+import { IconPlus } from '@tabler/icons-react';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import Page from '../../components/Page';
 import { CollectionsContext } from '../../context/CollectionsContext';
@@ -10,6 +10,7 @@ import { CollectionEntryWithTitle } from '../../../common/types/CollectionEntry'
 import ListEntry from '../../components/ListEntry';
 import { formatDate } from '../../util/data';
 import useRefresh from '../../util/refresh';
+import SearchInput from '../../components/SearchInput';
 
 export function Component() {
   const { websiteId, collectionId } = useParams();
@@ -34,11 +35,10 @@ export function Component() {
           iconButtonProps={{
             role: 'USER'
           }} />
-        <TextInput leftSection={<IconSearch />}
-          onChange={(e) => setSearch(e.target.value.toLowerCase())} />
+        <SearchInput setSearch={setSearch} />
       </Group>
 
-      <DataGetter<CollectionEntryWithTitle[]>
+      <DataGetter<CollectionEntryWithTitle[]> key={collectionId}
         url={`/api/websites/${websiteId}/collections/${collectionId}/entries`}>
         {(entries) => (
           <Stack>

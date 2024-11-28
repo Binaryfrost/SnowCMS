@@ -41,8 +41,6 @@ const input: Input<string, SlugInputSettings> = {
 
     const dependentFieldValue = useRef('');
 
-    console.log('slug', props.value);
-
     useImperativeHandle(ref, () => ({
       getValues: () => field.getValue(),
       hasError: async () => !!(await field.validate()),
@@ -57,14 +55,8 @@ const input: Input<string, SlugInputSettings> = {
           fallback: false
         }));
         dependentFieldValue.current = value;
-        console.log('form fields updated', props.name, values);
       }
     }));
-
-    console.log('field', field.getInputProps());
-
-    console.log('settings', props.settings);
-    console.log('value', props.value);
 
     return (
       <TextInput label={props.name} description={props.description} required={required}

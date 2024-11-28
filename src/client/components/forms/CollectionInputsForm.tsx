@@ -11,7 +11,7 @@ import { WebsiteContext } from '../../context/WebsiteContext';
 import type { Collection } from '../../../common/types/Collection';
 import type { CollectionInput } from '../../../common/types/CollectionInputs';
 import { CollectionInputListItem, isTemporaryInput } from '../CollectionInputListItem';
-import { randomHex } from '../../util/random';
+import { randomHex } from '../../../common/util';
 import { getById } from '../../util/data';
 import CollectionInputSettingsForm from './CollectionInputSettingsForm';
 import { patch, post, put } from '../../util/api';

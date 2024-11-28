@@ -65,8 +65,7 @@ export default async function init(knex: Knex) {
     await knex.schema.createTable('collection_entry_inputs', (table) => {
       table.string('entryId');
       table.string('inputId');
-      // TODO: Ensure that TEXT is enough for long blog posts, otherwise switch to MEDIUMTEXT
-      table.text('data').notNullable();
+      table.text('data', 'mediumtext').notNullable();
 
       table.primary(['entryId', 'inputId']);
       table.foreign('entryId').references('collection_entries.id');

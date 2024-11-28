@@ -27,6 +27,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
       <Stack>
         {error && <Text c="red">{error}</Text>}
         <Dropzone
+          accept={IMAGE_MIME_TYPE} multiple={false} loading={uploading}
           onDrop={async (files) => {
             try {
               const file = files[0];
@@ -108,8 +109,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
               setUploading(false);
             }
           }}
-          onReject={(files) => setError(files[0].errors[0].message)} maxSize={props.maxSize}
-          accept={IMAGE_MIME_TYPE} multiple={false} loading={uploading}>
+          onReject={(files) => setError(files[0].errors[0].message)} maxSize={props.maxSize}>
           <Stack align="center" style={{ pointerEvents: 'none' }}>
             <Box>
               <Dropzone.Accept>

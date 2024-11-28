@@ -24,3 +24,12 @@ export function getById<T extends ObjectWithId>(array: T[], id: string): T {
 export function formatDate(date: Date) {
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 }
+
+export function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { type Request } from 'express';
 import type { ForwardRefExoticComponent, RefAttributes, FunctionComponent } from 'react';
 import type { Website } from './types/Website';
 import type { Collection } from './types/Collection';
@@ -18,6 +19,8 @@ export interface InputProps<T, S> {
   description?: string
   notifyChanges: () => void
 }
+
+type RenderHtmlType<T> = string | T | Object;
 
 interface BaseInput<T, S> {
   // Provided ID (in this example, "text")
@@ -58,7 +61,7 @@ interface BaseInput<T, S> {
    * If you don't want the input to be rendered as HTML,
    * return a JSON object. You can also return a non-HTML string.
    */
-  renderHtml: (value: T) => string | T | Object
+  renderHtml: (value: T, req: Request) => RenderHtmlType<T> | Promise<RenderHtmlType<T>>
 }
 
 interface SettingsProps<S> {

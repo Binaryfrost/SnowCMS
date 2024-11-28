@@ -3,11 +3,11 @@ import { db } from '../database/db';
 import { handleAccessControl } from '../../common/users';
 import { exists } from '../database/util';
 import { CollectionTitle } from '../../common/types/CollectionTitle';
+import { asyncRouteFix } from '../util';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/', async (req, res) => {
-  // @ts-expect-error
+router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -31,10 +31,9 @@ router.get('/', async (req, res) => {
     collectionId,
     inputId: null
   });
-});
+}));
 
-router.put('/', async (req, res) => {
-  // @ts-expect-error
+router.put('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -60,6 +59,6 @@ router.put('/', async (req, res) => {
   res.json({
     message: 'Collection Title updated'
   });
-});
+}));
 
 export default router;

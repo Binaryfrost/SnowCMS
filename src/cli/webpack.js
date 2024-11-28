@@ -131,7 +131,7 @@ export async function getWebpackServerConfig(opts) {
     externals: [
       'express',
       'knex',
-      'mysql'
+      'mysql2'
     ]
   };
 }

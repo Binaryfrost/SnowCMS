@@ -8,7 +8,6 @@ export default async function setup() {
   if (__SNOWCMS_PLUGIN_CONFIG_FILE__) {
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const pluginConfig = require(__SNOWCMS_PLUGIN_CONFIG_FILE__);
-    console.log(pluginConfig.default);
     loadPlugins(pluginConfig.default);
 
     callHook('setup', {

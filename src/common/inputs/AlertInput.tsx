@@ -17,8 +17,6 @@ const input: Input<null, AlertInputSettings> = {
   deserialize: () => null,
 
   renderInput: () => function Component(props: InputProps<null, AlertInputSettings>) {
-    console.log('settings', props.settings);
-
     const { content, ...settings } = props.settings;
 
     return (
@@ -54,8 +52,6 @@ const input: Input<null, AlertInputSettings> = {
     useEffect(() => {
       form.validate();
     }, []);
-
-    console.log('settings', props.settings);
 
     return (
       <Stack>

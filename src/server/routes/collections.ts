@@ -4,11 +4,11 @@ import { db } from '../database/db';
 import { type Collection } from '../../common/types/Collection';
 import { handleAccessControl } from '../../common/users';
 import { exists } from '../database/util';
+import { asyncRouteFix } from '../util';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/', async (req, res) => {
-  // @ts-expect-error
+router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -26,10 +26,9 @@ router.get('/', async (req, res) => {
     .where({
       websiteId
     }));
-});
+}));
 
-router.post('/', async (req, res) => {
-  // @ts-expect-error
+router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -62,10 +61,9 @@ router.post('/', async (req, res) => {
     message: 'Collection created',
     id
   });
-});
+}));
 
-router.get('/:id', async (req, res) => {
-  // @ts-expect-error
+router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -86,10 +84,9 @@ router.get('/:id', async (req, res) => {
   }
 
   res.json(collection);
-});
+}));
 
-router.put('/:id', async (req, res) => {
-  // @ts-expect-error
+router.put('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -121,10 +118,9 @@ router.put('/:id', async (req, res) => {
   res.json({
     message: 'Collection edited'
   });
-});
+}));
 
-router.delete('/:id', async (req, res) => {
-  // @ts-expect-error
+router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -146,6 +142,6 @@ router.delete('/:id', async (req, res) => {
   res.json({
     message: 'Collection deleted'
   });
-});
+}));
 
 export default router;

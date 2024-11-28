@@ -13,6 +13,7 @@ import { bytesToReadableUnits } from '../../util/media';
 import MediaGallery from '../../components/MediaGallery';
 import MediaUploadForm from '../../components/forms/MediaUploadForm';
 import useRefresh from '../../util/refresh';
+import SearchInput from '../../components/SearchInput';
 
 export async function getMediaConfig(websiteId: string): Promise<MediaConfig> {
   const resp = await get<MediaConfig>(`/api/websites/${websiteId}/media/config`);
@@ -30,6 +31,7 @@ export async function getMediaConfig(websiteId: string): Promise<MediaConfig> {
 export function Component() {
   const { websiteId } = useParams();
   const refresh = useRefresh();
+  const [search, setSearch] = useState('');
   const [config, setConfig] = useState<MediaConfig>(null);
   const [opened, { open, close }] = useDisclosure(false);
 
@@ -46,16 +48,19 @@ export function Component() {
 
   return (
     <Page title="Media">
-      <HeaderWithAddButton tooltipLabel={storageFull ? 'Storage Full' : 'Upload Media'}
-        titleProps={{
-          children: 'Media'
-        }} actionIconProps={{
-          children: <IconUpload />,
-          disabled: !config || storageFull,
-          onClick: open
-        }} iconButtonProps={{
-          role: 'USER'
-        }} />
+      <Group justify="space-between" mb="sm">
+        <HeaderWithAddButton tooltipLabel={storageFull ? 'Storage Full' : 'Upload Media'}
+          titleProps={{
+            children: 'Media'
+          }} actionIconProps={{
+            children: <IconUpload />,
+            disabled: !config || storageFull,
+            onClick: open
+          }} iconButtonProps={{
+            role: 'USER'
+          }} />
+        <SearchInput setSearch={setSearch} />
+      </Group>
 
       <Stack gap="sm">
         {!config ? (
@@ -79,7 +84,7 @@ export function Component() {
           </Box>
         )}
 
-        <MediaGallery websiteId={websiteId} refresh={refresh} />
+        <MediaGallery websiteId={websiteId} refresh={refresh} search={search} />
       </Stack>
 
       {config && (

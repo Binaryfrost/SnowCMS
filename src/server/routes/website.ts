@@ -4,17 +4,18 @@ import { db } from '../database/db';
 import { type Website } from '../../common/types/Website';
 import { handleAccessControl } from '../../common/users';
 import { exists } from '../database/util';
+import { asyncRouteFix } from '../util';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', asyncRouteFix(async (req, res) => {
   if (!handleAccessControl(res, req.user, 'VIEWER')) return;
 
   // TODO: Filter based on access
   res.json(await db<Website>().select('id', 'name', 'hook').from('websites'));
-});
+}));
 
-router.post('/', async (req, res) => {
+router.post('/', asyncRouteFix(async (req, res) => {
   if (!handleAccessControl(res, req.user, 'ADMIN')) return;
 
   const { name, hook } = req.body;
@@ -37,9 +38,9 @@ router.post('/', async (req, res) => {
     message: 'Website created',
     id
   });
-});
+}));
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', asyncRouteFix(async (req, res) => {
   if (!handleAccessControl(res, req.user, 'VIEWER', req.params.id)) return;
 
   const website = await db()<Website>('websites')
@@ -58,9 +59,9 @@ router.get('/:id', async (req, res) => {
   }
 
   res.json(website);
-});
+}));
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', asyncRouteFix(async (req, res) => {
   if (!handleAccessControl(res, req.user, 'SUPERUSER', req.params.id)) return;
 
   const { name, hook } = req.body;
@@ -91,9 +92,9 @@ router.put('/:id', async (req, res) => {
   res.json({
     message: 'Website edited'
   });
-});
+}));
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', asyncRouteFix(async (req, res) => {
   if (!handleAccessControl(res, req.user, 'ADMIN')) return;
 
   if (!(await exists('websites', req.params.id))) {
@@ -115,6 +116,6 @@ router.delete('/:id', async (req, res) => {
   res.json({
     message: 'Website deleted'
   });
-});
+}));
 
 export default router;

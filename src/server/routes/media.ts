@@ -10,6 +10,7 @@ import { handleAccessControl } from '../../common/users';
 import { exists } from '../database/util';
 import { getConfig } from '../config/config';
 import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig } from '../../common/types/Media';
+import { asyncRouteFix } from '../util';
 
 const router = express.Router({ mergeParams: true });
 
@@ -70,8 +71,7 @@ function hmac(secret: string, ...data: any[]) {
   return h.digest().toString('hex');
 }
 
-router.get('/', async (req, res) => {
-  // @ts-expect-error
+router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -102,10 +102,9 @@ router.get('/', async (req, res) => {
       thumbUrl: file.thumbName ? url(file.thumbName) : undefined
     }))
   );
-});
+}));
 
-router.get('/config', async (req, res) => {
-  // @ts-expect-error
+router.get('/config', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -124,10 +123,9 @@ router.get('/config', async (req, res) => {
     maxStorage,
     usedStorage: await getUsedStorage(websiteId)
   } satisfies MediaConfig);
-});
+}));
 
-router.get('/:id', async (req, res) => {
-  // @ts-expect-error
+router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -156,10 +154,9 @@ router.get('/:id', async (req, res) => {
     url: url(file.fileName),
     thumbUrl: file.thumbName ? url(file.thumbName) : undefined
   });
-});
+}));
 
-router.post('/upload', async (req, res) => {
-  // @ts-expect-error
+router.post('/upload', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
@@ -204,8 +201,6 @@ router.post('/upload', async (req, res) => {
   const newFileName = `${getUrlTimePart()}/${shortId}-${imgSlug}${extension}`;
   const thumbFileName = thumbnail && `${getUrlTimePart()}/thumb-${shortId}-${imgSlug}${extension}`;
 
-  console.log(req.body);
-
   res.json({
     id,
     upload: {
@@ -216,10 +211,9 @@ router.post('/upload', async (req, res) => {
     },
     hmac: hmac(secret, id, name, newFileName, size, type, thumbFileName)
   } satisfies FileUploadResponse);
-});
+}));
 
-router.post('/upload/confirm', async (req, res) => {
-  // @ts-expect-error
+router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
@@ -240,16 +234,12 @@ router.post('/upload/confirm', async (req, res) => {
 
   const h = hmac(secret, id, name, s3Name, size, type, thumbFileName);
 
-  console.log(h, confirmationHmac);
-
   if (h !== confirmationHmac) {
     res.status(400).json({
       error: 'Invalid HMAC for file upload'
     });
     return;
   }
-
-  console.log('upload', req.body);
 
   await db<Media>()
     .into('media')
@@ -267,10 +257,9 @@ router.post('/upload/confirm', async (req, res) => {
     id,
     message: `Uploaded file with name ${name}`
   });
-});
+}));
 
-router.delete('/:id', async (req, res) => {
-  // @ts-expect-error
+router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
@@ -296,8 +285,6 @@ router.delete('/:id', async (req, res) => {
     });
     return;
   }
-
-  console.log(file);
 
   const { s3 } = getConfig().media;
 
@@ -335,6 +322,6 @@ router.delete('/:id', async (req, res) => {
   res.json({
     message: 'File deleted'
   });
-});
+}));
 
 export default router;

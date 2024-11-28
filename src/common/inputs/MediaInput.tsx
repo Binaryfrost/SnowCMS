@@ -31,7 +31,10 @@ const input: Input<string, MediaInputSettings> = {
       getValues: () => selectedImageId || '',
       hasError: () => {
         const hasError = props.settings?.required && !selectedImageId;
-        setError(`${props.name} is required`);
+        if (hasError) {
+          setError(`${props.name} is required`);
+        }
+
         return hasError;
       }
     }));
@@ -49,8 +52,6 @@ const input: Input<string, MediaInputSettings> = {
       }
     }, []);
 
-    console.log('media', media, props.value);
-
     return (
       <Box>
         <MantineInput.Label required={props.settings?.required}>{props.name}</MantineInput.Label>
@@ -64,7 +65,7 @@ const input: Input<string, MediaInputSettings> = {
             <>
               {error && <Text c="red">{error}</Text>}
               {media && (
-                <Paper w={192} withBorder mb="sm">
+                <Paper w="fit-content" withBorder mb="sm">
                   <Stack gap={0}>
                     <FilePreview file={media}>
                       <FilePreview.ViewButton file={media} />
@@ -118,8 +119,6 @@ const input: Input<string, MediaInputSettings> = {
       hasError: async () => !!(await field.validate()),
     }));
 
-    console.log('settings', props.settings);
-
     return (
       <Stack>
         <Checkbox label="Required" {...field.getInputProps()} key={field.key} />
@@ -127,7 +126,25 @@ const input: Input<string, MediaInputSettings> = {
     );
   }),
 
-  renderHtml: (value) => value
+  renderHtml: async (value, req) => {
+    const { websiteId } = req.params;
+    const { authorization } = req.headers;
+    const port = req.socket.localPort;
+
+    /*
+      As this file is shared between the server and client, attempting to access the database
+      directly breaks the build. To get around that, the server sends an HTTP request to itself
+      with the user's auth token to get information about the image. It isn't ideal, but it works.
+    */
+    const resp = await fetch(`http://localhost:${port}/api/websites/${websiteId}/media/${value}`, {
+      headers: {
+        authorization
+      }
+    });
+
+    const media: MediaWithUrls = await resp.json();
+    return media.url;
+  }
 };
 
 export default input;

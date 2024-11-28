@@ -42,22 +42,26 @@ export async function run(opts) {
         base: packageRoot
       });
 
+      const ignored = ['knex, mysql2'];
+
       // eslint-disable-next-line no-restricted-syntax
       for (const error of result.warnings) {
         if (error.message.startsWith('Failed to resolve dependency')) {
           const [, module, file] =
             /Cannot find module '(.+?)' loaded from (.+)/.exec(error.message) || [];
 
-          if (entryFile === file) {
-            console.log(
-              `The module "${module}" couldn't be resolved. ` +
-              'This may not be a problem, but it\'s worth checking.'
-            );
-          } else {
-            console.log(
-              `The module "${module}" inside the file "${file}" couldn't be resolved. ` +
-              'This may not be a problem, but it\'s worth checking.'
-            );
+          if (!ignored.some((i) => file.includes(`/${i}/`))) {
+            if (entryFile === file) {
+              console.log(
+                `The module "${module}" couldn't be resolved. ` +
+                'This may not be a problem, but it\'s worth checking.'
+              );
+            } else {
+              console.log(
+                `The module "${module}" inside the file "${file}" couldn't be resolved. ` +
+                'This may not be a problem, but it\'s worth checking.'
+              );
+            }
           }
           // eslint-disable-next-line brace-style
         }

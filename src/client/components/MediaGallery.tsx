@@ -1,18 +1,19 @@
 import { Group } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
 import { MediaWithUrls } from '../../common/types/Media';
 import DataGetter from './DataGetter';
 import GalleryFile from './GalleryFile';
 import FilePreview from './FilePreview';
+import { useIsMobile } from '../util/mobile';
 
 export interface MediaGalleryProps {
   websiteId: string
+  search?: string
   refresh: () => void
   select?: (file: MediaWithUrls) => void
 }
 
-export default function MediaGallery({ websiteId, refresh, select }: MediaGalleryProps) {
-  const isMobile = useMediaQuery('(max-width: 768px)');
+export default function MediaGallery({ websiteId, search, refresh, select }: MediaGalleryProps) {
+  const isMobile = useIsMobile();
 
   return (
     <DataGetter<MediaWithUrls[]> url={`/api/websites/${websiteId}/media`}
@@ -23,7 +24,11 @@ export default function MediaGallery({ websiteId, refresh, select }: MediaGaller
       )}>
       {(media) => (
         <Group align="stretch" justify={isMobile && 'center'}>
-          {media.map((file) => (
+          {media.filter((m) => {
+            if (!search) return true;
+            return [m.fileName, m.origFileName, m.id]
+              .some((s) => s.toLowerCase().includes(search));
+          }).map((file) => (
             <GalleryFile key={file.id} file={file} select={select} refresh={refresh} />
           ))}
         </Group>

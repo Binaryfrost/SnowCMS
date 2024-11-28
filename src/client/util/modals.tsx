@@ -1,4 +1,5 @@
-import { ActionIcon, Box, Group, Paper, Stack, Text } from '@mantine/core';
+import { useState } from 'react';
+import { ActionIcon, Box, Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconPlus } from '@tabler/icons-react';
@@ -9,6 +10,7 @@ import IconButton from '../components/IconButton';
 import type { Website } from '../../common/types/Website';
 import type { Collection } from '../../common/types/Collection';
 import SelectMedia, { SelectMediaProps } from '../components/SelectMedia';
+import AddHtmlModalContent, { type AddHtmlModalContentProps } from '../components/AddHtmlModalContent';
 
 export interface DeleteModalOpts {
   url: string
@@ -18,41 +20,56 @@ export interface DeleteModalOpts {
   onDelete: () => void
 }
 
-export function showDeleteModal(opts: DeleteModalOpts) {
-  modals.openConfirmModal({
-    title: `Delete ${opts.type}`,
-    children: (
-      <>
-        <Text>Are you sure you want to delete {opts.type} with ID&nbsp;
-          <ShortUuid uuid={opts.id} />?</Text>
-        {opts.additional && <Text mt="xs" mb="xs">{opts.additional}</Text>}
-        <Text c="dimmed">This action is irreversible.</Text>
-      </>
-    ),
-    cancelProps: {
-      children: 'Cancel'
-    },
-    confirmProps: {
-      color: 'red',
-      children: 'Delete'
-    },
-    onConfirm: () => {
-      del(opts.url).then((resp) => {
-        if (resp.status !== 200) {
-          throw new Error(resp.body.error);
-        }
+export const DELETE_MODAL_ID = 'delete_modal';
+function DeleteModal(props: DeleteModalOpts) {
+  const [submitting, setSubmitting] = useState(false);
 
-        notifications.show({
-          message: `Deleted ${opts.type} with ID ${shortenUuid(opts.id)}`
-        });
-        opts.onDelete();
-      }).catch((err) => {
-        notifications.show({
-          message: `Failed to delete ${opts.type} with ID ${shortenUuid(opts.id)}: ${err.message || 'An error occurred'}`,
-          color: 'red'
-        });
-      });
-    }
+  return (
+    <Stack>
+      <Box>
+        <Text>Are you sure you want to delete {props.type} with ID&nbsp;
+          <ShortUuid uuid={props.id} />?</Text>
+        {props.additional && <Text mt="xs" mb="xs">{props.additional}</Text>}
+        <Text c="dimmed">This action is irreversible.</Text>
+      </Box>
+      <Group justify="end">
+        <Button variant="default" loading={submitting}
+          onClick={() => modals.close(DELETE_MODAL_ID)}>Cancel</Button>
+        <Button color="red" loading={submitting} onClick={() => {
+          setSubmitting(true);
+          del(props.url).then((resp) => {
+            if (resp.status !== 200) {
+              throw new Error(resp.body.error);
+            }
+
+            notifications.show({
+              message: `Deleted ${props.type} with ID ${shortenUuid(props.id)}`
+            });
+            props.onDelete();
+            modals.close(DELETE_MODAL_ID);
+          }).catch((err) => {
+            notifications.show({
+              message: `Failed to delete ${props.type} with ID ${shortenUuid(props.id)}: ${err.message || 'An error occurred'}`,
+              color: 'red'
+            });
+          }).finally(() => {
+            setSubmitting(false);
+          });
+        }}>Delete</Button>
+      </Group>
+    </Stack>
+  );
+}
+
+export function showDeleteModal(opts: DeleteModalOpts) {
+  modals.open({
+    title: `Delete ${opts.type}`,
+    modalId: DELETE_MODAL_ID,
+    // Don't want users to close the modal while a delete request is in progress
+    closeOnEscape: false,
+    closeOnClickOutside: false,
+    withCloseButton: false,
+    children: <DeleteModal {...opts} />
   });
 }
 

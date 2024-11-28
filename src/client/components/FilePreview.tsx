@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ActionIcon, Group, Image, Paper, Stack, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Group, Image, Paper, Stack, Text, Tooltip, useComputedColorScheme } from '@mantine/core';
 import { IconDownload, IconEye, IconFile } from '@tabler/icons-react';
 import ShortUuid from './ShortUuid';
 import { bytesToReadableUnits } from '../util/media';
@@ -14,6 +14,7 @@ interface Props {
 
 function FilePreview({ file, children }: Props) {
   const SIZE = 192;
+  const colorScheme = useComputedColorScheme();
 
   const size = {
     h: SIZE,
@@ -22,7 +23,7 @@ function FilePreview({ file, children }: Props) {
 
   return (
     <>
-      <Paper bg="gray" {...size}>
+      <Paper bg={colorScheme === 'dark' ? 'gray' : 'gray.3'} {...size}>
         <Stack justify="center" align="center" h="100%">
           {file.thumbUrl ? (
             <Image {...size} fit="contain" src={file.thumbUrl} loading="lazy" />

@@ -1,4 +1,4 @@
-import express, { type Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import { handleAccessControl } from '../../common/users';
@@ -6,20 +6,20 @@ import { exists, getCollectionInputs } from '../database/util';
 import { CollectionEntry, CollectionEntryInputs } from '../../common/types/CollectionEntry';
 import { CollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
+import { asyncRouteFix } from '../util';
 
 const router = express.Router({ mergeParams: true });
 
-function renderInput(input: string, data: string) {
+async function renderInput(input: string, data: string, req: Request) {
   const registryInput = InputRegistry.getInput(input);
   if (registryInput) {
-    return registryInput.renderHtml(registryInput.deserialize(data));
+    return registryInput.renderHtml(registryInput.deserialize(data), req);
   }
 
   return null;
 }
 
-router.get('/', async (req, res) => {
-  // @ts-expect-error
+router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -39,8 +39,8 @@ router.get('/', async (req, res) => {
     .innerJoin('collection_inputs', 'collection_inputs.id', 'collection_entry_inputs.inputId')
     .where('collection_titles.collectionId', collectionId);
 
-  for (const title of titles) {
-    const renderedTitle = renderInput(title.input, title.data);
+  for await (const title of titles) {
+    const renderedTitle = await renderInput(title.input, title.data, req);
     renderedTitles[title.entryId] = renderedTitle || undefined;
   }
 
@@ -54,10 +54,9 @@ router.get('/', async (req, res) => {
     ...entry,
     title: renderedTitles[entry.id] || null
   })));
-});
+}));
 
-router.get('/:id', async (req, res) => {
-  // @ts-expect-error
+router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
   const { render } = req.query;
 
@@ -87,16 +86,23 @@ router.get('/:id', async (req, res) => {
     [c.id]: c
   }), {});
 
-  const inputsData = render && render !== 'false' ? inputs.reduce((a, c) => ({
-    ...a,
-    [collectionInputs[c.inputId].fieldName]: renderInput(collectionInputs[c.inputId].input, c.data)
-  }), {}) : inputs;
+  let inputsData = {};
+
+  if (render && render !== 'false') {
+    for await (const input of inputs) {
+      const collectionInput: CollectionInput = collectionInputs[input.inputId];
+      inputsData[collectionInput.fieldName] =
+        await renderInput(collectionInput.input, input.data, req);
+    }
+  } else {
+    inputsData = inputs;
+  }
 
   res.json({
     ...entry,
     data: inputsData
   });
-});
+}));
 
 async function addOrUpdate(data: Record<string, string>, collectionId: string,
   entryId: string, res: Response) {
@@ -123,10 +129,7 @@ async function addOrUpdate(data: Record<string, string>, collectionId: string,
     }
   }
 
-  console.log(data, collectionInputs);
-
   await db().transaction(async (trx) => {
-    // TODO: Try-catch all database operations
     await trx<CollectionEntry>('collection_entries')
       .insert({
         id: entryId,
@@ -142,8 +145,6 @@ async function addOrUpdate(data: Record<string, string>, collectionId: string,
       entryId
     }));
 
-    console.log(updatesWithId);
-
     await trx<CollectionEntryInputs>('collection_entry_inputs')
       .insert(updatesWithId)
       .onConflict('inputId')
@@ -153,8 +154,7 @@ async function addOrUpdate(data: Record<string, string>, collectionId: string,
   return true;
 }
 
-router.post('/', async (req, res) => {
-  // @ts-expect-error
+router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
@@ -173,10 +173,9 @@ router.post('/', async (req, res) => {
     message: 'Collection Entry created',
     id: entryId
   });
-});
+}));
 
-router.patch('/:id', async (req, res) => {
-  // @ts-expect-error
+router.patch('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
@@ -193,10 +192,9 @@ router.patch('/:id', async (req, res) => {
   res.status(200).json({
     message: 'Collection Entry edited'
   });
-});
+}));
 
-router.delete('/:id', async (req, res) => {
-  // @ts-expect-error
+router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
@@ -225,6 +223,6 @@ router.delete('/:id', async (req, res) => {
   res.json({
     message: 'Collection Entry deleted'
   });
-});
+}));
 
 export default router;

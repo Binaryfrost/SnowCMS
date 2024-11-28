@@ -36,11 +36,6 @@ const input: Input<string, TextInputSettings> = {
       hasError: async () => !!(await field.validate())
     }));
 
-    console.log('field', field.getInputProps());
-
-    console.log('settings', props.settings);
-    console.log('value', props.value);
-
     return (
       <TextInput label={props.name} description={props.description} required={required}
         maxLength={maxLength > 1 ? maxLength : null} {...field.getInputProps()} />
@@ -71,8 +66,6 @@ const input: Input<string, TextInputSettings> = {
     useEffect(() => {
       form.validate();
     }, []);
-
-    console.log('settings', props.settings);
 
     return (
       <Stack>

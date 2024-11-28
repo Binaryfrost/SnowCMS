@@ -23,7 +23,9 @@ export async function start(config: NormalizedConfig) {
   const app = express();
   // TODO: Caching in production
   app.use('/assets', express.static('../client'));
-  app.use(express.json());
+  app.use(express.json({
+    limit: '16MB'
+  }));
 
   app.use((req, res, next) => {
     // TODO: Read JWT from header
@@ -86,15 +88,30 @@ export async function start(config: NormalizedConfig) {
           <script src="${MANIFEST['main.js']}"></script>
           ${!__SNOWCMS_IS_PRODUCTION__ ? `
             <script>
-              const host = \`\${location.protocol === 'http:' ? 'ws' : 'wss'}` +
-                `://\${location.hostname}:${config.port + 1}/dev\`;
-              const ws = new WebSocket(host);
-              ws.addEventListener('close', () => location.reload());
+              (() => {
+                /*
+                  If the protocol is HTTPS, it's probably being accessed
+                  through a reverse proxy for development
+                */
+                if (location.protocol === 'https:') return;
+                const host = \`\${location.protocol === 'http:' ? 'ws' : 'wss'}` +
+                  `://\${location.hostname}:${config.port + 1}/dev\`;
+                const ws = new WebSocket(host);
+                ws.addEventListener('close', () => location.reload());
+              })();
             </script>
           ` : ''}
         </body>
       </html>
     `);
+  });
+
+  // Express expects error handling middleware to have 4 arguments
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500).json({
+      error: `${err.name}: ${err.message}`
+    });
   });
 
   app.listen(config.port, () => {

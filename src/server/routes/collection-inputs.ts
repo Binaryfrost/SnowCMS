@@ -6,11 +6,11 @@ import { exists, getCollection, getCollectionInputs, getWebsite, reorderCollecti
 import { CollectionInput, DatabaseCollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
 import { CollectionTitle } from '../../common/types/CollectionTitle';
+import { asyncRouteFix } from '../util';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/', async (req, res) => {
-  // @ts-expect-error
+router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
   }
 
   res.json(await getCollectionInputs(collectionId));
-});
+}));
 
 async function isInputAllowed(input: string, req: Request, res: Response) {
   const { websiteId, collectionId } = req.params;
@@ -50,8 +50,7 @@ async function isInputAllowed(input: string, req: Request, res: Response) {
   return true;
 }
 
-router.post('/', async (req, res) => {
-  // @ts-expect-error
+router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -105,10 +104,9 @@ router.post('/', async (req, res) => {
     message: 'Collection Input created',
     id
   });
-});
+}));
 
-router.put('/:id', async (req, res) => {
-  // @ts-expect-error
+router.put('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -147,10 +145,9 @@ router.put('/:id', async (req, res) => {
   res.json({
     message: 'Collection Input edited',
   });
-});
+}));
 
-router.patch('/:id/order', async (req, res) => {
-  // @ts-expect-error
+router.patch('/:id/order', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -176,10 +173,9 @@ router.patch('/:id/order', async (req, res) => {
   res.json({
     message: `Moved input to position ${order}`
   });
-});
+}));
 
-router.delete('/:id', async (req, res) => {
-  // @ts-expect-error
+router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
   if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
@@ -212,6 +208,6 @@ router.delete('/:id', async (req, res) => {
   res.json({
     message: 'Collection Input deleted'
   });
-});
+}));
 
 export default router;
