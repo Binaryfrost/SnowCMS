@@ -10,7 +10,6 @@ import IconButton from '../components/IconButton';
 import type { Website } from '../../common/types/Website';
 import type { Collection } from '../../common/types/Collection';
 import SelectMedia, { SelectMediaProps } from '../components/SelectMedia';
-import AddHtmlModalContent, { type AddHtmlModalContentProps } from '../components/AddHtmlModalContent';
 
 export interface DeleteModalOpts {
   url: string

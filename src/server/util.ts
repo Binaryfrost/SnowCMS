@@ -1,4 +1,4 @@
-import { type RequestHandler, Router } from 'express';
+import { type RequestHandler } from 'express';
 
 export function asyncRouteFix<T extends RequestHandler>(callback: T): RequestHandler {
   return (req, res, next) => {
