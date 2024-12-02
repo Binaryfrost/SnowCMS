@@ -44,6 +44,7 @@
     "@tiptap/extension-table-row": "^2.10.3",
     "@tiptap/extension-text-align": "^2.10.2",
     "@tiptap/extension-underline": "^2.10.2",
+    "@tiptap/extension-youtube": "^2.10.3",
     "@tiptap/html": "^2.10.2",
     "@tiptap/pm": "^2.10.2",
     "@tiptap/react": "^2.10.2",

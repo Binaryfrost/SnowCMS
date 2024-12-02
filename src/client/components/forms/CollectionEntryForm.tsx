@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Button, Stack, Text } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
+import { notifications } from '@mantine/notifications';
 import DataGetter from '../DataGetter';
 import { CollectionInput } from '../../../common/types/CollectionInputs';
 import InputRegistry, { type Input, type InputRef } from '../../../common/InputRegistry';
@@ -53,7 +54,16 @@ export default function CollectionEntryForm({ entryId }: Props) {
       }
     }
 
-    if (hasError) return;
+    if (hasError) {
+      /*
+       * On long Entries, it often isn't immediately obvious that there is an error
+       * and may seem like the save button doesn't work.
+       */
+      notifications.show({
+        message: 'Unable to save Collection Entry. One or more inputs has an error.'
+      });
+      return;
+    }
 
     const apiRoot = `/api/websites/${websiteId}/collections/${collectionId}/entries`;
 

@@ -17,19 +17,26 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import Youtube from '@tiptap/extension-youtube';
 import { generateHTML } from '@tiptap/html';
 import { all, createLowlight } from 'lowlight';
 // @ts-ignore
 import UniqueId from 'tiptap-unique-id';
-import { IconArrowMerge, IconArrowsSplit, IconColumnInsertLeft, IconColumnInsertRight, IconColumnRemove, IconLinkMinus, IconPhoto, IconRowInsertBottom, IconRowInsertTop, IconRowRemove, IconTable, IconTableColumn, IconTableOff, IconTableRow } from '@tabler/icons-react';
-import { type Input } from '../InputRegistry';
-import { SELECT_MEDIA_MODAL_ID, showSelectMediaModal } from '../../client/util/modals';
+import { IconArrowMerge, IconArrowsSplit, IconBrandYoutube, IconColumnInsertLeft,
+  IconColumnInsertRight, IconColumnRemove, IconLinkMinus, IconPhoto, IconRowInsertBottom,
+  IconRowInsertTop, IconRowRemove, IconTable, IconTableColumn, IconTableOff,
+  IconTableRow, IconVideo } from '@tabler/icons-react';
+import type { Input } from '../InputRegistry';
 import { randomHex } from '../util';
+import { SELECT_MEDIA_MODAL_ID, showSelectMediaModal } from '../../client/util/modals';
 import { showChangeIdModal } from './RichTextInput/ChangeIdModal';
-import Heading from './RichTextInput/Heading';
 import { showChangeLinkRelModal } from './RichTextInput/ChangeLinkRelModal';
+import Heading from './RichTextInput/Heading';
+import Video from './RichTextInput/Video';
 
 import './RichTextInput/RichTextInput.css';
+import { showYoutubeModal } from './RichTextInput/YoutubeModal';
+import { showVideoModal } from './RichTextInput/VideoModal';
 
 interface TextInputSettings {
   maxLength: number
@@ -68,7 +75,9 @@ const extensions = [
   Table,
   TableRow,
   TableHeader,
-  TableCell
+  TableCell,
+  Youtube,
+  Video
 ];
 
 const input: Input<JSONContent, TextInputSettings> = {
@@ -173,6 +182,13 @@ const input: Input<JSONContent, TextInputSettings> = {
             </RichTextEditor.ControlsGroup>
 
             <RichTextEditor.ControlsGroup>
+              <RichTextEditor.AlignLeft />
+              <RichTextEditor.AlignCenter />
+              <RichTextEditor.AlignJustify />
+              <RichTextEditor.AlignRight />
+            </RichTextEditor.ControlsGroup>
+
+            <RichTextEditor.ControlsGroup>
               <RichTextEditor.Link />
               <RichTextEditor.Unlink />
               <RichTextEditor.Control disabled={!editor.isActive('link')} onClick={() => {
@@ -211,6 +227,9 @@ const input: Input<JSONContent, TextInputSettings> = {
               }} title="Change Link Relationship" aria-label="Change Link Relationship">
                 <IconLinkMinus stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+            </RichTextEditor.ControlsGroup>
+
+            <RichTextEditor.ControlsGroup>
               <RichTextEditor.Control onClick={() => showSelectMediaModal({
                 websiteId,
                 select: (file) => {
@@ -222,16 +241,34 @@ const input: Input<JSONContent, TextInputSettings> = {
               })} title="Add Image" aria-label="Add Image">
                 <IconPhoto stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
+              <RichTextEditor.Control onClick={() => showYoutubeModal({
+                close(video) {
+                  if (!video) return;
+                  editor.commands.setYoutubeVideo({
+                    src: video.src,
+                    height: video.height,
+                    width: video.width
+                  });
+                }
+              })}>
+                <IconBrandYoutube stroke={1.5} size="1rem" />
+              </RichTextEditor.Control>
+
+              <RichTextEditor.Control onClick={() => showVideoModal({
+                close(video) {
+                  console.log(video);
+                  if (!video) return;
+                  editor.commands.insertContent({
+                    type: 'video',
+                    attrs: video
+                  });
+                }
+              })}>
+                <IconVideo stroke={1.5} size="1rem" />
+              </RichTextEditor.Control>
             </RichTextEditor.ControlsGroup>
 
-            <RichTextEditor.ControlsGroup>
-              <RichTextEditor.AlignLeft />
-              <RichTextEditor.AlignCenter />
-              <RichTextEditor.AlignJustify />
-              <RichTextEditor.AlignRight />
-            </RichTextEditor.ControlsGroup>
-
-            {/* TODO: Finish table code */}
             <RichTextEditor.ControlsGroup>
               <RichTextEditor.Control title="Insert Table" aria-label="Insert Table"
                 disabled={editor.isActive('table')}
@@ -246,81 +283,70 @@ const input: Input<JSONContent, TextInputSettings> = {
                 }}>
                 <IconTable stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Remove Table" aria-label="Remove Table"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().deleteTable().run()}>
                 <IconTableOff stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Insert Column Before" aria-label="Insert Column Before"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().addColumnBefore().run()}>
                 <IconColumnInsertLeft stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Insert Column After" aria-label="Insert Column After"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().addColumnAfter().run()}>
                 <IconColumnInsertRight stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Remove Column" aria-label="Remove Column"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().deleteColumn().run()}>
                 <IconColumnRemove stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Insert Row Before" aria-label="Insert Row Before"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().addRowBefore().run()}>
                 <IconRowInsertTop stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Insert Row After" aria-label="Insert Row After"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().addRowAfter().run()}>
                 <IconRowInsertBottom stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Remove Row" aria-label="Remove Row"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().deleteRow().run()}>
                 <IconRowRemove stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Toggle Header Row" aria-label="Toggle Header Row"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().toggleHeaderRow().run()}>
                 <IconTableRow stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Toggle Header Column" aria-label="Toggle Header Column"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().toggleHeaderColumn().run()}>
                 <IconTableColumn stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Merge Cells" aria-label="Merge Cells"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().mergeCells().run()}>
                 <IconArrowMerge stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
+
               <RichTextEditor.Control title="Split Cell" aria-label="Split Cell"
                 disabled={!editor.isActive('table')}
-                onClick={() => {
-
-                }}>
+                onClick={() => editor.chain().focus().splitCell().run()}>
                 <IconArrowsSplit stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
             </RichTextEditor.ControlsGroup>
