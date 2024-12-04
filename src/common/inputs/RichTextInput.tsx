@@ -234,11 +234,25 @@ const input: Input<JSONContent, TextInputSettings> = {
                 websiteId,
                 select: (file) => {
                   modals.close(SELECT_MEDIA_MODAL_ID);
-                  editor.commands.setImage({
-                    src: file.url
-                  });
+                  if (file.fileType.startsWith('image/')) {
+                    editor.commands.setImage({
+                      src: file.url
+                    });
+                  } else {
+                    editor.commands.insertContent({
+                      type: 'text',
+                      text: 'Download file',
+                      marks: [{
+                        type: 'link',
+                        attrs: {
+                          href: file.url,
+                          target: '_blank'
+                        }
+                      }]
+                    });
+                  }
                 }
-              })} title="Add Image" aria-label="Add Image">
+              })} title="Insert File" aria-label="Insert File">
                 <IconPhoto stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
 
@@ -251,7 +265,7 @@ const input: Input<JSONContent, TextInputSettings> = {
                     width: video.width
                   });
                 }
-              })}>
+              })} title="Insert YouTube Video" aria-label="Insert YouTube Video">
                 <IconBrandYoutube stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
 
@@ -264,7 +278,7 @@ const input: Input<JSONContent, TextInputSettings> = {
                     attrs: video
                   });
                 }
-              })}>
+              })} title="Insert Video" aria-label="Insert Video">
                 <IconVideo stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
             </RichTextEditor.ControlsGroup>

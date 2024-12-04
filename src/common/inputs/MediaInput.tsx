@@ -1,8 +1,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Button, Checkbox, Group, Input as MantineInput, Paper, Stack, Text } from '@mantine/core';
+import { Box, Button, Checkbox, Group, Input as MantineInput, Paper, Stack, TagsInput, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
-import { useField } from '@mantine/form';
+import { useForm } from '@mantine/form';
 import { IconPhoto, IconPhotoOff } from '@tabler/icons-react';
 import { type Input } from '../InputRegistry';
 import type { MediaWithUrls } from '../types/Media';
@@ -11,6 +11,7 @@ import FilePreview from '../../client/components/FilePreview';
 import { get } from '../../client/util/api';
 
 interface MediaInputSettings {
+  mimeTypes: string[]
   required: boolean
 }
 
@@ -77,6 +78,7 @@ const input: Input<string, MediaInputSettings> = {
               <Group>
                 <Button leftSection={<IconPhoto />} onClick={() => showSelectMediaModal({
                   websiteId,
+                  mimeTypes: props.settings.mimeTypes,
                   select: (file) => {
                     setError(null);
                     setMedia(file);
@@ -106,22 +108,26 @@ const input: Input<string, MediaInputSettings> = {
   deserializeSettings: (data) => JSON.parse(data),
 
   renderSettings: () => forwardRef((props, ref) => {
-    const field = useField({
+    const form = useForm({
       mode: 'uncontrolled',
-      type: 'checkbox',
-      initialValue: props.settings?.required ?? true
+      initialValues: {
+        mimeTypes: props.settings?.mimeTypes || [],
+        required: props.settings?.required ?? true
+      }
     });
 
     useImperativeHandle(ref, () => ({
-      getValues: () => ({
-        required: field.getValue()
-      }),
-      hasError: async () => !!(await field.validate()),
+      getValues: () => form.getValues(),
+      hasError: () => form.validate().hasErrors
     }));
 
     return (
       <Stack>
-        <Checkbox label="Required" {...field.getInputProps()} key={field.key} />
+        <TagsInput label="Mime Types" data={['image/*', 'image/png', 'image/jpeg']}
+          description="Limit file selections by mime type" {...form.getInputProps('mimeTypes')}
+          key={form.key('mimeTypes')} />
+        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
+          key={form.key('required')} />
       </Stack>
     );
   }),

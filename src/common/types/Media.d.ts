@@ -4,6 +4,7 @@ export interface Media {
   origFileName: string
   fileName: string
   fileSize: number
+  fileType: string
   thumbName?: string
   timestamp: number
 }

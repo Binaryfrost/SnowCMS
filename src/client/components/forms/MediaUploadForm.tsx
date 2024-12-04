@@ -6,6 +6,7 @@ import { FileUploadConfirmation, FileUploadResponse, type FileMetadata, type Med
 import { bytesToReadableUnits, generateThumbnail } from '../../util/media';
 import { post, s3Upload } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
+import { BLOCKED_MIME_TYPES } from '../../../common/blocked-mime-types';
 
 export interface MediaUploadFormProps extends MediaConfig {
   websiteId: string
@@ -27,7 +28,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
       <Stack>
         {error && <Text c="red">{error}</Text>}
         <Dropzone
-          accept={IMAGE_MIME_TYPE} multiple={false} loading={uploading}
+          multiple={false} loading={uploading}
           onDrop={async (files) => {
             try {
               const file = files[0];
@@ -36,9 +37,12 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
                 throw new Error('Unable to upload file without exceeding allocated storage');
               }
 
+              if (BLOCKED_MIME_TYPES.includes(file.type)) {
+                throw new Error(`File type ${file.type} is not allowed`);
+              }
+
               setError(null);
               setUploading(true);
-              console.log('accepted files', files);
 
               const generateThumbnailFor = [
                 MIME_TYPES.jpeg,
@@ -96,7 +100,6 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
               const confirmResp = await post(
                 `/api/websites/${props.websiteId}/media/upload/confirm`, confirmData
               );
-              console.log('confirm', confirmResp);
 
               if (confirmResp.status === 200) {
                 uploadedData.current += file.size;

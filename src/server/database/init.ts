@@ -81,6 +81,7 @@ export default async function init(knex: Knex) {
       table.string('origFileName').notNullable();
       table.string('fileName').notNullable();
       table.integer('fileSize').unsigned().notNullable();
+      table.string('fileType').notNullable();
       table.string('thumbName').nullable();
       table.integer('timestamp').unsigned().notNullable();
 

@@ -11,6 +11,7 @@ import { exists } from '../database/util';
 import { getConfig } from '../config/config';
 import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig } from '../../common/types/Media';
 import { asyncRouteFix } from '../util';
+import { BLOCKED_MIME_TYPES } from '../../common/blocked-mime-types';
 
 const router = express.Router({ mergeParams: true });
 
@@ -86,7 +87,16 @@ router.get('/', asyncRouteFix(async (req, res) => {
   const { publicUrl } = getConfig().media.s3;
 
   const files: Media[] = await db<Media>()
-    .select('id', 'websiteId', 'fileName', 'fileSize', 'origFileName', 'thumbName', 'timestamp')
+    .select(
+      'id',
+      'websiteId',
+      'fileName',
+      'fileSize',
+      'origFileName',
+      'fileType',
+      'thumbName',
+      'timestamp'
+    )
     .from('media')
     .where({
       websiteId
@@ -140,7 +150,16 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   const { publicUrl } = getConfig().media.s3;
 
   const file: Media = await db<Media>()
-    .select('id', 'websiteId', 'fileName', 'fileSize', 'origFileName', 'thumbName', 'timestamp')
+    .select(
+      'id',
+      'websiteId',
+      'fileName',
+      'fileSize',
+      'origFileName',
+      'fileType',
+      'thumbName',
+      'timestamp'
+    )
     .from('media')
     .where({
       id
@@ -187,9 +206,9 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
     return;
   }
 
-  if (!type.startsWith('image/')) {
+  if (BLOCKED_MIME_TYPES.includes(type)) {
     res.status(400).json({
-      error: 'Only images are allowed'
+      error: `File type ${type} is not allowed`
     });
     return;
   }
@@ -249,6 +268,7 @@ router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
       origFileName: name,
       fileName: s3Name,
       fileSize: size,
+      fileType: type,
       thumbName: thumbFileName || null,
       timestamp: Math.floor(Date.now() / 1000)
     });

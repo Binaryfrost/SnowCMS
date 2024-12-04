@@ -7,6 +7,10 @@
     "allowJs": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowUmdGlobalAccess": true,
-  }
+    "allowUmdGlobalAccess": true
+  },
+  "exclude": [
+    "./test/test-website-cms/data",
+    "./test/test-website-cms/dist"
+  ]
 }
