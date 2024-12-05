@@ -199,16 +199,6 @@ Payload does it this way:
 Plugins are added to the config file and should return a default export. Changes to plugins require a rebuild.
 
 ```ts
-interface StartHook {
-  /*
-   * Register Express routes at /c/{plugin_name}/{path}
-   * Minimum role, leave blank to allow unauthenticated access (restricted using app.use() on route)
-   * 
-   * Returns Express route (https://expressjs.com/en/4x/api.html#app.route)
-   */
-  registerRoute: (path: string, roles?: Role) => Route
-}
-
 /*
    * Events (* one of [website, collection, collectionInput, collectionEntry, media]):
    * - *BeforeCreate
@@ -218,17 +208,16 @@ interface StartHook {
    * - *BeforeDelete
    * - *AfterDelete
    * 
-   * Hooks may be async or synchronous. Allow modifying data in synchronous before hooks,
-   * which can also be used for validating input by throwing an error. Modifying data and
-   * input validation may not be done in async hooks.
+   * Hooks may be async or synchronous, all hooks will be awaited. Allow modifying data in before hooks,
+   * which can also be used for validating input by throwing an error.
    * 
-   * Add reason property to event so plugins can filter when to run their code, for example:
+   * Add reason property to beforeWebsiteHookCalled hook so plugins can filter when to run their code, for example:
    * Deleting Collection Inputs would change Collection Entries, but a developer may not want
    * to trigger a rebuild unless a specific Collection Input is changed.
    * 
    * Also have:
-   * - serverStart: Allow registering routes from this hook
    * - setup: Called server-side and client-side for registering inputs
+   * - serverStart: Called server-side with port
    */
 interface Hooks {
   start?: ({...}: StartHook) => void | Promise<void>

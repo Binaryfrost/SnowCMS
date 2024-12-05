@@ -2,12 +2,13 @@ import { Box, Button, Input, Skeleton, Stack } from '@mantine/core';
 
 interface Props {
   inputs?: number
+  withButton?: boolean
 }
 
-export default function FormSkeleton(props: Props) {
+export default function FormSkeleton({ inputs, withButton = true }: Props) {
   return (
     <Stack>
-      {new Array(props.inputs || 5).fill(null).map((_, i) => (
+      {new Array(inputs || 5).fill(null).map((_, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <Box key={i}>
           <Skeleton mb={4} p={0} w="fit-content">
@@ -19,9 +20,11 @@ export default function FormSkeleton(props: Props) {
         </Box>
       ))}
 
-      <Skeleton>
-        <Button>Loading...</Button>
-      </Skeleton>
+      {withButton && (
+        <Skeleton>
+          <Button>Loading...</Button>
+        </Skeleton>
+      )}
     </Stack>
   );
 }

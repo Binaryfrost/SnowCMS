@@ -2,11 +2,12 @@ import express, { type Response, type Request } from 'express';
 import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import { handleAccessControl } from '../../common/users';
-import { exists, getCollection, getCollectionInputs, getWebsite, reorderCollectionInputs, reorderCollectionInputsForDeletion } from '../database/util';
+import { exists, getCollection, getCollectionInputs, getWebsite, reorderCollectionInputs } from '../database/util';
 import { CollectionInput, DatabaseCollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
 import { CollectionTitle } from '../../common/types/CollectionTitle';
 import { asyncRouteFix } from '../util';
+import { CollectionEntryInputs } from '../../common/types/CollectionEntry';
 
 const router = express.Router({ mergeParams: true });
 
@@ -187,23 +188,39 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     return;
   }
 
-  await db<CollectionTitle>()
-    .from('collection_titles')
-    .where({
-      inputId: id
-    })
-    .delete();
+  await db().transaction(async (trx) => {
+    const { order } = await trx<DatabaseCollectionInput>('collection_inputs')
+      .select('order')
+      .where({
+        id
+      })
+      .first();
 
-  await reorderCollectionInputsForDeletion(id, collectionId);
+    await trx<DatabaseCollectionInput>('collection_inputs')
+      .decrement('order', 1)
+      .where({
+        collectionId
+      })
+      .andWhere('order', '>', order);
 
-  // TODO: Remove Collection Entry Inputs that reference the deleted input
+    await trx<CollectionTitle>('collection_titles')
+      .where({
+        inputId: id
+      })
+      .delete();
 
-  await db<CollectionInput>()
-    .from('collection_inputs')
-    .where({
-      id
-    })
-    .delete();
+    await trx<CollectionEntryInputs>('collection_entry_inputs')
+      .where({
+        inputId: id
+      })
+      .delete();
+
+    await trx<CollectionInput>('collection_inputs')
+      .where({
+        id
+      })
+      .delete();
+  });
 
   res.json({
     message: 'Collection Input deleted'

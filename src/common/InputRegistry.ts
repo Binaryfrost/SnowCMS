@@ -61,7 +61,8 @@ interface BaseInput<T, S> {
    * If you don't want the input to be rendered as HTML,
    * return a JSON object. You can also return a non-HTML string.
    */
-  renderHtml: (value: T, req: Request) => RenderHtmlType<T> | Promise<RenderHtmlType<T>>
+  renderHtml: (value: T, settings: S | null, req: Request) =>
+    RenderHtmlType<T> | Promise<RenderHtmlType<T>>
 }
 
 interface SettingsProps<S> {

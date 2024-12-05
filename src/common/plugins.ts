@@ -1,7 +1,10 @@
-import type { IRoute } from 'express';
 import type { PluginConfig } from '../config';
-import { type Input } from './InputRegistry';
-import { Role } from './types/User';
+import type { Input } from './InputRegistry';
+import type { Collection } from './types/Collection';
+import type { CollectionEntryWithData } from './types/CollectionEntry';
+import type { CollectionInput } from './types/CollectionInputs';
+import type { MediaWithUrls } from './types/Media';
+import type { Website } from './types/Website';
 
 class PluginLogger {
   private readonly name: string;
@@ -27,33 +30,71 @@ interface Hook {
   logger: PluginLogger
 }
 
-interface ServerSetupHook extends Hook {
-  /**
-   * Register an Express route at `/c/{path}`
-   *
-   * Role is minimum required role, leave blank to allow unauthenticated access
-   * (restricted using app.use() on route)
-   *
-   * Returns Express route (https://expressjs.com/en/4x/api.html#app.route)
-   */
-  registerRoute(path: string, role?: Role): IRoute
-}
-
 interface ServerStartHook extends Hook {
   port: number
 }
 
 interface SetupHook extends Hook {
-  addInput<T = any>(input: Input<T>): void;
+  addInput<T = any>(input: Input<T>): void
 }
 
-interface Hooks {
-  /** Called server-side */
-  serverSetup?: (hook: ServerSetupHook) => void
+export enum WebsiteHookCallReasons {
+  COLLECTION_ENTRY_CREATED,
+  COLLECTION_ENTRY_MODIFIED,
+  COLLECTION_ENTRY_DELETED,
+  COLLETION_INPUT_MODIFIED,
+  COLLECTION_INPUT_DELETED,
+  COLLECTION_DELETED
+}
+
+export enum WebsiteHookCallTargets {
+  COLLECTION,
+  COLLECTION_ENTRY,
+  COLLECTION_INPUT
+}
+
+interface BeforeWebsiteHookCalledHook extends Hook {
+  reason: {
+    target: {
+      type: WebsiteHookCallTargets,
+      id: string
+    }
+    reason: WebsiteHookCallReasons
+  }
+  /** Prevents the POST request from being sent */
+  cancel(): void
+}
+
+type BeforeAfterHookKey<K extends string, A extends string> =
+  `before${K}${A}Hook` | `after${K}${A}Hook`;
+
+type BeforeAfterCreateHook<K extends string> = BeforeAfterHookKey<K, 'Create'>;
+type BeforeAfterModifyHook<K extends string> = BeforeAfterHookKey<K, 'Modify'>;
+type BeforeAfterDeleteHook<K extends string> = BeforeAfterHookKey<K, 'Delete'>;
+
+type CombinedBeforeAfterHook<K extends string> =
+  BeforeAfterCreateHook<K> | BeforeAfterModifyHook<K> | BeforeAfterDeleteHook<K>
+
+type BeforeAfterHook<K extends string, H> = {
+  [x in CombinedBeforeAfterHook<K>]?: (hook: H & Hook) => void;
+}
+
+// TODO: Implement hook calls
+type AllBeforeAfterHooks =
+  BeforeAfterHook<'Website', { website: Website }> &
+  BeforeAfterHook<'Collection', { collection: Collection }> &
+  BeforeAfterHook<'CollectionInput', { collectionInput: CollectionInput }> &
+  BeforeAfterHook<'CollectionEntry', { collectionEntry: CollectionEntryWithData }> &
+  BeforeAfterHook<'Media', { media: MediaWithUrls }>;
+
+// TODO: Move doc comments to docs site
+interface Hooks extends AllBeforeAfterHooks {
   /** Called server-side */
   serverStart?: (hook: ServerStartHook) => void
   /** Called client-side on page load and server-side on startup */
   setup?: (hook: SetupHook) => void
+  /** Called server-side before a POST request is sent to the website hook */
+  beforeWebsiteHookCalled?: (hook: BeforeWebsiteHookCalledHook) => void
 }
 
 type HookRegistryFunction<T> = (props: Omit<T, 'logger'>) => void

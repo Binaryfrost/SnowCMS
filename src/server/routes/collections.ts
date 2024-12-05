@@ -120,6 +120,41 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
   });
 }));
 
+export async function deleteCollection(id: string) {
+  await db().transaction(async (trx) => {
+    await trx('collection_entry_inputs')
+      .innerJoin('collection_inputs', 'collection_inputs.id', 'collection_entry_inputs.inputId')
+      .where({
+        collectionId: id
+      })
+      .delete();
+
+    await trx('collection_entries')
+      .where({
+        collectionId: id
+      })
+      .delete();
+
+    await trx('collection_titles')
+      .where({
+        collectionId: id
+      })
+      .delete();
+
+    await trx('collection_inputs')
+      .where({
+        collectionId: id
+      })
+      .delete();
+
+    await trx('collections')
+      .where({
+        id
+      })
+      .delete();
+  });
+}
+
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
@@ -133,11 +168,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     return;
   }
 
-  await db()<Collection>('collections')
-    .where({
-      id
-    })
-    .delete();
+  await deleteCollection(id);
 
   res.json({
     message: 'Collection deleted'

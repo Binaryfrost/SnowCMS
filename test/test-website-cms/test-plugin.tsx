@@ -5,17 +5,6 @@ import { Plugin } from '../../src';
 const plugin: Plugin = {
   name: 'test-plugin',
   hooks: {
-    serverSetup: ({ logger, registerRoute }) => {
-      logger.log('Registering routes');
-
-      registerRoute('/plugin-registered-route/1').get((req, res) => {
-        res.end('OK');
-      });
-
-      registerRoute('/plugin-registered-route/2', 'ADMIN').get((req, res) => {
-        res.end('Restricted route');
-      });
-    },
     serverStart: ({ logger, port }) => {
       logger.log(`Server started on port ${port}`);
     },
@@ -24,7 +13,8 @@ const plugin: Plugin = {
 
       /*
        * If you need to run some code only on the server (e.g. reading a config file
-       * with sensitive information), you can do it this way
+       * with sensitive information), you can do it this way. Don't import any
+       * server-side code as this may leak the config file. Use fs instead.
        */
       if (typeof window !== 'undefined') {
         logger.log('Client-side');
@@ -79,6 +69,19 @@ const plugin: Plugin = {
 
         renderHtml: () => null
       });
+    },
+    // TODO: Test
+    beforeWebsiteCreateHook: ({ logger, website }) => {
+      logger.log('before website create', website);
+
+      // This should prevent the creation of the website
+      if (website.name.includes('reject')) throw new Error('Invalid website name');
+    },
+    afterWebsiteCreateHook: ({ logger, website }) => {
+      logger.log('before website create', website);
+
+      // This should result in a warning in console but not stop the website creation
+      if (website.name.includes('reject')) throw new Error('Invalid website name');
     }
   }
 };

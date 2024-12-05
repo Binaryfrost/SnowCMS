@@ -10,10 +10,15 @@ import { asyncRouteFix } from '../util';
 
 const router = express.Router({ mergeParams: true });
 
-async function renderInput(input: string, data: string, req: Request) {
+async function renderInput(input: string, data: string, settings: string, req: Request) {
   const registryInput = InputRegistry.getInput(input);
   if (registryInput) {
-    return registryInput.renderHtml(registryInput.deserialize(data), req);
+    return registryInput.renderHtml(
+      registryInput.deserialize(data),
+      settings && 'deserializeSettings' in registryInput ?
+        registryInput.deserializeSettings(settings) : null,
+      req
+    );
   }
 
   return null;
@@ -33,14 +38,14 @@ router.get('/', asyncRouteFix(async (req, res) => {
 
   const renderedTitles = {};
   const titles = await db()
-    .select('data', 'input', 'entryId')
+    .select('data', 'input', 'entryId', 'inputConfig')
     .from('collection_titles')
     .innerJoin('collection_entry_inputs', 'collection_titles.inputId', 'collection_entry_inputs.inputId')
     .innerJoin('collection_inputs', 'collection_inputs.id', 'collection_entry_inputs.inputId')
     .where('collection_titles.collectionId', collectionId);
 
   for await (const title of titles) {
-    const renderedTitle = await renderInput(title.input, title.data, req);
+    const renderedTitle = await renderInput(title.input, title.data, title.inputConfig, req);
     renderedTitles[title.entryId] = renderedTitle || undefined;
   }
 
@@ -92,7 +97,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     for await (const input of inputs) {
       const collectionInput: CollectionInput = collectionInputs[input.inputId];
       inputsData[collectionInput.fieldName] =
-        await renderInput(collectionInput.input, input.data, req);
+        await renderInput(collectionInput.input, input.data, collectionInput.inputConfig, req);
     }
   } else {
     inputsData = inputs;

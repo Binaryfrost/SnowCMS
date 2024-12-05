@@ -132,7 +132,7 @@ const input: Input<string, MediaInputSettings> = {
     );
   }),
 
-  renderHtml: async (value, req) => {
+  renderHtml: async (value, settings, req) => {
     const { websiteId } = req.params;
     const { authorization } = req.headers;
     const port = req.socket.localPort;

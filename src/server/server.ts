@@ -4,7 +4,6 @@ import { callHook } from '../common/plugins';
 import devServer from './dev-server';
 import { getManifest } from './manifest';
 import initDb from './database/db';
-import { hasAccess } from '../common/users';
 import { initConfig } from './config/config';
 
 import websiteRouter from './routes/website';
@@ -47,30 +46,6 @@ export async function start(config: NormalizedConfig) {
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);
   }
-
-  const pluginRouteRouter = express.Router();
-  app.use('/c', express.Router());
-
-  callHook('serverSetup', {
-    registerRoute: (path, role) => {
-      if (role) {
-        pluginRouteRouter.use(path, (req, res, next) => {
-          // TODO: Add role checking
-          if (!hasAccess(req.user, role)) {
-            res.status(403).json({
-              error: 'User role does not have access to that route'
-            });
-
-            return;
-          }
-
-          next();
-        });
-      }
-
-      return app.route(path);
-    }
-  });
 
   // Catch all GET requests that haven't already been handled and serve the CMS SPA
   app.get('*', async (req, res) => {

@@ -83,21 +83,3 @@ export async function reorderCollectionInputs(inputId: string, collectionId: str
       id: inputId
     });
 }
-
-export async function reorderCollectionInputsForDeletion(inputId: string, collectionId: string,) {
-  const { order } = await db<DatabaseCollectionInput>()
-    .select('order')
-    .from('collection_inputs')
-    .where({
-      id: inputId
-    })
-    .first();
-
-  await db<DatabaseCollectionInput>()
-    .table('collection_inputs')
-    .decrement('order', 1)
-    .where({
-      collectionId
-    })
-    .andWhere('order', '>', order);
-}
