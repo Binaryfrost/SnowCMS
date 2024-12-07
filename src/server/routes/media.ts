@@ -12,8 +12,15 @@ import { getConfig } from '../config/config';
 import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig } from '../../common/types/Media';
 import { asyncRouteFix } from '../util';
 import { BLOCKED_MIME_TYPES } from '../../common/blocked-mime-types';
+import { callHook } from '../../common/plugins';
+import ExpressError from '../../common/ExpressError';
 
 const router = express.Router({ mergeParams: true });
+
+const mediaUrl = (websiteId: string, fileName: string) => {
+  const { publicUrl } = getConfig().media.s3;
+  return new URL(`/media/${websiteId}/${fileName}`, publicUrl).toString();
+};
 
 async function getUsedStorage(websiteId: string) {
   const result = await db()<Media>('media')
@@ -75,16 +82,11 @@ function hmac(secret: string, ...data: any[]) {
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-    return;
+    throw new ExpressError('Website not found', 404);
   }
-
-  const { publicUrl } = getConfig().media.s3;
 
   const files: Media[] = await db<Media>()
     .select(
@@ -103,13 +105,11 @@ router.get('/', asyncRouteFix(async (req, res) => {
     })
     .orderBy('id', 'desc');
 
-  const url = (fileName: string) => new URL(`/media/${websiteId}/${fileName}`, publicUrl);
-
   res.json(
     files.map((file) => ({
       ...file,
-      url: url(file.fileName),
-      thumbUrl: file.thumbName ? url(file.thumbName) : undefined
+      url: mediaUrl(websiteId, file.fileName),
+      thumbUrl: file.thumbName ? mediaUrl(websiteId, file.thumbName) : undefined
     }))
   );
 }));
@@ -117,13 +117,10 @@ router.get('/', asyncRouteFix(async (req, res) => {
 router.get('/config', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-    return;
+    throw new ExpressError('Website not found', 404);
   }
 
   const { maxSize, maxStorage } = getConfig().media;
@@ -138,16 +135,11 @@ router.get('/config', asyncRouteFix(async (req, res) => {
 router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   if (!(await exists('media', id))) {
-    res.status(404).json({
-      error: 'File not found'
-    });
-    return;
+    throw new ExpressError('File not found', 404);
   }
-
-  const { publicUrl } = getConfig().media.s3;
 
   const file: Media = await db<Media>()
     .select(
@@ -166,25 +158,20 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     })
     .first();
 
-  const url = (fileName: string) => new URL(`/media/${websiteId}/${fileName}`, publicUrl);
-
   res.json({
     ...file,
-    url: url(file.fileName),
-    thumbUrl: file.thumbName ? url(file.thumbName) : undefined
+    url: mediaUrl(websiteId, file.fileName),
+    thumbUrl: file.thumbName ? mediaUrl(websiteId, file.thumbName) : undefined
   });
 }));
 
 router.post('/upload', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
+  handleAccessControl(res, req.user, 'USER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-    return;
+    throw new ExpressError('Website not found', 404);
   }
 
   const { name, size, type, thumbnail }: FileMetadata = req.body;
@@ -192,25 +179,35 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
   const { maxSize, maxStorage } = media;
   const usedStorage = await getUsedStorage(websiteId);
 
+  if (!name || !size || !type) {
+    throw new ExpressError('Name, size, and type are required', 400);
+  }
+
+  // @ts-expect-error We don't yet know if it is a string or number
+  if (Number.isNaN(parseInt(size, 10))) {
+    throw new ExpressError('Size must be a number', 400);
+  }
+
+  if (thumbnail) {
+    if (typeof thumbnail !== 'object') {
+      throw new ExpressError('Thumbnail must be an object', 400);
+    }
+
+    if (!thumbnail.size || !thumbnail.type) {
+      throw new ExpressError('Thumbnail must have size and type', 400);
+    }
+  }
+
   if ((size > maxSize) || (thumbnail && thumbnail.size > maxSize)) {
-    res.status(400).json({
-      error: 'File is too big'
-    });
-    return;
+    throw new ExpressError('File is too big', 400);
   }
 
   if (usedStorage + size > maxStorage) {
-    res.status(400).json({
-      error: 'Uploading file would exceed allocated storage'
-    });
-    return;
+    throw new ExpressError('Uploading file would exceed allocated storage', 400);
   }
 
   if (BLOCKED_MIME_TYPES.includes(type)) {
-    res.status(400).json({
-      error: `File type ${type} is not allowed`
-    });
-    return;
+    throw new ExpressError(`File type ${type} is not allowed`, 400);
   }
 
   const id = uuid();
@@ -219,6 +216,20 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
   const imgSlug = slug(basename(name, extension)).substring(0, 48);
   const newFileName = `${getUrlTimePart()}/${shortId}-${imgSlug}${extension}`;
   const thumbFileName = thumbnail && `${getUrlTimePart()}/thumb-${shortId}-${imgSlug}${extension}`;
+
+  const uploadMedia: Omit<Media, 'timestamp'> = {
+    id,
+    websiteId,
+    fileName: newFileName,
+    origFileName: name,
+    fileSize: size,
+    fileType: type,
+    thumbName: thumbFileName
+  };
+
+  callHook('beforeMediaCreateHook', {
+    media: uploadMedia
+  });
 
   res.json({
     id,
@@ -230,81 +241,107 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
     },
     hmac: hmac(secret, id, name, newFileName, size, type, thumbFileName)
   } satisfies FileUploadResponse);
+
+  callHook('afterMediaCreateHook', {
+    media: uploadMedia
+  });
 }));
 
 router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
+  handleAccessControl(res, req.user, 'USER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-    return;
+    throw new ExpressError('Website not found', 404);
   }
 
   const { data, id, hmac: confirmationHmac }: FileUploadConfirmation = req.body;
 
+  if (!data.image) {
+    throw new ExpressError('Image data is required', 400);
+  }
+
   const { name, size, type, s3Name } = data.image;
   const thumbFileName = data.thumbnail && data.thumbnail.s3Name;
+
+  if (!name || !size || !type || !s3Name) {
+    throw new ExpressError('Name, size, type, and s3Name is required', 400);
+  }
+
+  if (data.thumbnail && !data.thumbnail.s3Name) {
+    throw new ExpressError('s3Name is required if thumbnail exists');
+  }
 
   const { secret } = getConfig();
 
   const h = hmac(secret, id, name, s3Name, size, type, thumbFileName);
 
   if (h !== confirmationHmac) {
-    res.status(400).json({
-      error: 'Invalid HMAC for file upload'
-    });
-    return;
+    throw new ExpressError('Invalid HMAC for file upload', 400);
   }
+
+  const uploadMedia: Media = {
+    id,
+    websiteId,
+    origFileName: name,
+    fileName: s3Name,
+    fileSize: size,
+    fileType: type,
+    thumbName: thumbFileName || null,
+    timestamp: Math.floor(Date.now() / 1000)
+  };
 
   await db<Media>()
     .into('media')
-    .insert({
-      id,
-      websiteId,
-      origFileName: name,
-      fileName: s3Name,
-      fileSize: size,
-      fileType: type,
-      thumbName: thumbFileName || null,
-      timestamp: Math.floor(Date.now() / 1000)
-    });
+    .insert(uploadMedia);
 
   res.json({
     id,
     message: `Uploaded file with name ${name}`
+  });
+
+  callHook('afterMediaConfirmHook', {
+    media: {
+      ...uploadMedia,
+      url: mediaUrl(websiteId, uploadMedia.fileName),
+      thumbUrl: uploadMedia.thumbName ? mediaUrl(websiteId, uploadMedia.thumbName) : undefined
+    }
   });
 }));
 
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
+  handleAccessControl(res, req.user, 'USER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-    return;
+    throw new ExpressError('Website not found', 404);
   }
 
-  const file = await db<Media>()
-    .select('fileName', 'thumbName')
-    .from('media')
+  const file = await db()<Media>('media')
+    .select(
+      'id',
+      'websiteId',
+      'origFileName',
+      'fileName',
+      'fileSize',
+      'fileType',
+      'thumbName',
+      'timestamp'
+    )
     .where({
       id
     })
     .first();
 
   if (!file) {
-    res.status(404).json({
-      error: 'File not found'
-    });
-    return;
+    throw new ExpressError('File not found', 404);
   }
+
+  callHook('beforeMediaDeleteHook', {
+    media: file
+  });
 
   const { s3 } = getConfig().media;
 
@@ -341,6 +378,10 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
 
   res.json({
     message: 'File deleted'
+  });
+
+  callHook('afterMediaDeleteHook', {
+    media: file
   });
 }));
 

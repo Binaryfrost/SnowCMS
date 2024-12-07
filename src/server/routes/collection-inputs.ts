@@ -1,4 +1,4 @@
-import express, { type Response, type Request } from 'express';
+import express, { type Request } from 'express';
 import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import { handleAccessControl } from '../../common/users';
@@ -8,44 +8,36 @@ import InputRegistry from '../../common/InputRegistry';
 import { CollectionTitle } from '../../common/types/CollectionTitle';
 import { asyncRouteFix } from '../util';
 import { CollectionEntryInputs } from '../../common/types/CollectionEntry';
+import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../../common/plugins';
+import ExpressError from '../../common/ExpressError';
 
 const router = express.Router({ mergeParams: true });
 
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
-    res.status(404).json({
-      error: 'Collection not found'
-    });
-    return;
+    throw new ExpressError('Collection not found', 404);
   }
 
   res.json(await getCollectionInputs(collectionId));
 }));
 
-async function isInputAllowed(input: string, req: Request, res: Response) {
+async function checkIfInputAllowed(input: string, req: Request) {
   const { websiteId, collectionId } = req.params;
 
   const registryInput = InputRegistry.getInput(input);
   if (!registryInput) {
-    res.status(400).json({
-      error: 'Provided Input does not exist in Input Registry'
-    });
-
-    return false;
+    throw new ExpressError('Provided Input does not exist in Input Registry', 400);
   }
 
   const website = await getWebsite(websiteId);
   const collection = await getCollection(collectionId);
 
   if ('isAllowed' in registryInput && !registryInput.isAllowed(website, collection)) {
-    res.status(403).json({
-      error: 'Website or collection does not have permission to use Input'
-    });
-    return false;
+    throw new ExpressError('Website or collection does not have permission to use Input', 403);
   }
 
   return true;
@@ -54,13 +46,10 @@ async function isInputAllowed(input: string, req: Request, res: Response) {
 router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
-    res.status(404).json({
-      error: 'Collection not found'
-    });
-    return;
+    throw new ExpressError('Collection not found', 404);
   }
 
   const lastRecordOrder = (
@@ -79,24 +68,29 @@ router.post('/', asyncRouteFix(async (req, res) => {
   const { name, description, fieldName, input, inputConfig } = req.body;
 
   if (!name || !fieldName || !input) {
-    res.status(400).json({
-      error: 'Name, field name, and input required'
-    });
-    return;
+    throw new ExpressError('Name, field name, and input required', 400);
   }
 
-  if (!await isInputAllowed(input, req, res)) return;
+  await checkIfInputAllowed(input, req);
 
   const id = uuid();
+  const collectionInput: CollectionInput = {
+    id,
+    collectionId,
+    name,
+    description,
+    fieldName,
+    input,
+    inputConfig
+  };
+
+  callHook('beforeCollectionInputCreateHook', {
+    collectionInput
+  });
+
   await db<DatabaseCollectionInput>()
     .insert({
-      id,
-      collectionId,
-      name,
-      description,
-      fieldName,
-      input,
-      inputConfig,
+      ...collectionInput,
       order: lastRecordOrder + 1
     })
     .into('collection_inputs');
@@ -105,30 +99,42 @@ router.post('/', asyncRouteFix(async (req, res) => {
     message: 'Collection Input created',
     id
   });
+
+  callHook('afterCollectionInputCreateHook', {
+    collectionInput
+  });
 }));
 
 router.put('/:id', asyncRouteFix(async (req, res) => {
-  const { websiteId, id } = req.params;
+  const { websiteId, collectionId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collection_inputs', id))) {
-    res.status(404).json({
-      error: 'Collection Input not found'
-    });
-    return;
+    throw new ExpressError('Collection Input not found', 404);
   }
 
   const { name, description, fieldName, input, inputConfig } = req.body;
 
   if (!name || !fieldName || !input) {
-    res.status(400).json({
-      error: 'Name, field name, and input required'
-    });
-    return;
+    throw new ExpressError('Name, field name, and input required', 400);
   }
 
-  if (!await isInputAllowed(input, req, res)) return;
+  await checkIfInputAllowed(input, req);
+
+  const collectionInput: CollectionInput = {
+    id,
+    collectionId,
+    name,
+    description,
+    fieldName,
+    input,
+    inputConfig
+  };
+
+  callHook('beforeCollectionInputModifyHook', {
+    collectionInput
+  });
 
   await db<DatabaseCollectionInput>()
     .table('collection_inputs')
@@ -146,27 +152,33 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
   res.json({
     message: 'Collection Input edited',
   });
+
+  callHook('afterCollectionInputModifyHook', {
+    collectionInput
+  });
+
+  callHttpHook(await getWebsite(websiteId), await getCollection(collectionId), {
+    reason: WebsiteHookCallReasons.COLLETION_INPUT_MODIFIED,
+    target: {
+      id,
+      type: WebsiteHookCallTargets.COLLECTION_INPUT
+    }
+  });
 }));
 
 router.patch('/:id/order', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collection_inputs', id))) {
-    res.status(404).json({
-      error: 'Collection Input not found'
-    });
-    return;
+    throw new ExpressError('Collection Input not found', 404);
   }
 
   const { order } = req.body;
 
   if (Number.isNaN(parseInt(order, 10))) {
-    res.status(400).json({
-      error: 'Order is required and must be a number'
-    });
-    return;
+    throw new ExpressError('Order is required and must be a number', 400);
   }
 
   await reorderCollectionInputs(req.params.id, collectionId, order);
@@ -179,14 +191,22 @@ router.patch('/:id/order', asyncRouteFix(async (req, res) => {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collection_inputs', id))) {
-    res.status(404).json({
-      error: 'Collection Input not found'
-    });
-    return;
+    throw new ExpressError('Collection Input not found', 404);
   }
+
+  const collectionInput = await db()<CollectionInput>('collection_inputs')
+    .select('id', 'collectionId', 'name', 'description', 'fieldName', 'input', 'inputConfig')
+    .where({
+      id
+    })
+    .first();
+
+  callHook('beforeCollectionInputDeleteHook', {
+    collectionInput
+  });
 
   await db().transaction(async (trx) => {
     const { order } = await trx<DatabaseCollectionInput>('collection_inputs')
@@ -224,6 +244,18 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
 
   res.json({
     message: 'Collection Input deleted'
+  });
+
+  callHook('afterCollectionInputDeleteHook', {
+    collectionInput
+  });
+
+  callHttpHook(await getWebsite(websiteId), await getCollection(collectionId), {
+    reason: WebsiteHookCallReasons.COLLECTION_INPUT_DELETED,
+    target: {
+      id,
+      type: WebsiteHookCallTargets.COLLECTION_INPUT
+    }
   });
 }));
 

@@ -133,6 +133,7 @@ const input: Input<string, MediaInputSettings> = {
   }),
 
   renderHtml: async (value, settings, req) => {
+    if (!value) return null;
     const { websiteId } = req.params;
     const { authorization } = req.headers;
     const port = req.socket.localPort;
@@ -147,6 +148,8 @@ const input: Input<string, MediaInputSettings> = {
         authorization
       }
     });
+
+    if (resp.status !== 200) return null;
 
     const media: MediaWithUrls = await resp.json();
     return media.url;

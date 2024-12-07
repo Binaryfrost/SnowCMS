@@ -1,5 +1,6 @@
 import { type Response } from 'express';
 import type { Role, User } from './types/User';
+import ExpressError from './ExpressError';
 
 const ROLE_HIERARCHY: Record<Role, number> = Object.freeze({
   VIEWER: 20,
@@ -30,17 +31,11 @@ export function hasAccess(user: User, requiredRole: Role, websiteId?: string) {
 /** Returns true if the user is allowed access, otherwise false */
 export function handleAccessControl(res: Response, user: User, requiredRole: Role,
   websiteId?: string) {
-  if (hasAccess(user, requiredRole, websiteId)) return true;
+  if (hasAccess(user, requiredRole, websiteId)) return;
 
   if (!user) {
-    res.status(401).json({
-      error: 'Unauthorized'
-    });
+    throw new ExpressError('Unauthorized', 401);
   } else {
-    res.status(403).json({
-      error: 'Forbidden'
-    });
+    throw new ExpressError('Forbidden', 403);
   }
-
-  return false;
 }

@@ -1,12 +1,14 @@
-import express, { type Request, type Response } from 'express';
+import express, { type Request } from 'express';
 import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import { handleAccessControl } from '../../common/users';
-import { exists, getCollectionInputs } from '../database/util';
-import { CollectionEntry, CollectionEntryInputs } from '../../common/types/CollectionEntry';
+import { exists, getCollection, getCollectionInputs, getWebsite } from '../database/util';
+import { CollectionEntry, CollectionEntryInputs, CollectionEntryWithData } from '../../common/types/CollectionEntry';
 import { CollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
 import { asyncRouteFix } from '../util';
+import ExpressError from '../../common/ExpressError';
+import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../../common/plugins';
 
 const router = express.Router({ mergeParams: true });
 
@@ -27,13 +29,10 @@ async function renderInput(input: string, data: string, settings: string, req: R
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
-    res.status(404).json({
-      error: 'Collection not found'
-    });
-    return;
+    throw new ExpressError('Collection not found', 404);
   }
 
   const renderedTitles = {};
@@ -65,7 +64,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
   const { render } = req.query;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   const entry = await db()<CollectionEntry>('collection_entries')
     .select('id', 'collectionId', 'createdAt', 'updatedAt')
@@ -74,10 +73,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     }).first();
 
   if (!entry) {
-    res.status(404).json({
-      error: 'Collection Entry not found'
-    });
-    return;
+    throw new ExpressError('Collection Entry not found', 404);
   }
 
   const inputs = await db()<CollectionEntryInputs>('collection_entry_inputs')
@@ -94,6 +90,10 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   let inputsData = {};
 
   if (render && render !== 'false') {
+    /*
+     * TODO: Loop through collectionInputs instead so that CollectionEntry API responses
+     * always have all inputs, even for Entries created before the Collection Input.
+     */
     for await (const input of inputs) {
       const collectionInput: CollectionInput = collectionInputs[input.inputId];
       inputsData[collectionInput.fieldName] =
@@ -109,8 +109,8 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   });
 }));
 
-async function addOrUpdate(data: Record<string, string>, collectionId: string,
-  entryId: string, res: Response) {
+async function prepareData(data: Record<string, string>, collectionId: string,
+  entryId: string): Promise<CollectionEntryWithData> {
   const collectionInputs: Record<string, CollectionInput> =
     (await getCollectionInputs(collectionId)).reduce((a, c) => ({
       ...a,
@@ -121,10 +121,7 @@ async function addOrUpdate(data: Record<string, string>, collectionId: string,
   for (const key in data) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       if (!(key in collectionInputs)) {
-        res.status(400).json({
-          error: `Invalid data: Input ${key} does not exist on this Collection`
-        });
-        return false;
+        throw new ExpressError(`Invalid data: Input ${key} does not exist on this Collection`, 400);
       }
 
       updates.push({
@@ -134,24 +131,40 @@ async function addOrUpdate(data: Record<string, string>, collectionId: string,
     }
   }
 
+  const updatesWithId: CollectionEntryInputs[] = updates.map((update) => ({
+    ...update,
+    entryId
+  }));
+
+  const existingEntry = await db()<CollectionEntry>('collection_entries')
+    .where({
+      id: entryId
+    })
+    .first();
+
+  return {
+    id: entryId,
+    collectionId,
+    createdAt: existingEntry?.createdAt || Math.round(Date.now() / 1000),
+    updatedAt: Math.round(Date.now() / 1000),
+    data: updatesWithId
+  };
+}
+
+async function addOrUpdate(data: CollectionEntryWithData) {
   await db().transaction(async (trx) => {
     await trx<CollectionEntry>('collection_entries')
       .insert({
-        id: entryId,
-        collectionId,
-        createdAt: Math.round(Date.now() / 1000),
-        updatedAt: Math.round(Date.now() / 1000)
+        id: data.id,
+        collectionId: data.collectionId,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt
       })
       .onConflict('id')
       .merge(['updatedAt']);
 
-    const updatesWithId = updates.map((update) => ({
-      ...update,
-      entryId
-    }));
-
     await trx<CollectionEntryInputs>('collection_entry_inputs')
-      .insert(updatesWithId)
+      .insert(data.data)
       .onConflict('inputId')
       .merge();
   });
@@ -162,54 +175,102 @@ async function addOrUpdate(data: Record<string, string>, collectionId: string,
 router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
+  handleAccessControl(res, req.user, 'USER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
-    res.status(404).json({
-      error: 'Collection not found'
-    });
-    return;
+    throw new ExpressError('Collection not found', 404);
   }
 
   const entryId = uuid();
-  if (!await addOrUpdate(req.body, collectionId, entryId, res)) return;
+  const collectionEntry = await prepareData(req.body, collectionId, entryId);
 
-  res.status(200).json({
+  callHook('beforeCollectionEntryCreateHook', {
+    collectionEntry
+  });
+
+  if (!await addOrUpdate(collectionEntry)) return;
+
+  res.json({
     message: 'Collection Entry created',
     id: entryId
+  });
+
+  callHook('afterCollectionEntryCreateHook', {
+    collectionEntry
+  });
+
+  callHttpHook(await getWebsite(websiteId), await getCollection(collectionId), {
+    reason: WebsiteHookCallReasons.COLLECTION_ENTRY_CREATED,
+    target: {
+      id: entryId,
+      type: WebsiteHookCallTargets.COLLECTION_ENTRY
+    }
   });
 }));
 
 router.patch('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
+  handleAccessControl(res, req.user, 'USER', websiteId);
 
   if (!(await exists('collection_entries', id))) {
-    res.status(404).json({
-      error: 'Collection Entry not found'
-    });
-    return;
+    throw new ExpressError('Collection Entry not found', 404);
   }
 
-  if (!await addOrUpdate(req.body, collectionId, id, res)) return;
+  const collectionEntry = await prepareData(req.body, collectionId, id);
 
-  res.status(200).json({
+  callHook('beforeCollectionEntryModifyHook', {
+    collectionEntry
+  });
+
+  if (!await addOrUpdate(collectionEntry)) return;
+
+  res.json({
     message: 'Collection Entry edited'
+  });
+
+  callHook('afterCollectionEntryModifyHook', {
+    collectionEntry
+  });
+
+  callHttpHook(await getWebsite(websiteId), await getCollection(collectionId), {
+    reason: WebsiteHookCallReasons.COLLECTION_ENTRY_MODIFIED,
+    target: {
+      id,
+      type: WebsiteHookCallTargets.COLLECTION_ENTRY
+    }
   });
 }));
 
 router.delete('/:id', asyncRouteFix(async (req, res) => {
-  const { websiteId, id } = req.params;
+  const { websiteId, collectionId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'USER', websiteId)) return;
+  handleAccessControl(res, req.user, 'USER', websiteId);
 
   if (!(await exists('collection_entries', id))) {
-    res.status(404).json({
-      error: 'Collection Entry not found'
-    });
-    return;
+    throw new ExpressError('Collection Entry not found', 404);
   }
+
+  const existingEntry = await db()<CollectionEntry>('collection_entries')
+    .where({
+      id
+    })
+    .first();
+
+  const collectionEntry = {
+    id,
+    collectionId,
+    createdAt: existingEntry?.createdAt || Math.round(Date.now() / 1000),
+    updatedAt: Math.round(Date.now() / 1000),
+    data: await db()<CollectionEntryInputs>('collection_entry_inputs')
+      .where({
+        entryId: id
+      })
+  };
+
+  callHook('beforeCollectionEntryDeleteHook', {
+    collectionEntry
+  });
 
   await db().transaction(async (trx) => {
     await trx<CollectionEntryInputs>('collection_entry_inputs')
@@ -227,6 +288,18 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
 
   res.json({
     message: 'Collection Entry deleted'
+  });
+
+  callHook('afterCollectionEntryDeleteHook', {
+    collectionEntry
+  });
+
+  callHttpHook(await getWebsite(websiteId), await getCollection(collectionId), {
+    reason: WebsiteHookCallReasons.COLLECTION_ENTRY_DELETED,
+    target: {
+      id,
+      type: WebsiteHookCallTargets.COLLECTION_ENTRY
+    }
   });
 }));
 

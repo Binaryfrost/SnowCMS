@@ -1,5 +1,5 @@
 import { Box, Modal, Stack, Text, rem } from '@mantine/core';
-import { Dropzone, IMAGE_MIME_TYPE, MIME_TYPES } from '@mantine/dropzone';
+import { Dropzone, MIME_TYPES } from '@mantine/dropzone';
 import { IconFileUpload, IconUpload, IconX } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 import { FileUploadConfirmation, FileUploadResponse, type FileMetadata, type MediaConfig } from '../../../common/types/Media';
@@ -32,13 +32,14 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
           onDrop={async (files) => {
             try {
               const file = files[0];
+              const fileType = file.type || 'application/octet-stream';
 
               if (props.usedStorage + uploadedData.current + file.size > props.maxStorage) {
                 throw new Error('Unable to upload file without exceeding allocated storage');
               }
 
-              if (BLOCKED_MIME_TYPES.includes(file.type)) {
-                throw new Error(`File type ${file.type} is not allowed`);
+              if (BLOCKED_MIME_TYPES.includes(fileType)) {
+                throw new Error(`File type ${fileType} is not allowed`);
               }
 
               setError(null);
@@ -49,14 +50,14 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
                 MIME_TYPES.png,
                 MIME_TYPES.gif
               ];
-              const thumbnail = generateThumbnailFor.includes(file.type as any) &&
+              const thumbnail = generateThumbnailFor.includes(fileType as any) &&
                 await generateThumbnail(file);
               console.log('thumbnail', thumbnail.size, thumbnail);
 
               const metadata: FileMetadata = {
                 name: file.name,
                 size: file.size,
-                type: file.type,
+                type: fileType,
                 thumbnail: thumbnail && {
                   size: thumbnail.size,
                   type: 'image/png'
@@ -73,7 +74,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
               }
 
               const uploads = [
-                s3Upload(resp.body.upload.image.url, file.type, file),
+                s3Upload(resp.body.upload.image.url, fileType, file),
                 thumbnail && s3Upload(resp.body.upload.thumbnail.url, thumbnail.type, thumbnail)
               ].filter(Boolean);
 
@@ -89,7 +90,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
                     name: file.name,
                     s3Name: resp.body.upload.image.name,
                     size: file.size,
-                    type: file.type
+                    type: fileType
                   },
                   thumbnail: thumbnail && {
                     s3Name: resp.body.upload.thumbnail.name

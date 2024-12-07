@@ -1,9 +1,11 @@
 import type { PluginConfig } from '../config';
+import ExpressError from './ExpressError';
 import type { Input } from './InputRegistry';
 import type { Collection } from './types/Collection';
 import type { CollectionEntryWithData } from './types/CollectionEntry';
 import type { CollectionInput } from './types/CollectionInputs';
-import type { MediaWithUrls } from './types/Media';
+import type { CollectionTitle } from './types/CollectionTitle';
+import type { Media, MediaWithUrls } from './types/Media';
 import type { Website } from './types/Website';
 
 class PluginLogger {
@@ -34,6 +36,14 @@ interface ServerStartHook extends Hook {
   port: number
 }
 
+interface BeforeAfterCollectionTitlesModifyHook extends Hook {
+  collectionTitle: CollectionTitle
+}
+
+interface BeforeAfterMediaHook<T = Media> extends Hook {
+  media: T
+}
+
 interface SetupHook extends Hook {
   addInput<T = any>(input: Input<T>): void
 }
@@ -61,6 +71,8 @@ interface BeforeWebsiteHookCalledHook extends Hook {
     }
     reason: WebsiteHookCallReasons
   }
+  website: Website
+  collection: Collection
   /** Prevents the POST request from being sent */
   cancel(): void
 }
@@ -84,8 +96,7 @@ type AllBeforeAfterHooks =
   BeforeAfterHook<'Website', { website: Website }> &
   BeforeAfterHook<'Collection', { collection: Collection }> &
   BeforeAfterHook<'CollectionInput', { collectionInput: CollectionInput }> &
-  BeforeAfterHook<'CollectionEntry', { collectionEntry: CollectionEntryWithData }> &
-  BeforeAfterHook<'Media', { media: MediaWithUrls }>;
+  BeforeAfterHook<'CollectionEntry', { collectionEntry: CollectionEntryWithData }>;
 
 // TODO: Move doc comments to docs site
 interface Hooks extends AllBeforeAfterHooks {
@@ -93,24 +104,90 @@ interface Hooks extends AllBeforeAfterHooks {
   serverStart?: (hook: ServerStartHook) => void
   /** Called client-side on page load and server-side on startup */
   setup?: (hook: SetupHook) => void
+  beforeCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) => void
+  afterCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) => void
+  beforeMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) => void
+  afterMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) => void
+  afterMediaConfirmHook?: (hook: BeforeAfterMediaHook<MediaWithUrls>) => void
+  beforeMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void
+  afterMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void
+  /*
+   * TODO: Implement
+   * Events that trigger this hook:
+   * - CollectionEntryCreate
+   * - CollectionEntryModify
+   * - CollectionEntryDelete
+   * - CollectionInputModify
+   * - CollectionInputDelete
+   *
+   * No other events should trigger the hook as other events
+   * will most probably require code changes on the website.
+   */
   /** Called server-side before a POST request is sent to the website hook */
   beforeWebsiteHookCalled?: (hook: BeforeWebsiteHookCalledHook) => void
 }
 
-type HookRegistryFunction<T> = (props: Omit<T, 'logger'>) => void
+type HookRegistryFunction<T> = {
+  logger: PluginLogger,
+  hook: (props: Omit<T, 'logger'>) => void
+}
 
 const HookRegistry = new Map<keyof Hooks,
   HookRegistryFunction<Parameters<Hooks[keyof Hooks]>[0]>[]>();
 
+const ignoreThrowFromHooks: (keyof Hooks)[] = [
+  'serverStart',
+  'setup',
+  'beforeWebsiteHookCalled'
+];
+
 export function callHook<T extends keyof Hooks>(name: T, data:
   Omit<Parameters<Hooks[T]>[0], 'logger'>) {
   if (!HookRegistry.has(name)) return;
-  HookRegistry.get(name).forEach((hook) => hook(data));
+  HookRegistry.get(name).forEach((hook) => {
+    try {
+      hook.hook(data);
+    } catch (e) {
+      if (ignoreThrowFromHooks.includes(name) || name.startsWith('after')) {
+        hook.logger.warn('Plugin attempted to throw error from hook that does not allow errors');
+        return;
+      }
+
+      throw new ExpressError(e.message || e.name, e.status || 400);
+    }
+  });
+}
+
+export async function callHttpHook(website: Website, collection: Collection,
+  reason: BeforeWebsiteHookCalledHook['reason']) {
+  if (!website.hook) return;
+
+  let cancelled = false;
+
+  callHook('beforeWebsiteHookCalled', {
+    cancel: () => cancelled = true,
+    website,
+    collection,
+    reason
+  });
+
+  if (cancelled) return;
+
+  // TODO: Send POST request to hook
+  console.log('call website hook', website, collection, reason);
+
+  const resp = await fetch(website.hook, {
+    method: 'POST'
+  });
+
+  if (resp.status >= 400) {
+    console.log(`Failed to send POST request to website ${website.id}. ` +
+      `Response status: ${resp.status}`);
+  }
 }
 
 export interface Plugin {
   name: string
-  // TODO: Add hook types
   hooks: Hooks
 }
 
@@ -129,11 +206,14 @@ export function loadPlugins(config: PluginConfig) {
         HookRegistry.set(hookName, []);
       }
 
-      // @ts-expect-error
-      HookRegistry.get(hookName).push((props) => hook({
-        ...props,
-        logger
-      }));
+      HookRegistry.get(hookName).push({
+        logger,
+        // @ts-expect-error
+        hook: (props) => hook({
+          ...props,
+          logger
+        })
+      });
     });
 
     console.log(`Loaded plugin ${plugin.name}`);

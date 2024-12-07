@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Alert, JsonInput } from '@mantine/core';
-import { Plugin } from '../../src';
+import { Plugin, WebsiteHookCallReasons } from '../../src';
 
 const plugin: Plugin = {
   name: 'test-plugin',
@@ -70,7 +70,6 @@ const plugin: Plugin = {
         renderHtml: () => null
       });
     },
-    // TODO: Test
     beforeWebsiteCreateHook: ({ logger, website }) => {
       logger.log('before website create', website);
 
@@ -81,7 +80,45 @@ const plugin: Plugin = {
       logger.log('before website create', website);
 
       // This should result in a warning in console but not stop the website creation
-      if (website.name.includes('reject')) throw new Error('Invalid website name');
+      if (website.name.includes('test')) throw new Error('Invalid website name');
+    },
+    beforeWebsiteModifyHook: ({ logger, website }) => {
+      logger.log('website modified', website);
+    },
+    beforeWebsiteDeleteHook: ({ website }) => {
+      if (website.name === 'Test Website') throw new Error('That website cannot be deleted');
+    },
+    afterWebsiteDeleteHook: ({ logger, website }) => {
+      logger.log('website deleted', website);
+    },
+    afterCollectionEntryModifyHook: ({ logger, collectionEntry }) => {
+      logger.log('collection entry modified', collectionEntry);
+    },
+    beforeCollectionEntryDeleteHook: ({ logger, collectionEntry }) => {
+      if (collectionEntry.collectionId === '0192c4a8-9d0b-7ee9-a0b6-b87e38003c06') {
+        throw new Error('Entries in this collection cannot be deleted');
+      }
+
+      logger.log('will delete entry', collectionEntry);
+    },
+    afterCollectionEntryDeleteHook: ({ logger, collectionEntry }) => {
+      logger.log('deleted entry', collectionEntry);
+    },
+    beforeMediaCreateHook: ({ media }) => {
+      if (media.fileType === 'application/zip' || media.fileType === 'application/x-zip-compressed') {
+        throw new Error('ZIP files are not allowed');
+      }
+    },
+    afterMediaConfirmHook: ({ logger, media }) => {
+      logger.log('media uploaded', media.url);
+    },
+    beforeWebsiteHookCalled: ({ logger, website, collection, reason, cancel }) => {
+      if (collection.id === '0192c4a8-9d0b-7ee9-a0b6-b87e38003c06' &&
+        reason.reason === WebsiteHookCallReasons.COLLECTION_ENTRY_CREATED) {
+        cancel();
+      }
+
+      logger.log('before website hook called', website, collection, reason);
     }
   }
 };

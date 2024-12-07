@@ -3,12 +3,15 @@
  */
 
 export function bytesToReadableUnits(bytes: number) {
-  let amount = bytes / 1048576;
-  let unit = 'MB';
+  let amount = bytes / 1024;
+  let unit = 'KB';
 
-  if (amount >= 1024) {
-    amount /= 1024;
+  if (amount >= 1048576) {
+    amount /= 1048576;
     unit = 'GB';
+  } else if (amount >= 1024) {
+    amount /= 1024;
+    unit = 'MB';
   }
 
   return `${Math.round(amount * 100) / 100} ${unit}`;

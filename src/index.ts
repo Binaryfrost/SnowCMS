@@ -1,2 +1,2 @@
 export { defineConfig, definePluginConfig } from './config';
-export type { Plugin } from './common/plugins';
+export { type Plugin, WebsiteHookCallReasons, WebsiteHookCallTargets } from './common/plugins';

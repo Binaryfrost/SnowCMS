@@ -218,6 +218,16 @@ Plugins are added to the config file and should return a default export. Changes
    * Also have:
    * - setup: Called server-side and client-side for registering inputs
    * - serverStart: Called server-side with port
+   * - beforeWebsiteHookCalled: Called server-side before a POST request is sent to the website hook
+   * Events that trigger this hook:
+   * - CollectionEntryCreate
+   * - CollectionEntryModify
+   * - CollectionEntryDelete
+   * - CollectionInputModify
+   * - CollectionInputDelete
+   *
+   * No other events should trigger the hook as other events
+   * will most probably require code changes on the website.
    */
 interface Hooks {
   start?: ({...}: StartHook) => void | Promise<void>

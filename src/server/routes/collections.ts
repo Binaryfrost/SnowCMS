@@ -5,19 +5,18 @@ import { type Collection } from '../../common/types/Collection';
 import { handleAccessControl } from '../../common/users';
 import { exists } from '../database/util';
 import { asyncRouteFix } from '../util';
+import { callHook } from '../../common/plugins';
+import ExpressError from '../../common/ExpressError';
 
 const router = express.Router({ mergeParams: true });
 
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-    return;
+    throw new ExpressError('Website not found', 404);
   }
 
   res.json(await db<Collection>()
@@ -31,42 +30,45 @@ router.get('/', asyncRouteFix(async (req, res) => {
 router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
 
   const { name } = req.body;
 
   if (!name) {
-    res.status(400).json({
-      error: 'Name is required'
-    });
-    return;
+    throw new ExpressError('Name is required', 400);
   }
 
   if (!(await exists('websites', websiteId))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-    return;
+    throw new ExpressError('Website not found', 404);
   }
 
   const id = uuid();
-
-  await db<Collection>().insert({
+  const collection: Collection = {
     id,
     websiteId,
     name
-  }).into('collections');
+  };
+
+  callHook('beforeCollectionCreateHook', {
+    collection
+  });
+
+  await db<Collection>().insert(collection).into('collections');
 
   res.json({
     message: 'Collection created',
     id
+  });
+
+  callHook('afterCollectionCreateHook', {
+    collection
   });
 }));
 
 router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'VIEWER', websiteId)) return;
+  handleAccessControl(res, req.user, 'VIEWER', websiteId);
 
   const collection = await db()<Collection>('collections')
     .select('id', 'websiteId', 'name')
@@ -76,11 +78,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     .first();
 
   if (!collection) {
-    res.status(404).json({
-      error: 'Collection not found'
-    });
-
-    return;
+    throw new ExpressError('Collection not found', 404);
   }
 
   res.json(collection);
@@ -89,23 +87,26 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
 router.put('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
 
   const { name } = req.body;
   if (!name) {
-    res.status(400).json({
-      error: 'Name is required'
-    });
-    return;
+    throw new ExpressError('Name is required', 404);
   }
 
   if (!(await exists('collections', id))) {
-    res.status(404).json({
-      error: 'Collection not found'
-    });
-
-    return;
+    throw new ExpressError('Collection not found', 404);
   }
+
+  const collection: Collection = {
+    id,
+    websiteId,
+    name
+  };
+
+  callHook('beforeCollectionModifyHook', {
+    collection
+  });
 
   await db()<Collection>('collections')
     .where({
@@ -117,6 +118,10 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
 
   res.json({
     message: 'Collection edited'
+  });
+
+  callHook('afterCollectionModifyHook', {
+    collection
   });
 }));
 
@@ -158,20 +163,31 @@ export async function deleteCollection(id: string) {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', websiteId)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collections', id))) {
-    res.status(404).json({
-      error: 'Collection not found'
-    });
-
-    return;
+    throw new ExpressError('Collection not found', 404);
   }
+
+  const collection = await db()<Collection>('collections')
+    .select('id', 'name', 'websiteId')
+    .where({
+      id
+    })
+    .first();
+
+  callHook('beforeCollectionDeleteHook', {
+    collection
+  });
 
   await deleteCollection(id);
 
   res.json({
     message: 'Collection deleted'
+  });
+
+  callHook('afterCollectionDeleteHook', {
+    collection
   });
 }));
 

@@ -9,43 +9,51 @@ import { asyncRouteFix } from '../util';
 import { Collection } from '../../common/types/Collection';
 import { getConfig } from '../config/config';
 import { deleteCollection } from './collections';
+import { callHook } from '../../common/plugins';
+import ExpressError from '../../common/ExpressError';
 
 const router = express.Router();
 
 router.get('/', asyncRouteFix(async (req, res) => {
-  if (!handleAccessControl(res, req.user, 'VIEWER')) return;
+  handleAccessControl(res, req.user, 'VIEWER');
 
   // TODO: Filter based on access
   res.json(await db<Website>().select('id', 'name', 'hook').from('websites'));
 }));
 
 router.post('/', asyncRouteFix(async (req, res) => {
-  if (!handleAccessControl(res, req.user, 'ADMIN')) return;
+  handleAccessControl(res, req.user, 'ADMIN');
 
   const { name, hook } = req.body;
   if (!name) {
-    res.status(400).json({
-      error: 'Name is required'
-    });
-    return;
+    throw new ExpressError('Name is required', 400);
   }
 
   const id = uuid();
-
-  await db<Website>().insert({
+  const website: Website = {
     id,
     name,
     hook
-  }).into('websites');
+  };
+
+  callHook('beforeWebsiteCreateHook', {
+    website
+  });
+
+  await db<Website>().insert(website).into('websites');
 
   res.json({
     message: 'Website created',
     id
   });
+
+  callHook('afterWebsiteCreateHook', {
+    website
+  });
 }));
 
 router.get('/:id', asyncRouteFix(async (req, res) => {
-  if (!handleAccessControl(res, req.user, 'VIEWER', req.params.id)) return;
+  handleAccessControl(res, req.user, 'VIEWER', req.params.id);
 
   const website = await db()<Website>('websites')
     .select('id', 'name', 'hook')
@@ -55,34 +63,33 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     .first();
 
   if (!website) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-
-    return;
+    throw new ExpressError('Website not found', 404);
   }
 
   res.json(website);
 }));
 
 router.put('/:id', asyncRouteFix(async (req, res) => {
-  if (!handleAccessControl(res, req.user, 'SUPERUSER', req.params.id)) return;
+  handleAccessControl(res, req.user, 'SUPERUSER', req.params.id);
 
   const { name, hook } = req.body;
   if (!name) {
-    res.status(400).json({
-      error: 'Name is required'
-    });
-    return;
+    throw new ExpressError('Name is required', 400);
   }
 
   if (!(await exists('websites', req.params.id))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-
-    return;
+    throw new ExpressError('Website not found', 404);
   }
+
+  const website: Website = {
+    id: req.params.id,
+    name,
+    hook
+  };
+
+  callHook('beforeWebsiteModifyHook', {
+    website
+  });
 
   await db()<Website>('websites')
     .where({
@@ -95,6 +102,10 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
 
   res.json({
     message: 'Website edited'
+  });
+
+  callHook('afterWebsiteModifyHook', {
+    website
   });
 }));
 
@@ -118,7 +129,6 @@ async function deleteFolder(location: string) {
     });
 
     const list = await client.send(listCommand);
-    console.log(list);
     if (list.KeyCount) {
       const deleteCommand = new DeleteObjectsCommand({
         Bucket: s3.bucket,
@@ -146,15 +156,22 @@ async function deleteFolder(location: string) {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { id } = req.params;
 
-  if (!handleAccessControl(res, req.user, 'ADMIN')) return;
+  handleAccessControl(res, req.user, 'ADMIN');
 
   if (!(await exists('websites', id))) {
-    res.status(404).json({
-      error: 'Website not found'
-    });
-
-    return;
+    throw new ExpressError('Website not found', 404);
   }
+
+  const website = await db()<Website>('websites')
+    .select('id', 'name', 'hook')
+    .where({
+      id
+    })
+    .first();
+
+  callHook('beforeWebsiteDeleteHook', {
+    website
+  });
 
   await db().transaction(async (trx) => {
     const collections = await trx<Collection>('collections')
@@ -183,6 +200,10 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
 
   res.json({
     message: 'Website deleted'
+  });
+
+  callHook('afterWebsiteDeleteHook', {
+    website
   });
 }));
 

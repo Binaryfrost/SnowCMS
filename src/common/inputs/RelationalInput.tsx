@@ -3,10 +3,10 @@ import { useParams } from 'react-router-dom';
 import { Checkbox, Select, Text } from '@mantine/core';
 import { useField, useForm } from '@mantine/form';
 import type { Input } from '../InputRegistry';
+import type { Collection } from '../types/Collection';
+import type { CollectionEntryWithTitle } from '../types/CollectionEntry';
 import DataGetter from '../../client/components/DataGetter';
-import { Collection } from '../types/Collection';
 import { shortenUuid } from '../../client/components/ShortUuid';
-import { CollectionEntryWithTitle } from '../types/CollectionEntry';
 import FormSkeleton from '../../client/components/FormSkeleton';
 
 /*
