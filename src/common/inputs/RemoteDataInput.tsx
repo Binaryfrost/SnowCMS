@@ -3,13 +3,6 @@ import { Box, Checkbox, Code, List, Text, TextInput } from '@mantine/core';
 import { useField, useForm } from '@mantine/form';
 import type { Input } from '../InputRegistry';
 
-// TODO: Implement
-/*
- * The RemoteData Input will send an HTTP request to the specified URL and
- * return the result of this request as either text, JSON, or base64 depending
- * on Content-Type header.
- */
-
 interface RemoteDataSettings {
   url: string
   required: boolean
@@ -32,15 +25,17 @@ const input: Input<string, RemoteDataSettings> = {
       }
     });
     useImperativeHandle(ref, () => ({
-      getValues: () => props.settings?.url || field.getValue(),
+      getValues: () => field.getValue(),
       hasError: async () => {
         if (props.settings.url) return false;
         return !!(await field.validate());
       }
     }));
 
-    return props.settings.url ? null : (
-      <TextInput label={props.name} description={props.description}
+    return (
+      <TextInput label={props.name}
+        description={[props.description, props.settings?.url &&
+          `Leave blank to use default (${props.settings.url})`].filter(Boolean).join('. ')}
         required={props.settings?.required} {...field.getInputProps()} key={field.key} />
     );
   }),
@@ -83,7 +78,7 @@ const input: Input<string, RemoteDataSettings> = {
   }),
 
   renderHtml: async (value, settings, req) => {
-    const url = settings.url || value;
+    const url = value || settings.url;
     if (!url) return null;
 
     const { websiteId, collectionId, id } = req.params;
@@ -100,9 +95,9 @@ const input: Input<string, RemoteDataSettings> = {
     });
     if (resp.status >= 400) return null;
 
-    const contentType = resp.headers.get('Content-Type');
+    const contentType = resp.headers.get('Content-Type') || 'application/octet-stream';
 
-    if (!contentType || contentType.includes('text/')) {
+    if (contentType.includes('text/')) {
       return resp.text();
     }
 
