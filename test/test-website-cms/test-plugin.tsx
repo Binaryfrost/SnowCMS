@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Alert, JsonInput } from '@mantine/core';
-import { Plugin, WebsiteHookCallReasons } from '../../src';
+import { Plugin, WebsiteHookCallReasons, ExpressError } from '../../src';
 
 const plugin: Plugin = {
   name: 'test-plugin',
@@ -74,19 +74,19 @@ const plugin: Plugin = {
       logger.log('before website create', website);
 
       // This should prevent the creation of the website
-      if (website.name.includes('reject')) throw new Error('Invalid website name');
+      if (website.name.includes('reject')) throw new ExpressError('Invalid website name', 400);
     },
     afterWebsiteCreateHook: ({ logger, website }) => {
       logger.log('before website create', website);
 
       // This should result in a warning in console but not stop the website creation
-      if (website.name.includes('test')) throw new Error('Invalid website name');
+      if (website.name.includes('test')) throw new ExpressError('Invalid website name', 400);
     },
     beforeWebsiteModifyHook: ({ logger, website }) => {
       logger.log('website modified', website);
     },
     beforeWebsiteDeleteHook: ({ website }) => {
-      if (website.name === 'Test Website') throw new Error('That website cannot be deleted');
+      if (website.name === 'Test Website') throw new ExpressError('That website cannot be deleted', 403);
     },
     afterWebsiteDeleteHook: ({ logger, website }) => {
       logger.log('website deleted', website);
@@ -96,7 +96,7 @@ const plugin: Plugin = {
     },
     beforeCollectionEntryDeleteHook: ({ logger, collectionEntry }) => {
       if (collectionEntry.collectionId === '0192c4a8-9d0b-7ee9-a0b6-b87e38003c06') {
-        throw new Error('Entries in this collection cannot be deleted');
+        throw new ExpressError('Entries in this collection cannot be deleted', 403);
       }
 
       logger.log('will delete entry', collectionEntry);
@@ -106,7 +106,7 @@ const plugin: Plugin = {
     },
     beforeMediaCreateHook: ({ media }) => {
       if (media.fileType === 'application/zip' || media.fileType === 'application/x-zip-compressed') {
-        throw new Error('ZIP files are not allowed');
+        throw new ExpressError('ZIP files are not allowed', 400);
       }
     },
     afterMediaConfirmHook: ({ logger, media }) => {
