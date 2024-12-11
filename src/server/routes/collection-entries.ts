@@ -76,29 +76,51 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection Entry not found', 404);
   }
 
-  const inputs = await db()<CollectionEntryInputs>('collection_entry_inputs')
-    .select('inputId', 'entryId', 'data')
-    .where({
-      entryId: id
-    });
-
-  const collectionInputs = (await getCollectionInputs(collectionId)).reduce((a, c) => ({
-    ...a,
-    [c.id]: c
-  }), {});
+  const inputs =
+    (await db()<CollectionEntryInputs>('collection_entry_inputs')
+      .select('inputId', 'entryId', 'data')
+      .where({
+        entryId: id
+      }));
 
   let inputsData = {};
 
   if (render && render !== 'false') {
-    /*
-     * TODO: Loop through collectionInputs instead so that CollectionEntry API responses
-     * always have all inputs, even for Entries created before the Collection Input.
-     */
-    for await (const input of inputs) {
-      const collectionInput: CollectionInput = collectionInputs[input.inputId];
-      inputsData[collectionInput.fieldName] =
-        await renderInput(collectionInput.input, input.data, collectionInput.inputConfig, req);
+    const renderedInputs: (() => Promise<{name: string, data: Promise<any>}>)[] = [];
+    const keyedInputs = inputs.reduce((a, c) => ({
+      ...a,
+      [c.inputId]: c
+    }), {});
+
+    interface CollectionInputWithData extends CollectionInput {
+      data: string
     }
+
+    const collectionInputs: Record<string, CollectionInputWithData> =
+      (await getCollectionInputs(collectionId))
+        .reduce((a, c) => ({
+          ...a,
+          [c.id]: {
+            ...c,
+            data: keyedInputs[c.id]?.data || null
+          }
+        }), {});
+
+    for (const collectionInput in collectionInputs) {
+      if (Object.prototype.hasOwnProperty.call(collectionInputs, collectionInput)) {
+        const element = collectionInputs[collectionInput];
+        renderedInputs.push(async () => ({
+          name: element.fieldName,
+          data: await renderInput(element.input, element.data, element.inputConfig, req)
+        }));
+      }
+    }
+
+    inputsData = (await Promise.all(renderedInputs.map((promise) => promise())))
+      .reduce((a, c) => ({
+        ...a,
+        [c.name]: c.data
+      }), {});
   } else {
     inputsData = inputs;
   }
