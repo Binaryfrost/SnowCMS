@@ -31,9 +31,9 @@ interface BaseInput<T, S> {
   description?: string
 
   /*
-   * Serialization methods, called client-side
-   * serialize is called before sending data to server
-   * deserialize is called before rendering input
+   * Serialization methods.
+   * serialize is called before sending data to server (client-side only)
+   * deserialize is called before rendering input and HTML (client and server side)
    */
   serialize: (data: T) => string
   deserialize: (data: string) => T
