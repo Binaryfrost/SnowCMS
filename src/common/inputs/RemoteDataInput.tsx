@@ -53,7 +53,7 @@ const input: Input<string, RemoteDataSettings> = {
     });
 
     useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues(),
+      getValues: () => form.getValues()
     }));
 
     return (

@@ -47,3 +47,7 @@
   outline: 3px solid var(--mantine-color-violet-5);
   transition: outline 0.15s;
 }
+
+.tiptap iframe {
+  max-width: fit-content;
+}

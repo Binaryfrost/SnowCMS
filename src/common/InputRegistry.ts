@@ -66,7 +66,7 @@ interface BaseInput<T, S> {
 }
 
 interface SettingsProps<S> {
-  settings: S
+  settings?: S
 }
 
 interface InputWithSettings<T, S> extends BaseInput<T, S> {
