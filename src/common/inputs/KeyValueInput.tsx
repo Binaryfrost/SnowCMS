@@ -1,20 +1,17 @@
 import { forwardRef, memo, useCallback, useImperativeHandle, useState } from 'react';
 import { useForm } from '@mantine/form';
-import { ActionIcon, Box, Checkbox, Group, NumberInput, NumberInputProps, TextInput,
-  Input as MantineInput, Stack, Paper, Text } from '@mantine/core';
+import { Checkbox, NumberInput, NumberInputProps, TextInput } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
-import { IconMinus, IconPlus } from '@tabler/icons-react';
 import { v4 as uuid } from 'uuid';
 import { Input } from '../InputRegistry';
-import IconButton from '../../client/components/IconButton';
 import FlexGrow from '../../client/components/FlexGrow';
+import InputArray, { InputArrayBaseValue, UpdateInputArrayWithoutHandler, updateInputArray } from './common/InputArray';
 
 type Value = Record<string, string>
 
-interface TempValue {
+interface TempValue extends InputArrayBaseValue {
   key: string
   value: string
-  id: string
 }
 
 interface KeyValueInputSettings {
@@ -66,70 +63,34 @@ const input: Input<Value, KeyValueInputSettings> = {
       }
     }));
 
-    const update = useCallback((id: string, key: string, value: string) => {
-      handlers.applyWhere(
-        (item) => item.id === id,
-        (item) => ({
-          ...item,
-          [key]: value
-        })
-      );
+    const update = useCallback((...params: UpdateInputArrayWithoutHandler) => {
+      updateInputArray(handlers, ...params);
     }, []);
 
     return (
-      <Box>
-        <Group>
-          <Box>
-            <MantineInput.Label required={props.settings?.required}>
-              {props.name}
-            </MantineInput.Label>
-            {props.description && (
-              <MantineInput.Description>{props.description}</MantineInput.Description>
-            )}
-          </Box>
+      <InputArray name={props.name} description={props.description} error={error}
+        required={props.settings?.required} inputs={inputs} handlers={handlers}
+        maxInputs={props.settings?.maxInputs} addInput={() => handlers.append({
+          id: uuid(),
+          key: '',
+          value: ''
+        })}>
+        {(i) => (
+          <>
+            <FlexGrow>
+              <TextInput label="Key" value={i.key}
+                maxLength={props.settings?.maxKeyLength || undefined}
+                onChange={(e) => update(i.id, 'key', e.target.value)} />
+            </FlexGrow>
 
-          <IconButton label="Add Input">
-            <ActionIcon onClick={() => handlers.append({
-              id: uuid(),
-              key: '',
-              value: ''
-            })} disabled={props.settings?.maxInputs <= inputs.length}>
-              <IconPlus />
-            </ActionIcon>
-          </IconButton>
-        </Group>
-
-        <Paper withBorder p="sm">
-          <Stack gap="xs">
-            {inputs.length === 0 ? (
-              <Text c="dimmed">No inputs exist yet for this Key Value Input. Add one by clicking the add button above.</Text>
-            ) : inputs.map((i) => (
-              <Paper withBorder p="xs" key={i.id}>
-                <Group>
-                  <FlexGrow>
-                    <TextInput label="Key" value={i.key}
-                      maxLength={props.settings?.maxKeyLength || undefined}
-                      onChange={(e) => update(i.id, 'key', e.target.value)} />
-                  </FlexGrow>
-
-                  <FlexGrow>
-                    <TextInput label="Value" value={i.value}
-                      maxLength={props.settings?.maxValueLength || undefined}
-                      onChange={(e) => update(i.id, 'value', e.target.value)} />
-                  </FlexGrow>
-
-                  <IconButton label="Remove Input">
-                    <ActionIcon onClick={() => handlers.filter((e) => e.id !== i.id)}>
-                      <IconMinus />
-                    </ActionIcon>
-                  </IconButton>
-                </Group>
-              </Paper>
-            ))}
-          </Stack>
-        </Paper>
-        {error && <MantineInput.Error>{error}</MantineInput.Error>}
-      </Box>
+            <FlexGrow>
+              <TextInput label="Value" value={i.value}
+                maxLength={props.settings?.maxValueLength || undefined}
+                onChange={(e) => update(i.id, 'value', e.target.value)} />
+            </FlexGrow>
+          </>
+        )}
+      </InputArray>
     );
   }),
 
