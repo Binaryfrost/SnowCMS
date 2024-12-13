@@ -99,7 +99,7 @@ const input: Input<string, RelationalInputSettings> = {
   deserializeSettings: (data) => JSON.parse(data),
   serializeSettings: (data) => JSON.stringify(data),
 
-  isValid: async (stringifiedValue, deserialize, settings, req) => {
+  validate: async (stringifiedValue, deserialize, settings, req) => {
     if (settings.required && !stringifiedValue) {
       throw new Error('Required Relational Input does not have a value');
     }

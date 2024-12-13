@@ -110,7 +110,7 @@ interface BaseInput<T, S> {
    * Called server-side to ensure that the input value is valid.
    * You should throw an error if it is invalid.
    */
-  isValid?: (stringifiedValue: string, deserialize: BaseInput<T, S>['deserialize'],
+  validate?: (stringifiedValue: string, deserialize: BaseInput<T, S>['deserialize'],
     settings: S | null, req: Request) => void | Promise<void>
 
   /**

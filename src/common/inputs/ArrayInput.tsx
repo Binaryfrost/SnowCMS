@@ -182,7 +182,7 @@ const input: Input<any[], ArrayInputSettings> = {
     );
   }),
 
-  isValid: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, settings) => {
     if (!stringifiedValue) {
       throw new Error('Empty value for Array Input');
     }

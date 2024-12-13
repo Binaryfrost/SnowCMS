@@ -419,7 +419,7 @@ const input: Input<JSONContent, TextInputSettings> = {
    * It would be great to check the max length here, but it doesn't look
    * like Tiptap provides a server-side getText() API.
    */
-  isValid: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, settings) => {
     if (!stringifiedValue) {
       if (settings.required) {
         throw new ExpressError('Required Rich Text Input does not have a value');

@@ -29,7 +29,7 @@ async function renderInput(input: string, data: string, settings: string, req: R
 async function checkInputValueValidity(input: string, data: string,
   settings: string, req: Request) {
   const registryInput = InputRegistry.getInput(input);
-  return registryInput?.isValid?.(
+  return registryInput?.validate?.(
     data,
     registryInput.deserialize,
     settings ? registryInput.deserializeSettings?.(settings) : null,

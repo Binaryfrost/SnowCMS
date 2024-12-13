@@ -132,7 +132,7 @@ const input: Input<Value, KeyValueInputSettings> = {
     );
   }),
 
-  isValid: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, settings) => {
     if (!stringifiedValue) {
       throw new Error('Empty value for Key Value Input');
     }

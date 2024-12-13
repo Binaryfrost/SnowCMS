@@ -134,7 +134,7 @@ const input: Input<string, MediaInputSettings> = {
     );
   }),
 
-  isValid: async (stringifiedValue, deserialize, settings, req) => {
+  validate: async (stringifiedValue, deserialize, settings, req) => {
     if (settings.required && !stringifiedValue) {
       throw new Error('Required Media Input does not have a value');
     }

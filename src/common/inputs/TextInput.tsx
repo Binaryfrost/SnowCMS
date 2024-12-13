@@ -79,7 +79,7 @@ const input: Input<string, TextInputSettings> = {
     );
   }),
 
-  isValid: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, settings) => {
     if (settings.required && !stringifiedValue) {
       throw new ExpressError('Required Text Input does not have a value');
     }

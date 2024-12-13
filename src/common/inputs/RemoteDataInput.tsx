@@ -77,7 +77,7 @@ const input: Input<string, RemoteDataSettings> = {
     );
   }),
 
-  isValid: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, settings) => {
     if (settings.required && !stringifiedValue) {
       throw new Error('Required Remote Data Input does not have a value');
     }

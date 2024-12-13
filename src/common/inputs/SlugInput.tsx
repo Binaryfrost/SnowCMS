@@ -106,7 +106,7 @@ const input: Input<string, SlugInputSettings> = {
     );
   }),
 
-  isValid: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, settings) => {
     if (settings.required && !stringifiedValue) {
       throw new ExpressError('Required Slug Input does not have a value');
     }
