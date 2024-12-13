@@ -26,6 +26,17 @@ async function renderInput(input: string, data: string, settings: string, req: R
   return null;
 }
 
+async function checkInputValueValidity(input: string, data: string,
+  settings: string, req: Request) {
+  const registryInput = InputRegistry.getInput(input);
+  return registryInput?.isValid?.(
+    data,
+    registryInput.deserialize,
+    settings ? registryInput.deserializeSettings?.(settings) : null,
+    req
+  );
+}
+
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
@@ -132,7 +143,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
 }));
 
 async function prepareData(data: Record<string, string>, collectionId: string,
-  entryId: string): Promise<CollectionEntryWithData> {
+  entryId: string, req: Request): Promise<CollectionEntryWithData> {
   const collectionInputs: Record<string, CollectionInput> =
     (await getCollectionInputs(collectionId)).reduce((a, c) => ({
       ...a,
@@ -145,6 +156,15 @@ async function prepareData(data: Record<string, string>, collectionId: string,
       if (!(key in collectionInputs)) {
         throw new ExpressError(`Invalid data: Input ${key} does not exist on this Collection`, 400);
       }
+
+      const collectionInput = collectionInputs[key];
+      // eslint-disable-next-line no-await-in-loop
+      await checkInputValueValidity(
+        collectionInput.input,
+        data[key],
+        collectionInput.inputConfig,
+        req
+      );
 
       updates.push({
         inputId: collectionInputs[key].id,
@@ -204,7 +224,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
   }
 
   const entryId = uuid();
-  const collectionEntry = await prepareData(req.body, collectionId, entryId);
+  const collectionEntry = await prepareData(req.body, collectionId, entryId, req);
 
   callHook('beforeCollectionEntryCreateHook', {
     collectionEntry
@@ -239,7 +259,7 @@ router.patch('/:id', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection Entry not found', 404);
   }
 
-  const collectionEntry = await prepareData(req.body, collectionId, id);
+  const collectionEntry = await prepareData(req.body, collectionId, id, req);
 
   callHook('beforeCollectionEntryModifyHook', {
     collectionEntry

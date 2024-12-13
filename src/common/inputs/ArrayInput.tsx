@@ -182,6 +182,26 @@ const input: Input<any[], ArrayInputSettings> = {
     );
   }),
 
+  isValid: (stringifiedValue, deserialize, settings) => {
+    if (!stringifiedValue) {
+      throw new Error('Empty value for Array Input');
+    }
+
+    const value = deserialize(stringifiedValue);
+
+    if (!Array.isArray(value)) {
+      throw new Error('Array Input must be a value');
+    }
+
+    if (settings.required && value.length === 0) {
+      throw new Error('Required Array Input does not have a value');
+    }
+
+    if (settings.maxInputs > 0 && value.length > settings.maxInputs) {
+      throw new Error('Array Input has more inputs than allowed');
+    }
+  },
+
   renderHtml: (value, settings, req) => {
     console.log('array', value, settings);
     const selectedInput = getInput(settings?.input);

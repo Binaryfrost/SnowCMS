@@ -11,3 +11,12 @@ export function random(length: number, charset: string) {
 export function randomHex(length: number) {
   return random(length, '0123456789abcdef');
 }
+
+export function mimeTypeMatch(imageMime: string, filterMime: string) {
+  if (filterMime.endsWith('/*')) {
+    const wildcardType = filterMime.replace('/*', '');
+    return imageMime.startsWith(wildcardType);
+  }
+
+  return filterMime === imageMime;
+}

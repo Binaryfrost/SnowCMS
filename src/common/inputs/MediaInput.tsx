@@ -9,6 +9,8 @@ import type { MediaWithUrls } from '../types/Media';
 import { SELECT_MEDIA_MODAL_ID, showSelectMediaModal } from '../../client/util/modals';
 import FilePreview from '../../client/components/FilePreview';
 import { get } from '../../client/util/api';
+import { mimeTypeMatch } from '../util';
+import ExpressError from '../ExpressError';
 
 interface MediaInputSettings {
   mimeTypes: string[]
@@ -131,6 +133,34 @@ const input: Input<string, MediaInputSettings> = {
       </Stack>
     );
   }),
+
+  isValid: async (stringifiedValue, deserialize, settings, req) => {
+    if (settings.required && !stringifiedValue) {
+      throw new Error('Required Media Input does not have a value');
+    }
+
+    const value = deserialize(stringifiedValue);
+    if (!value) return;
+    if (settings.mimeTypes?.length === 0) return;
+
+    const { websiteId } = req.params;
+    const { authorization } = req.headers;
+    const port = req.socket.localPort;
+
+    const resp = await fetch(`http://localhost:${port}/api/websites/${websiteId}/media/${value}`, {
+      headers: {
+        authorization
+      }
+    });
+
+    if (resp.status !== 200) return;
+
+    const media: MediaWithUrls = await resp.json();
+
+    if (!settings.mimeTypes.some((type) => mimeTypeMatch(media.fileType, type))) {
+      throw new ExpressError('Media Input image is an invalid type');
+    }
+  },
 
   renderHtml: async (value, settings, req) => {
     if (!value) return null;

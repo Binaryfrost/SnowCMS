@@ -4,6 +4,7 @@ import DataGetter from './DataGetter';
 import GalleryFile from './GalleryFile';
 import FilePreview from './FilePreview';
 import { useIsMobile } from '../util/mobile';
+import { mimeTypeMatch } from '../../common/util';
 
 export interface MediaGalleryProps {
   websiteId: string
@@ -29,14 +30,7 @@ export default function MediaGallery({ websiteId, search, mimeTypes = [],
           {media
             .filter((m) => {
               if (mimeTypes.length === 0) return true;
-              return mimeTypes.some((type) => {
-                if (type.endsWith('/*')) {
-                  const wildcardType = type.replace('/*', '');
-                  return m.fileType.startsWith(wildcardType);
-                }
-
-                return m.fileType === type;
-              });
+              return mimeTypes.some((type) => mimeTypeMatch(m.fileType, type));
             })
             .filter((m) => {
               if (!search) return true;

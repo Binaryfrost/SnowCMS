@@ -3,6 +3,7 @@ import { Checkbox, NumberInput, Stack, TextInput } from '@mantine/core';
 import { useField, useForm } from '@mantine/form';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
+import ExpressError from '../ExpressError';
 
 interface SlugInputSettings {
   fieldName: string
@@ -104,6 +105,18 @@ const input: Input<string, SlugInputSettings> = {
       </Stack>
     );
   }),
+
+  isValid: (stringifiedValue, deserialize, settings) => {
+    if (settings.required && !stringifiedValue) {
+      throw new ExpressError('Required Slug Input does not have a value');
+    }
+
+    const value = deserialize(stringifiedValue);
+
+    if (settings.maxLength > 0 && value.length > settings.maxLength) {
+      throw new ExpressError('Slug Input value is longer than allowed');
+    }
+  },
 
   renderHtml: (value) => value
 };

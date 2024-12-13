@@ -107,6 +107,13 @@ interface BaseInput<T, S> {
   isAllowed?: (website: Website, collection: Collection) => boolean
 
   /**
+   * Called server-side to ensure that the input value is valid.
+   * You should throw an error if it is invalid.
+   */
+  isValid?: (stringifiedValue: string, deserialize: BaseInput<T, S>['deserialize'],
+    settings: S | null, req: Request) => void | Promise<void>
+
+  /**
    * Called server-side when page is requested through API
    * with the query parameter `?render=true`.
    *

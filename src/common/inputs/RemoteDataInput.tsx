@@ -77,6 +77,12 @@ const input: Input<string, RemoteDataSettings> = {
     );
   }),
 
+  isValid: (stringifiedValue, deserialize, settings) => {
+    if (settings.required && !stringifiedValue) {
+      throw new Error('Required Remote Data Input does not have a value');
+    }
+  },
+
   renderHtml: async (value, settings, req) => {
     const url = value || settings.url;
     if (!url) return null;

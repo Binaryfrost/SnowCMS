@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle } from 'react';
 import { Checkbox, NumberInput, Stack, TextInput } from '@mantine/core';
 import { useField, useForm } from '@mantine/form';
 import { type Input } from '../InputRegistry';
+import ExpressError from '../ExpressError';
 
 interface TextInputSettings {
   maxLength: number
@@ -77,6 +78,18 @@ const input: Input<string, TextInputSettings> = {
       </Stack>
     );
   }),
+
+  isValid: (stringifiedValue, deserialize, settings) => {
+    if (settings.required && !stringifiedValue) {
+      throw new ExpressError('Required Text Input does not have a value');
+    }
+
+    const value = deserialize(stringifiedValue);
+
+    if (settings.maxLength > 0 && value.length > settings.maxLength) {
+      throw new ExpressError('Text Input value is longer than allowed');
+    }
+  },
 
   renderHtml: (value) => value
 };

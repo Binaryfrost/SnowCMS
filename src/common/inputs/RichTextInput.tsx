@@ -37,6 +37,7 @@ import Video from './RichTextInput/Video';
 import './RichTextInput/RichTextInput.css';
 import { showYoutubeModal } from './RichTextInput/YoutubeModal';
 import { showVideoModal } from './RichTextInput/VideoModal';
+import ExpressError from '../ExpressError';
 
 interface TextInputSettings {
   maxLength: number
@@ -413,6 +414,24 @@ const input: Input<JSONContent, TextInputSettings> = {
       </Stack>
     );
   }),
+
+  /*
+   * It would be great to check the max length here, but it doesn't look
+   * like Tiptap provides a server-side getText() API.
+   */
+  isValid: (stringifiedValue, deserialize, settings) => {
+    if (!stringifiedValue) {
+      if (settings.required) {
+        throw new ExpressError('Required Rich Text Input does not have a value');
+      }
+      return;
+    }
+
+    const value = deserialize(stringifiedValue);
+    if (typeof value !== 'object' || Array.isArray(value)) {
+      throw new ExpressError('Invalid Rich Text Input data');
+    }
+  },
 
   renderHtml: (value) => generateHTML(value, extensions)
 };

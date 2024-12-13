@@ -65,7 +65,7 @@ const input: Input<null, AlertInputSettings> = {
     );
   }),
 
-  renderHtml: (value) => value
+  renderHtml: () => null
 };
 
 export default input;

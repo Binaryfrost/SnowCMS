@@ -99,6 +99,30 @@ const input: Input<string, RelationalInputSettings> = {
   deserializeSettings: (data) => JSON.parse(data),
   serializeSettings: (data) => JSON.stringify(data),
 
+  isValid: async (stringifiedValue, deserialize, settings, req) => {
+    if (settings.required && !stringifiedValue) {
+      throw new Error('Required Relational Input does not have a value');
+    }
+
+    const value = deserialize(stringifiedValue);
+    if (!value || !settings.collectionId) return;
+
+    const { websiteId } = req.params;
+    const { authorization } = req.headers;
+    const port = req.socket.localPort;
+
+    const resp = await fetch(`http://localhost:${port}/api/websites/${websiteId}/collections` +
+      `/${settings.collectionId}/entry/${value}`, {
+      headers: {
+        authorization
+      }
+    });
+
+    if (resp.status !== 200) {
+      throw new Error('Relational Input referenced non-existant entry');
+    }
+  },
+
   renderHtml: async (value, settings, req) => {
     if (!value) return null;
 
