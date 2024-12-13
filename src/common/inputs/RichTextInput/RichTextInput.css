@@ -48,6 +48,6 @@
   transition: outline 0.15s;
 }
 
-.tiptap iframe {
-  max-width: fit-content;
+.tiptap [data-youtube-video] {
+  overflow: auto;
 }
