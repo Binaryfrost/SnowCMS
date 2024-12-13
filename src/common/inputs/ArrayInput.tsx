@@ -159,6 +159,8 @@ const input: Input<any[], ArrayInputSettings> = {
         <Select label="Input" required searchable nothingFoundMessage="No Input found"
           data={Object.values(inputs)
             .filter((i) => i.id !== INPUT_ID)
+            // Only allow Inputs that return a ref (accept a value)
+            .filter((i) => typeof i.renderInput() === 'object')
             .map((i) => ({
               label: `${i.name} (${i.id})`,
               value: i.id
