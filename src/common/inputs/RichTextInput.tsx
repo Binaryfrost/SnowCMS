@@ -77,7 +77,11 @@ const extensions = [
   TableRow,
   TableHeader,
   TableCell,
-  Youtube,
+  Youtube.configure({
+    HTMLAttributes: {
+      loading: 'lazy'
+    }
+  }),
   Video
 ];
 
