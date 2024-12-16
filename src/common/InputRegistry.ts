@@ -89,11 +89,7 @@ interface BaseInput<T, S> {
    * Called client-side to render input in CMS; remember to call useImperativeHandle
    * with InputRef object if the Input has a value
    *
-   * Example usage:
-   * ```js
-   * const InputComponent = input.renderInput();
-   * <InputComponent value={value} settings={settings} label={name} description={description} />
-   * ```
+   * The Collection Input name and description will be passed as props.
    */
   renderInput: () =>
     ForwardRefExoticComponent<InputProps<T, S> & RefAttributes<InputRef<T>>> |
@@ -110,7 +106,7 @@ interface BaseInput<T, S> {
    * Called server-side to ensure that the input value is valid.
    * You should throw an error if it is invalid.
    */
-  validate?: (stringifiedValue: string, deserialize: BaseInput<T, S>['deserialize'],
+  validate?: (serializedValue: string, deserialize: BaseInput<T, S>['deserialize'],
     settings: S | null, req: Request) => void | Promise<void>
 
   /**
@@ -144,6 +140,15 @@ interface InputWithSettings<T, S> extends BaseInput<T, S> {
    * Deserializes settings from a string
    */
   deserializeSettings: (data: string) => S
+
+  // TODO: Implement
+  /**
+   * Called server-side to ensure that the input value is valid.
+   * You should throw an error if it is invalid.
+   */
+  validateSettings?: (serializedSettings: string,
+    deserialize: InputWithSettings<T, S>['deserializeSettings'],
+    req: Request) => void | Promise<void>
 }
 
 // This ensures that if one of these is defined, the other one has to be as well
@@ -151,6 +156,7 @@ interface InputWithoutSettings<T, S> extends BaseInput<T, S> {
   renderSettings?: never
   serializeSettings?: never
   deserializeSettings?: never
+  validateSettings?: never
 }
 
 /**

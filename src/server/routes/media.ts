@@ -180,34 +180,34 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
   const usedStorage = await getUsedStorage(websiteId);
 
   if (!name || !size || !type) {
-    throw new ExpressError('Name, size, and type are required', 400);
+    throw new ExpressError('Name, size, and type are required');
   }
 
   // @ts-expect-error We don't yet know if it is a string or number
   if (Number.isNaN(parseInt(size, 10))) {
-    throw new ExpressError('Size must be a number', 400);
+    throw new ExpressError('Size must be a number');
   }
 
   if (thumbnail) {
     if (typeof thumbnail !== 'object') {
-      throw new ExpressError('Thumbnail must be an object', 400);
+      throw new ExpressError('Thumbnail must be an object');
     }
 
     if (!thumbnail.size || !thumbnail.type) {
-      throw new ExpressError('Thumbnail must have size and type', 400);
+      throw new ExpressError('Thumbnail must have size and type');
     }
   }
 
   if ((size > maxSize) || (thumbnail && thumbnail.size > maxSize)) {
-    throw new ExpressError('File is too big', 400);
+    throw new ExpressError('File is too big');
   }
 
   if (usedStorage + size > maxStorage) {
-    throw new ExpressError('Uploading file would exceed allocated storage', 400);
+    throw new ExpressError('Uploading file would exceed allocated storage');
   }
 
   if (BLOCKED_MIME_TYPES.includes(type)) {
-    throw new ExpressError(`File type ${type} is not allowed`, 400);
+    throw new ExpressError(`File type ${type} is not allowed`);
   }
 
   const id = uuid();
@@ -259,14 +259,14 @@ router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
   const { data, id, hmac: confirmationHmac }: FileUploadConfirmation = req.body;
 
   if (!data.image) {
-    throw new ExpressError('Image data is required', 400);
+    throw new ExpressError('Image data is required');
   }
 
   const { name, size, type, s3Name } = data.image;
   const thumbFileName = data.thumbnail && data.thumbnail.s3Name;
 
   if (!name || !size || !type || !s3Name) {
-    throw new ExpressError('Name, size, type, and s3Name is required', 400);
+    throw new ExpressError('Name, size, type, and s3Name is required');
   }
 
   if (data.thumbnail && !data.thumbnail.s3Name) {
@@ -278,7 +278,7 @@ router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
   const h = hmac(secret, id, name, s3Name, size, type, thumbFileName);
 
   if (h !== confirmationHmac) {
-    throw new ExpressError('Invalid HMAC for file upload', 400);
+    throw new ExpressError('Invalid HMAC for file upload');
   }
 
   const uploadMedia: Media = {

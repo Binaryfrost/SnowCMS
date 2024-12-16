@@ -154,7 +154,7 @@ async function prepareData(data: Record<string, string>, collectionId: string,
   for (const key in data) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       if (!(key in collectionInputs)) {
-        throw new ExpressError(`Invalid data: Input ${key} does not exist on this Collection`, 400);
+        throw new ExpressError(`Invalid data: Input ${key} does not exist on this Collection`);
       }
 
       const collectionInput = collectionInputs[key];

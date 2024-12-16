@@ -2,6 +2,7 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { Box, Checkbox, Code, List, Text, TextInput } from '@mantine/core';
 import { useField, useForm } from '@mantine/form';
 import type { Input } from '../InputRegistry';
+import ExpressError from '../ExpressError';
 
 interface RemoteDataSettings {
   url: string
@@ -80,6 +81,22 @@ const input: Input<string, RemoteDataSettings> = {
   validate: (stringifiedValue, deserialize, settings) => {
     if (settings.required && !stringifiedValue) {
       throw new Error('Required Remote Data Input does not have a value');
+    }
+  },
+
+  validateSettings: (serializedSettings, deserialize) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    if (settings.url && typeof settings.url !== 'string') {
+      throw new ExpressError('URL, if it exists, must be a string');
+    }
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
     }
   },
 

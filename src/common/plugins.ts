@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import type { PluginConfig } from '../config';
 import ExpressError from './ExpressError';
 import type { Input } from './InputRegistry';
@@ -153,7 +154,7 @@ export function callHook<T extends keyof Hooks>(name: T, data:
         return;
       }
 
-      throw new ExpressError(e.message || e.name, e.status || 400);
+      throw new ExpressError(e.message || e.name, e.status || 500);
     }
   });
 }
@@ -173,7 +174,6 @@ export async function callHttpHook(website: Website, collection: Collection,
 
   if (cancelled) return;
 
-  // TODO: Send POST request to hook
   console.log('call website hook', website, collection, reason);
 
   const resp = await fetch(website.hook, {
@@ -217,5 +217,38 @@ export function loadPlugins(config: PluginConfig) {
     });
 
     console.log(`Loaded plugin ${plugin.name}`);
+  });
+}
+
+type Fn = ({ websiteId, collectionId }: { websiteId: string, collectionId: string }) => string;
+
+// It isn't ideal, but it works.
+/**
+ * As Inputs are shared between the server and client, attempting to access the database
+ * directly breaks the build. To get around that, use this function to send an HTTP request to server
+ * from itself with the user's auth token to get information about the image.
+ *
+ * Example:
+ * ```js
+ * const resp = await serverInputFetch(req, ({ websiteId }) => `/api/websites/${websiteId}/media/1234`);
+ * if (resp.status !== 200) {
+ *  // Handle error
+ * }
+ * const respData = await resp.json();
+ * // Use response data
+ * ```
+ */
+export async function serverInputFetch(req: Request, fn: Fn) {
+  const { websiteId, collectionId } = req.params;
+  const { authorization } = req.headers;
+  const port = req.socket.localPort;
+
+  const apiPath = fn({ websiteId, collectionId });
+  const url = new URL(apiPath, `http://localhost:${port}`);
+
+  return fetch(url, {
+    headers: {
+      authorization
+    }
   });
 }

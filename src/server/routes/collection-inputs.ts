@@ -25,12 +25,12 @@ router.get('/', asyncRouteFix(async (req, res) => {
   res.json(await getCollectionInputs(collectionId));
 }));
 
-async function checkIfInputAllowed(input: string, req: Request) {
+async function checkIfInputAllowed(input: string, inputConfig: string, req: Request) {
   const { websiteId, collectionId } = req.params;
 
   const registryInput = InputRegistry.getInput(input);
   if (!registryInput) {
-    throw new ExpressError('Provided Input does not exist in Input Registry', 400);
+    throw new ExpressError('Provided Input does not exist in Input Registry');
   }
 
   const website = await getWebsite(websiteId);
@@ -40,7 +40,9 @@ async function checkIfInputAllowed(input: string, req: Request) {
     throw new ExpressError('Website or collection does not have permission to use Input', 403);
   }
 
-  return true;
+  if ('deserializeSettings' in registryInput) {
+    await registryInput.validateSettings?.(inputConfig, registryInput.deserializeSettings, req);
+  }
 }
 
 router.post('/', asyncRouteFix(async (req, res) => {
@@ -68,10 +70,10 @@ router.post('/', asyncRouteFix(async (req, res) => {
   const { name, description, fieldName, input, inputConfig } = req.body;
 
   if (!name || !fieldName || !input) {
-    throw new ExpressError('Name, field name, and input required', 400);
+    throw new ExpressError('Name, field name, and input required');
   }
 
-  await checkIfInputAllowed(input, req);
+  await checkIfInputAllowed(input, inputConfig, req);
 
   const id = uuid();
   const collectionInput: CollectionInput = {
@@ -117,10 +119,10 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
   const { name, description, fieldName, input, inputConfig } = req.body;
 
   if (!name || !fieldName || !input) {
-    throw new ExpressError('Name, field name, and input required', 400);
+    throw new ExpressError('Name, field name, and input required');
   }
 
-  await checkIfInputAllowed(input, req);
+  await checkIfInputAllowed(input, inputConfig, req);
 
   const collectionInput: CollectionInput = {
     id,
@@ -178,7 +180,7 @@ router.patch('/:id/order', asyncRouteFix(async (req, res) => {
   const { order } = req.body;
 
   if (Number.isNaN(parseInt(order, 10))) {
-    throw new ExpressError('Order is required and must be a number', 400);
+    throw new ExpressError('Order is required and must be a number');
   }
 
   await reorderCollectionInputs(req.params.id, collectionId, order);

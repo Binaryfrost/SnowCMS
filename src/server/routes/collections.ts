@@ -35,7 +35,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
   const { name } = req.body;
 
   if (!name) {
-    throw new ExpressError('Name is required', 400);
+    throw new ExpressError('Name is required');
   }
 
   if (!(await exists('websites', websiteId))) {

@@ -44,7 +44,7 @@ router.put('/', asyncRouteFix(async (req, res) => {
   const { inputId } = req.body;
 
   if (!inputId) {
-    throw new ExpressError('Title is required', 400);
+    throw new ExpressError('Title is required');
   }
 
   const collectionTitle: CollectionTitle = {

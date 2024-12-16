@@ -4,6 +4,8 @@ import { useField, useForm } from '@mantine/form';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
+import { serverInputFetch } from '../plugins';
+import { CollectionInput } from '../types/CollectionInputs';
 
 interface SlugInputSettings {
   fieldName: string
@@ -106,15 +108,57 @@ const input: Input<string, SlugInputSettings> = {
     );
   }),
 
-  validate: (stringifiedValue, deserialize, settings) => {
-    if (settings.required && !stringifiedValue) {
+  validate: (serializedValue, deserialize, settings) => {
+    if (settings.required && !serializedValue) {
       throw new ExpressError('Required Slug Input does not have a value');
     }
 
-    const value = deserialize(stringifiedValue);
+    const value = deserialize(serializedValue);
 
     if (settings.maxLength > 0 && value.length > settings.maxLength) {
       throw new ExpressError('Slug Input value is longer than allowed');
+    }
+  },
+
+  validateSettings: async (serializedSettings, deserialize, req) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    if (!settings.fieldName) {
+      throw new ExpressError('Field Name is required');
+    }
+
+    if (typeof settings.fieldName !== 'string') {
+      throw new ExpressError('Field Name must be a string');
+    }
+
+    const resp = await serverInputFetch(
+      req,
+      (params) => `/api/websites/${params.websiteId}/collections/${params.collectionId}/inputs`
+    );
+
+    if (resp.status !== 200) {
+      throw new ExpressError('Failed to validate settings', 500);
+    }
+
+    const collectionInputs: CollectionInput[] = await resp.json();
+    if (collectionInputs.filter((i) => i.fieldName === settings.fieldName).length === 0) {
+      throw new ExpressError('No Input with that field name exist in this Collection');
+    }
+
+    if (typeof settings.maxLength !== 'number') {
+      throw new ExpressError('Max Length must be a number');
+    }
+
+    if (settings.maxLength < 0) {
+      throw new ExpressError('Max Length cannot be negative');
+    }
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
     }
   },
 

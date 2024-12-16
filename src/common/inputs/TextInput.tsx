@@ -91,6 +91,26 @@ const input: Input<string, TextInputSettings> = {
     }
   },
 
+  validateSettings: (serializedSettings, deserialize) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    if (typeof settings.maxLength !== 'number') {
+      throw new ExpressError('Max Length must be a number');
+    }
+
+    if (settings.maxLength < 0) {
+      throw new ExpressError('Max Length cannot be negative');
+    }
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
+    }
+  },
+
   renderHtml: (value) => value
 };
 

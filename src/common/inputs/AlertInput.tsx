@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle } from 'react';
 import { Alert, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { type InputProps, type Input } from '../InputRegistry';
+import ExpressError from '../ExpressError';
 
 interface AlertInputSettings {
   color: string
@@ -64,6 +65,26 @@ const input: Input<null, AlertInputSettings> = {
       </Stack>
     );
   }),
+
+  validateSettings: (serializedSettings, deserialize) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    const fieldsToValidate = ['color', 'title', 'content'];
+    const optionalFields = ['title'];
+    fieldsToValidate.forEach((field) => {
+      if (!settings[field] && !optionalFields.includes(field)) {
+        throw new ExpressError(`${field} is required`);
+      }
+
+      if (settings[field] && typeof settings[field] !== 'string') {
+        throw new ExpressError(`${field} must be a string`);
+      }
+    });
+  },
 
   renderHtml: () => null
 };

@@ -39,7 +39,7 @@ import { showYoutubeModal } from './RichTextInput/YoutubeModal';
 import { showVideoModal } from './RichTextInput/VideoModal';
 import ExpressError from '../ExpressError';
 
-interface TextInputSettings {
+interface RichTextInputSettings {
   maxLength: number
   required: boolean
 }
@@ -85,7 +85,7 @@ const extensions = [
   Video
 ];
 
-const input: Input<JSONContent, TextInputSettings> = {
+const input: Input<JSONContent, RichTextInputSettings> = {
   id: 'rich-text',
   name: 'Rich Text',
 
@@ -434,6 +434,30 @@ const input: Input<JSONContent, TextInputSettings> = {
     const value = deserialize(stringifiedValue);
     if (typeof value !== 'object' || Array.isArray(value)) {
       throw new ExpressError('Invalid Rich Text Input data');
+    }
+  },
+
+  validateSettings: (serializedSettings, deserialize) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    if (typeof settings.maxLength !== 'number') {
+      throw new ExpressError('Max Length must be a number');
+    }
+
+    if (settings.maxLength < 0) {
+      throw new ExpressError('Max Length cannot be negative');
+    }
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
+    }
+
+    if (settings.maxLength >= 10) {
+      throw new ExpressError('test');
     }
   },
 

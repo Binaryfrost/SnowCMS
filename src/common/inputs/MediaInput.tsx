@@ -11,11 +11,14 @@ import FilePreview from '../../client/components/FilePreview';
 import { get } from '../../client/util/api';
 import { mimeTypeMatch } from '../util';
 import ExpressError from '../ExpressError';
+import { serverInputFetch } from '../plugins';
 
 interface MediaInputSettings {
   mimeTypes: string[]
   required: boolean
 }
+
+const MIME_REGEX = /^[a-z]+\/(?:\*|[^*]+)$/;
 
 const input: Input<string, MediaInputSettings> = {
   id: 'media',
@@ -115,7 +118,12 @@ const input: Input<string, MediaInputSettings> = {
       initialValues: {
         mimeTypes: props.settings?.mimeTypes || [],
         required: props.settings?.required ?? true
-      }
+      },
+      validate: {
+        mimeTypes: (values) => (!values.every((v) => v.match(MIME_REGEX)) ?
+          'One or more mime types are invalid' : null)
+      },
+      validateInputOnChange: true
     });
 
     useImperativeHandle(ref, () => ({
@@ -127,7 +135,7 @@ const input: Input<string, MediaInputSettings> = {
       <Stack>
         <TagsInput label="Mime Types" data={['image/*', 'image/png', 'image/jpeg']}
           description="Limit file selections by mime type" {...form.getInputProps('mimeTypes')}
-          key={form.key('mimeTypes')} />
+          key={form.key('mimeTypes')} splitChars={[',', ' ']} />
         <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
           key={form.key('required')} />
       </Stack>
@@ -143,15 +151,10 @@ const input: Input<string, MediaInputSettings> = {
     if (!value) return;
     if (settings.mimeTypes?.length === 0) return;
 
-    const { websiteId } = req.params;
-    const { authorization } = req.headers;
-    const port = req.socket.localPort;
-
-    const resp = await fetch(`http://localhost:${port}/api/websites/${websiteId}/media/${value}`, {
-      headers: {
-        authorization
-      }
-    });
+    const resp = await serverInputFetch(
+      req,
+      ({ websiteId }) => `/api/websites/${websiteId}/media/${value}`
+    );
 
     if (resp.status !== 200) return;
 
@@ -162,22 +165,37 @@ const input: Input<string, MediaInputSettings> = {
     }
   },
 
+  validateSettings: (serializedSettings, deserialize) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    if (settings.mimeTypes && !Array.isArray(settings.mimeTypes)) {
+      throw new ExpressError('Mime Types must be an array');
+    }
+
+    if (!settings.mimeTypes?.every((v) => typeof v === 'string')) {
+      throw new ExpressError('All mime type values must be strings');
+    }
+
+    if (!settings.mimeTypes?.every((v) => v.match(MIME_REGEX))) {
+      throw new ExpressError('One or more mime types are invalid');
+    }
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
+    }
+  },
+
   renderHtml: async (value, settings, req) => {
     if (!value) return null;
-    const { websiteId } = req.params;
-    const { authorization } = req.headers;
-    const port = req.socket.localPort;
 
-    /*
-      As this file is shared between the server and client, attempting to access the database
-      directly breaks the build. To get around that, the server sends an HTTP request to itself
-      with the user's auth token to get information about the image. It isn't ideal, but it works.
-    */
-    const resp = await fetch(`http://localhost:${port}/api/websites/${websiteId}/media/${value}`, {
-      headers: {
-        authorization
-      }
-    });
+    const resp = await serverInputFetch(
+      req,
+      ({ websiteId }) => `/api/websites/${websiteId}/media/${value}`
+    );
 
     if (resp.status !== 200) return null;
 

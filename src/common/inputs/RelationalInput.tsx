@@ -8,6 +8,8 @@ import type { CollectionEntryWithTitle } from '../types/CollectionEntry';
 import DataGetter from '../../client/components/DataGetter';
 import { shortenUuid } from '../../client/components/ShortUuid';
 import FormSkeleton from '../../client/components/FormSkeleton';
+import ExpressError from '../ExpressError';
+import { serverInputFetch } from '../plugins';
 
 /*
  * Setting field to select other collection. In Collection Entry, allow selecting specific entry
@@ -107,35 +109,63 @@ const input: Input<string, RelationalInputSettings> = {
     const value = deserialize(stringifiedValue);
     if (!value || !settings.collectionId) return;
 
-    const { websiteId } = req.params;
-    const { authorization } = req.headers;
-    const port = req.socket.localPort;
-
-    const resp = await fetch(`http://localhost:${port}/api/websites/${websiteId}/collections` +
-      `/${settings.collectionId}/entry/${value}`, {
-      headers: {
-        authorization
-      }
-    });
+    const resp = await serverInputFetch(
+      req,
+      ({ websiteId }) => `/api/websites/${websiteId}/collections` +
+      `/${settings.collectionId}/entry/${value}`);
 
     if (resp.status !== 200) {
       throw new Error('Relational Input referenced non-existant entry');
     }
   },
 
+  validateSettings: async (serializedSettings, deserialize, req) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    if (!settings.collectionId) {
+      throw new ExpressError('Collection ID is required');
+    }
+
+    if (typeof settings.collectionId !== 'string') {
+      throw new ExpressError('Collection ID must be a string');
+    }
+
+    console.log(settings.collectionId, req.params.collectionId);
+
+    if (settings.collectionId === req.params.collectionId) {
+      throw new ExpressError('Cannot reference same Collection');
+    }
+
+    const resp = await serverInputFetch(
+      req,
+      ({ websiteId }) => `/api/websites/${websiteId}/collections`
+    );
+
+    if (resp.status !== 200) {
+      throw new ExpressError('Failed to validate settings', 500);
+    }
+
+    const collections: Collection[] = await resp.json();
+    if (collections.filter((c) => c.id === settings.collectionId).length === 0) {
+      throw new ExpressError('Collection with that ID does not exist');
+    }
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
+    }
+  },
+
   renderHtml: async (value, settings, req) => {
     if (!value) return null;
 
-    const { websiteId } = req.params;
-    const { authorization } = req.headers;
-    const port = req.socket.localPort;
-
-    const resp = await fetch(`http://localhost:${port}/api/websites/${websiteId}/collections` +
-      `/${settings.collectionId}/entries/${value}?render=true`, {
-      headers: {
-        authorization
-      }
-    });
+    const resp = await serverInputFetch(
+      req,
+      ({ websiteId }) => `/api/websites/${websiteId}/collections` +
+      `/${settings.collectionId}/entries/${value}?render=true`);
 
     if (resp.status !== 200) return null;
 

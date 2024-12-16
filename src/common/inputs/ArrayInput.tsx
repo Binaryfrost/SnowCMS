@@ -1,11 +1,12 @@
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
-import { Checkbox, Select, Text, TextInput } from '@mantine/core';
+import { Checkbox, NumberInput, Select, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useListState } from '@mantine/hooks';
 import { v4 as uuid } from 'uuid';
 import InputRegistry, { InputRef, type Input } from '../InputRegistry';
 import InputArray, { InputArrayBaseValue, UpdateInputArrayWithoutHandler, updateInputArray } from './common/InputArray';
 import FlexGrow from '../../client/components/FlexGrow';
+import ExpressError from '../ExpressError';
 
 interface ArrayInputSettings {
   input: string
@@ -166,8 +167,8 @@ const input: Input<any[], ArrayInputSettings> = {
               value: i.id
             }))} {...form.getInputProps('input')} />
 
-        <TextInput label="Max Inputs" required description="Set to 0 to disable limit"
-          {...form.getInputProps('maxInputs')} />
+        <NumberInput label="Max Inputs" required description="Set to 0 to disable limit"
+          {...form.getInputProps('maxInputs')} allowDecimal={false} allowNegative={false} />
         <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })} />
 
         {InputSettings && (
@@ -199,6 +200,50 @@ const input: Input<any[], ArrayInputSettings> = {
 
     if (settings.maxInputs > 0 && value.length > settings.maxInputs) {
       throw new Error('Array Input has more inputs than allowed');
+    }
+  },
+
+  validateSettings: async (serializedSettings, deserialize, req) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    if (!settings.input) {
+      throw new ExpressError('Input is required');
+    }
+
+    if (typeof settings.input !== 'string') {
+      throw new ExpressError('Input must be a string');
+    }
+
+    const selectedInput = getInput(settings.input);
+
+    if (!selectedInput) {
+      throw new ExpressError('Input does not exist');
+    }
+
+    if (typeof selectedInput.renderInput() !== 'object') {
+      throw new ExpressError('Input must accept a value');
+    }
+
+    if (typeof settings.maxInputs !== 'number') {
+      throw new ExpressError('Max Input must be a number');
+    }
+
+    if (settings.maxInputs < 0) {
+      throw new ExpressError('Max Inputs cannot be negative');
+    }
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
+    }
+
+    if ('deserializeSettings' in selectedInput) {
+      await selectedInput.validateSettings?.(
+        settings.inputConfig, selectedInput.deserializeSettings, req
+      );
     }
   },
 

@@ -6,6 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { Input } from '../InputRegistry';
 import FlexGrow from '../../client/components/FlexGrow';
 import InputArray, { InputArrayBaseValue, UpdateInputArrayWithoutHandler, updateInputArray } from './common/InputArray';
+import ExpressError from '../ExpressError';
 
 type Value = Record<string, string>
 
@@ -159,6 +160,29 @@ const input: Input<Value, KeyValueInputSettings> = {
     if (settings.maxValueLength > 0 &&
       kvEntries.some(([, v]) => v.length > settings.maxValueLength)) {
       throw new Error('At least one value of Key Value Input is longer than allowed');
+    }
+  },
+
+  validateSettings: (serializedSettings, deserialize) => {
+    if (!serializedSettings) {
+      throw new ExpressError('Settings are required');
+    }
+
+    const settings = deserialize(serializedSettings);
+
+    const fieldsToValidate = ['maxInputs', 'maxKeyLength', 'maxValueLength'];
+    fieldsToValidate.forEach((field) => {
+      if (typeof settings[field] !== 'number') {
+        throw new ExpressError(`${field} must be a number`);
+      }
+
+      if (settings[field] < 0) {
+        throw new ExpressError(`${field} cannot be negative`);
+      }
+    });
+
+    if (typeof settings.required !== 'boolean') {
+      throw new ExpressError('Required must be a boolean');
     }
   },
 
