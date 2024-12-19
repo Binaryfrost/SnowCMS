@@ -1,8 +1,8 @@
 import { Tooltip } from '@mantine/core';
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
 import type { Role } from '../../common/types/User';
-import { getUser } from '../util/api';
 import { hasAccess } from '../../common/users';
+import { UserContext } from '../context/UserContext';
 
 export interface IconButtonProps {
   label: string
@@ -11,7 +11,7 @@ export interface IconButtonProps {
 }
 
 export default function IconButton({ label, children, role }: IconButtonProps) {
-  const user = getUser();
+  const { user } = useContext(UserContext);
 
   if (role) {
     if (!user) return null;

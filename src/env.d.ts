@@ -1,4 +1,4 @@
-import type { User } from './common/types/User';
+import type { UserWithWebsites } from './common/types/User';
 
 declare global {
   /* eslint-disable no-underscore-dangle */
@@ -9,7 +9,7 @@ declare global {
 
   namespace Express {
     interface Request {
-      user?: User
+      user?: UserWithWebsites
     }
   }
 }

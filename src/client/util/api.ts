@@ -1,5 +1,5 @@
-import type { User } from '../../common/types/User';
-import { router } from '../router';
+import type { UserWithWebsites } from '../../common/types/User';
+// import { router } from '../router';
 
 let redirectUrl = '/';
 export function redirectAfterLogin() {
@@ -66,6 +66,7 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
     // Uncommenting this causes the server to crash with error "document is not defined".
     // TODO: Find solution
     // router.navigate('/login');
+    location.href = '/';
     return {
       status: 401,
       body: null
@@ -130,26 +131,4 @@ export async function s3Upload(url: string, type: string, data: any) {
     },
     body: data
   });
-}
-
-/**
- * Only use this on pages that do not request data from the server on load
- */
-// TODO: Remove if unused
-export async function ensureUserIsLoggedIn(): Promise<HttpResponse> {
-  return get('/api/is-logged-in');
-}
-
-function getJWT(): User {
-  const jwt = localStorage.getItem('token');
-  return jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
-}
-
-export function getUser(): User {
-  // TODO: Use actual JWT
-  // return getJWT();
-  return {
-    role: 'ADMIN',
-    websites: []
-  };
 }

@@ -24,7 +24,7 @@ interface Props {
       url: string
       role: Role
     }
-    enter: {
+    enter?: {
       url: string
     }
   }
@@ -50,11 +50,13 @@ export default function ListEntry(props: Props) {
               </ActionIcon>
             </IconButton>
           )}
-          <IconButton label={`Select ${props.type}`}>
-            <ActionIcon component={Link} to={props.buttons.enter.url}>
-              <IconArrowRight />
-            </ActionIcon>
-          </IconButton>
+          {props.buttons.enter && (
+            <IconButton label={`Select ${props.type}`}>
+              <ActionIcon component={Link} to={props.buttons.enter.url}>
+                <IconArrowRight />
+              </ActionIcon>
+            </IconButton>
+          )}
         </Group>
       </Group>
     </Paper>

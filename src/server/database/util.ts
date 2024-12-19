@@ -2,6 +2,7 @@ import { db } from './db';
 import type { Collection } from '../../common/types/Collection';
 import type { Website } from '../../common/types/Website';
 import type { DatabaseCollectionInput } from '../../common/types/CollectionInputs';
+import { ApiKeyWithWebsites, UserWithWebsites } from '../../common/types/User';
 
 export async function exists<T extends { id: string }>(table: string, id: string) {
   const [result] = await db()<T>(table)
@@ -82,4 +83,12 @@ export async function reorderCollectionInputs(inputId: string, collectionId: str
     .where({
       id: inputId
     });
+}
+
+export function handleUserBooleanConversion
+  <T extends UserWithWebsites | ApiKeyWithWebsites>(user: T): T {
+  return {
+    ...user,
+    active: Boolean(user.active)
+  };
 }

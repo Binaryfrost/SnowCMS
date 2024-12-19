@@ -12,6 +12,8 @@ import collectionInputsRouter from './routes/collection-inputs';
 import collectionTitleRouter from './routes/collection-titles';
 import collectionEntriesRouter from './routes/collection-entries';
 import mediaRouter from './routes/media';
+import accountRouter from './routes/accounts';
+import { handleUserBooleanConversion } from './database/util';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -27,11 +29,16 @@ export async function start(config: NormalizedConfig) {
   }));
 
   app.use((req, res, next) => {
-    // TODO: Read JWT from header
-    req.user = Object.freeze({
+    // TODO: Read token from header and get from Redis/MySQL
+    // TODO: If the API key has a higher role than the user or websites that the user doesn't have access to, limit the API key to the user's role/websites
+    // TODO: Don't set the user object if active is false
+    req.user = Object.freeze(handleUserBooleanConversion({
+      id: '1234',
+      email: 'testing@snowcms',
+      active: true,
       role: 'ADMIN',
       websites: []
-    });
+    }));
 
     next();
   });
@@ -42,6 +49,7 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites/:websiteId/collections/:collectionId/title', collectionTitleRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
   app.use('/api/websites/:websiteId/media', mediaRouter);
+  app.use('/api/accounts', accountRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);

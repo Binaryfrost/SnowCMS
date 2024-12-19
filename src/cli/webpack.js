@@ -131,7 +131,10 @@ export async function getWebpackServerConfig(opts) {
     externals: [
       'express',
       'knex',
-      'mysql2'
+      'mysql2',
+      'bcrypt',
+      '@aws-sdk/client-s3',
+      '@aws-sdk/s3-request-presigner'
     ]
   };
 }

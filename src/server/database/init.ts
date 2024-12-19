@@ -1,4 +1,8 @@
+import { randomBytes } from 'crypto';
 import { Knex } from 'knex';
+import { v7 as uuid } from 'uuid';
+import bcrypt from 'bcrypt';
+import { DatabaseUser, User } from '../../common/types/User';
 
 export default async function init(knex: Knex) {
   if (!await knex.schema.hasTable('websites')) {
@@ -85,6 +89,78 @@ export default async function init(knex: Knex) {
       table.string('thumbName').nullable();
       table.integer('timestamp').unsigned().notNullable();
 
+      table.foreign('websiteId').references('websites.id');
+    });
+  }
+
+  if (!await knex.schema.hasTable('users')) {
+    console.log('Creating users table');
+    await knex.schema.createTable('users', (table) => {
+      table.string('id').primary();
+      table.string('email').unique();
+      table.string('password', 60);
+      table.string('role');
+      table.boolean('active');
+    });
+  }
+
+  const userCount = await knex<User>('users')
+    .count({ count: '*' })
+    .first();
+  if (userCount.count === 0) {
+    const email = 'admin@snowcms';
+    const password = randomBytes(12).toString('base64url');
+
+    await knex<DatabaseUser>('users')
+      .insert({
+        id: uuid(),
+        email,
+        password: await bcrypt.hash(password, 10),
+        role: 'ADMIN',
+        active: true
+      });
+
+    const msg = '----------\n' +
+      'Created default admin account\n\n' +
+      `Email: ${email}\n` +
+      `Password: ${password}\n` +
+      '----------';
+    console.log(msg);
+  }
+
+  if (!await knex.schema.hasTable('user_websites')) {
+    console.log('Creating user_websites table');
+    await knex.schema.createTable('user_websites', (table) => {
+      table.string('userId');
+      table.string('websiteId');
+
+      table.primary(['userId', 'websiteId']);
+      table.foreign('userId').references('users.id');
+      table.foreign('websiteId').references('websites.id');
+    });
+  }
+
+  if (!await knex.schema.hasTable('apikeys')) {
+    console.log('Creating apikeys table');
+    await knex.schema.createTable('apikeys', (table) => {
+      table.string('id').primary();
+      table.string('key');
+      table.string('userId');
+      table.string('role');
+      table.boolean('active');
+
+      table.foreign('userId').references('users.id');
+    });
+  }
+
+  if (!await knex.schema.hasTable('apikey_websites')) {
+    console.log('Creating apikey_websites table');
+    await knex.schema.createTable('apikey_websites', (table) => {
+      table.string('apikeyId');
+      table.string('websiteId');
+
+      table.primary(['apikeyId', 'websiteId']);
+      table.foreign('apikeyId').references('apikeys.id');
       table.foreign('websiteId').references('websites.id');
     });
   }

@@ -92,7 +92,6 @@ type BeforeAfterHook<K extends string, H> = {
   [x in CombinedBeforeAfterHook<K>]?: (hook: H & Hook) => void;
 }
 
-// TODO: Implement hook calls
 type AllBeforeAfterHooks =
   BeforeAfterHook<'Website', { website: Website }> &
   BeforeAfterHook<'Collection', { collection: Collection }> &
@@ -112,18 +111,6 @@ interface Hooks extends AllBeforeAfterHooks {
   afterMediaConfirmHook?: (hook: BeforeAfterMediaHook<MediaWithUrls>) => void
   beforeMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void
   afterMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void
-  /*
-   * TODO: Implement
-   * Events that trigger this hook:
-   * - CollectionEntryCreate
-   * - CollectionEntryModify
-   * - CollectionEntryDelete
-   * - CollectionInputModify
-   * - CollectionInputDelete
-   *
-   * No other events should trigger the hook as other events
-   * will most probably require code changes on the website.
-   */
   /** Called server-side before a POST request is sent to the website hook */
   beforeWebsiteHookCalled?: (hook: BeforeWebsiteHookCalledHook) => void
 }

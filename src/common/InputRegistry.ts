@@ -141,7 +141,6 @@ interface InputWithSettings<T, S> extends BaseInput<T, S> {
    */
   deserializeSettings: (data: string) => S
 
-  // TODO: Implement
   /**
    * Called server-side to ensure that the input value is valid.
    * You should throw an error if it is invalid.

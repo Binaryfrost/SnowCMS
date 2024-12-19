@@ -1,15 +1,31 @@
-import { useEffect } from 'react';
+import { PropsWithChildren, useEffect } from 'react';
 import { AppShell, Burger, Divider, Group, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { nprogress } from '@mantine/nprogress';
+import { ModalsProvider } from '@mantine/modals';
 import { Outlet, useLocation, useNavigation } from 'react-router-dom';
 import DarkModeToggle from './components/DarkModeToggle';
 import LogoutButton from './components/LogoutButton';
 import Navbar from './components/Navbar';
 import Logo from './components/Logo';
 import CollectionsProvider from './context/CollectionsProvider';
-import GlobalSettingsButton from './components/GlobalSettingsButton';
+import { AccountsButton, MyAccountButton } from './components/AccountButtons';
 import WebsiteProvider from './context/WebsiteProvider';
+import UserProvider from './context/UserProvider';
+
+function AppProviders({ children }: PropsWithChildren) {
+  return (
+    <UserProvider>
+      <ModalsProvider>
+        <WebsiteProvider>
+          <CollectionsProvider>
+            {children}
+          </CollectionsProvider>
+        </WebsiteProvider>
+      </ModalsProvider>
+    </UserProvider>
+  );
+}
 
 export function Component() {
   const [opened, { toggle, close }] = useDisclosure();
@@ -43,39 +59,38 @@ export function Component() {
       }}
       padding="lg"
     >
-      <WebsiteProvider>
-        <CollectionsProvider>
-          <AppShell.Header>
-            <Group h="100%" px="md">
-              <Burger
-                opened={opened}
-                onClick={toggle}
-                hiddenFrom="sm"
-                size="sm"
-              />
-              <Logo />
+      <AppProviders>
+        <AppShell.Header>
+          <Group h="100%" px="md">
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+            />
+            <Logo />
+          </Group>
+        </AppShell.Header>
+
+        <AppShell.Navbar p="md">
+          <AppShell.Section grow component={ScrollArea}>
+            <Navbar />
+          </AppShell.Section>
+          <Divider />
+          <AppShell.Section mt="md">
+            <Group justify="center">
+              <DarkModeToggle />
+              <MyAccountButton />
+              <AccountsButton />
+              <LogoutButton />
             </Group>
-          </AppShell.Header>
+          </AppShell.Section>
+        </AppShell.Navbar>
 
-          <AppShell.Navbar p="md">
-            <AppShell.Section grow component={ScrollArea}>
-              <Navbar />
-            </AppShell.Section>
-            <Divider />
-            <AppShell.Section mt="md">
-              <Group justify="center">
-                <DarkModeToggle />
-                <GlobalSettingsButton />
-                <LogoutButton />
-              </Group>
-            </AppShell.Section>
-          </AppShell.Navbar>
-
-          <AppShell.Main>
-            <Outlet />
-          </AppShell.Main>
-        </CollectionsProvider>
-      </WebsiteProvider>
+        <AppShell.Main>
+          <Outlet />
+        </AppShell.Main>
+      </AppProviders>
     </AppShell>
   );
 }

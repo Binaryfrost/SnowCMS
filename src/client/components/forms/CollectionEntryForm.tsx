@@ -1,14 +1,15 @@
-import { useRef } from 'react';
+import { useContext, useRef } from 'react';
 import { Button, Stack, Text } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import DataGetter from '../DataGetter';
 import { CollectionInput } from '../../../common/types/CollectionInputs';
 import InputRegistry, { type Input, type InputRef } from '../../../common/InputRegistry';
-import { HttpResponse, getUser, patch, post } from '../../util/api';
+import { HttpResponse, patch, post } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 import FormSkeleton from '../FormSkeleton';
 import { CollectionEntryWithData } from '../../../common/types/CollectionEntry';
+import { UserContext } from '../../context/UserContext';
 
 type InputsRef = InputRef<any> & Pick<Input<any>, 'serialize'>;
 
@@ -20,7 +21,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
   const { websiteId, collectionId } = useParams();
   const navigate = useNavigate();
   const inputsRef = useRef<Record<string, InputsRef>>({});
-  const { role } = getUser();
+  const { user } = useContext(UserContext);
 
   function getValues(serialize: boolean = true) {
     return Object.entries(inputsRef.current).reduce((a, [fieldName, input]) => {
@@ -126,7 +127,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
                 );
               })}
 
-              <Button onClick={save} disabled={role === 'VIEWER'}>Save</Button>
+              <Button onClick={save} disabled={user.role === 'VIEWER'}>Save</Button>
             </>
           )}
         </Stack>

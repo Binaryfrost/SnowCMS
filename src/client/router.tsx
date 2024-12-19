@@ -4,8 +4,6 @@ import Refresh from './pages/Refresh';
 import Logout from './pages/Logout';
 
 export const router = createBrowserRouter([{
-  lazy: () => import('./RootLayout'),
-  errorElement: <ErrorPage />,
   children: [{
     path: '/',
     element: <Navigate to="/websites" />
@@ -13,12 +11,16 @@ export const router = createBrowserRouter([{
     path: '/refresh',
     element: <Refresh />
   }, {
+    path: '/login',
+    lazy: () => null
+  }, {
     path: '/logout',
     element: <Logout />
-  }, {
-    path: '/settings',
-    lazy: () => import('./pages/Settings')
-  }, {
+  }]
+}, {
+  lazy: () => import('./RootLayout'),
+  errorElement: <ErrorPage />,
+  children: [{
     path: '/websites',
     lazy: () => import('./pages/website/Websites')
   }, {
@@ -48,5 +50,20 @@ export const router = createBrowserRouter([{
   }, {
     path: '/websites/:websiteId/media',
     lazy: () => import('./pages/media/Media')
+  }, {
+    path: '/accounts',
+    lazy: () => import('./pages/accounts/Accounts')
+  }, {
+    path: '/accounts/create',
+    lazy: () => import('./pages/accounts/CreateAccount')
+  }, {
+    path: '/accounts/:accountId/settings',
+    lazy: () => import('./pages/accounts/EditAccount')
+  }, {
+    path: '/accounts/:accountId/settings/keys/create',
+    lazy: () => import('./pages/accounts/keys/CreateKey')
+  }, {
+    path: '/accounts/:accountId/settings/keys/:keyId/settings',
+    lazy: () => import('./pages/accounts/keys/EditKey')
   }]
 }]);

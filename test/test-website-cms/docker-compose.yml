@@ -1,8 +1,9 @@
+# This Docker config is intended for development only. It is not secure, do not use this in production.
 services:
   db:
     image: mysql:8.0.40
     volumes:
-      - ./data:/var/lib/mysql
+      - ./data/mysql:/var/lib/mysql
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: yes
       MYSQL_DATABASE: snowcms
@@ -10,3 +11,9 @@ services:
       MYSQL_PASSWORD: snowcms
     ports:
       - 3306:3306
+  redis:
+    image: redis:8.0-M02
+    volumes:
+      - ./data/redis:/data
+    ports:
+      - 6379:6379

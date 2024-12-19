@@ -11,14 +11,18 @@ import { getConfig } from '../config/config';
 import { deleteCollection } from './collections';
 import { callHook } from '../../common/plugins';
 import ExpressError from '../../common/ExpressError';
+import { ApiKeyWebsite, UserWebsite } from '../../common/types/User';
 
 const router = express.Router();
 
 router.get('/', asyncRouteFix(async (req, res) => {
   handleAccessControl(res, req.user, 'VIEWER');
 
-  // TODO: Filter based on access
-  res.json(await db<Website>().select('id', 'name', 'hook').from('websites'));
+  const websites = await db()<Website>('websites').select('id', 'name', 'hook');
+  res.json(websites.filter((w) => {
+    if (req.user.role === 'ADMIN') return true;
+    return req.user.websites.includes(w.id);
+  }));
 }));
 
 router.post('/', asyncRouteFix(async (req, res) => {
@@ -184,6 +188,18 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     }
 
     await trx('media')
+      .where({
+        websiteId: id
+      })
+      .delete();
+
+    await trx<UserWebsite>('user_websites')
+      .where({
+        websiteId: id
+      })
+      .delete();
+
+    await trx<ApiKeyWebsite>('apikey_websites')
       .where({
         websiteId: id
       })

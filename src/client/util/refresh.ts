@@ -6,7 +6,7 @@ export default function useRefresh() {
 
   return () => {
     navigate('/refresh', {
-      state: location.pathname
+      state: location.pathname + location.hash
     });
   };
 }

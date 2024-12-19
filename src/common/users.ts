@@ -1,15 +1,15 @@
 import { type Response } from 'express';
-import type { Role, User } from './types/User';
+import type { Role, UserWithWebsites } from './types/User';
 import ExpressError from './ExpressError';
 
-const ROLE_HIERARCHY: Record<Role, number> = Object.freeze({
+export const ROLE_HIERARCHY = Object.freeze({
   VIEWER: 20,
   USER: 40,
   SUPERUSER: 60,
   ADMIN: 80
 });
 
-export function hasAccess(user: User, requiredRole: Role, websiteId?: string) {
+export function hasAccess(user: UserWithWebsites, requiredRole: Role, websiteId?: string) {
   if (!user) return false;
 
   const userRoleWeight = ROLE_HIERARCHY[user.role];
@@ -29,7 +29,7 @@ export function hasAccess(user: User, requiredRole: Role, websiteId?: string) {
 }
 
 /** Returns true if the user is allowed access, otherwise false */
-export function handleAccessControl(res: Response, user: User, requiredRole: Role,
+export function handleAccessControl(res: Response, user: UserWithWebsites, requiredRole: Role,
   websiteId?: string) {
   if (hasAccess(user, requiredRole, websiteId)) return;
 

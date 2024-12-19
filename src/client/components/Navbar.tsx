@@ -16,7 +16,8 @@ export default function Navbar() {
   const location = useLocation();
   const collectionContext = useContext(CollectionsContext);
   const websiteContext = useContext(WebsiteContext);
-  const selectingWebsite = ['/', '/websites', '/websites/create', '/settings'].includes(location.pathname);
+  const selectingWebsite = ['/', '/websites', '/websites/create'].includes(location.pathname) ||
+    location.pathname.includes('/accounts');
 
   /*
    * Can't use the DataGetter component here as the navbar
