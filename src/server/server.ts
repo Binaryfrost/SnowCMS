@@ -5,6 +5,7 @@ import devServer from './dev-server';
 import { getManifest } from './manifest';
 import initDb from './database/db';
 import { initConfig } from './config/config';
+import { getSession, getUser, handleUserBooleanConversion } from './database/util';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
@@ -13,13 +14,18 @@ import collectionTitleRouter from './routes/collection-titles';
 import collectionEntriesRouter from './routes/collection-entries';
 import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
-import { handleUserBooleanConversion } from './database/util';
+import loginRouter from './routes/login';
+import initRedis, { redis } from './database/redis';
+import { asyncRouteFix } from './util';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
 
   console.log('Connecting to database');
   await initDb();
+
+  console.log('Connecting to Redis');
+  await initRedis();
 
   const app = express();
   // TODO: Caching in production
@@ -28,20 +34,50 @@ export async function start(config: NormalizedConfig) {
     limit: '16MB'
   }));
 
-  app.use((req, res, next) => {
+  app.use(asyncRouteFix(async (req, res, next) => {
     // TODO: Read token from header and get from Redis/MySQL
     // TODO: If the API key has a higher role than the user or websites that the user doesn't have access to, limit the API key to the user's role/websites
-    // TODO: Don't set the user object if active is false
-    req.user = Object.freeze(handleUserBooleanConversion({
+    // TODO: Don't set the user object if the account or API key is not active (also check API key's user active value)
+    /*req.user = Object.freeze(handleUserBooleanConversion({
       id: '1234',
       email: 'testing@snowcms',
       active: true,
       role: 'ADMIN',
       websites: []
-    }));
+    }));*/
+
+    const { authorization } = req.headers;
+    if (!authorization || !authorization.includes(':')) {
+      next();
+      return;
+    }
+
+    const authHeaderParts = authorization.split(' ');
+    if (authHeaderParts.length < 2 || authHeaderParts[0] !== 'Bearer') {
+      next();
+      return;
+    }
+
+    const token = authHeaderParts[1];
+    const isApiKey = authorization.startsWith('apikey:');
+
+    console.log(token);
+
+    if (!isApiKey) {
+      const sessionUser = await getSession(token);
+      console.log(sessionUser);
+      if (sessionUser) {
+        const user = await getUser(sessionUser);
+        if (user) {
+          req.user = Object.freeze(user);
+        }
+      }
+    } else {
+      // TODO: API keys
+    }
 
     next();
-  });
+  }));
 
   app.use('/api/websites', websiteRouter);
   app.use('/api/websites/:websiteId/collections', collectionRouter);
@@ -50,10 +86,17 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
   app.use('/api/websites/:websiteId/media', mediaRouter);
   app.use('/api/accounts', accountRouter);
+  app.use('/api/login', loginRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);
   }
+
+  app.use('/api/', (req, res) => {
+    res.status(404).json({
+      error: 'Route not found'
+    });
+  });
 
   // Catch all GET requests that haven't already been handled and serve the CMS SPA
   app.get('*', async (req, res) => {

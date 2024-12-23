@@ -134,7 +134,8 @@ export async function getWebpackServerConfig(opts) {
       'mysql2',
       'bcrypt',
       '@aws-sdk/client-s3',
-      '@aws-sdk/s3-request-presigner'
+      '@aws-sdk/s3-request-presigner',
+      'redis'
     ]
   };
 }

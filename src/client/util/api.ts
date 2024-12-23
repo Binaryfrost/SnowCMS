@@ -1,11 +1,3 @@
-import type { UserWithWebsites } from '../../common/types/User';
-// import { router } from '../router';
-
-let redirectUrl = '/';
-export function redirectAfterLogin() {
-  return redirectUrl;
-}
-
 interface Opts {
   noRedirectOn401?: boolean
 }
@@ -36,8 +28,8 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
     Accept: 'application/json'
   };
 
-  const jwt = localStorage.getItem('token');
-  if (jwt) headers.Authorization = `Bearer ${jwt}`;
+  const token = localStorage.getItem('token');
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   let serializedData: string;
 
@@ -59,14 +51,10 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
   });
 
   if (resp.status === 401 && !opts.noRedirectOn401) {
-    localStorage.removeItem('token');
-    redirectUrl = location.pathname;
-    // https://github.com/remix-run/react-router/issues/9422#issuecomment-1301182219
-
-    // Uncommenting this causes the server to crash with error "document is not defined".
-    // TODO: Find solution
-    // router.navigate('/login');
-    location.href = '/';
+    // TODO: Figure out why this just reloads the page instead of redirecting to /login
+    // Might need to replace this file with a hook so react-router's navigate() hook can be called
+    location.href = '/login';
+    console.log('redirect');
     return {
       status: 401,
       body: null

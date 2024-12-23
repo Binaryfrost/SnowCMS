@@ -1,4 +1,5 @@
 import type { DeepRequired } from 'utility-types';
+import type { RedisClientOptions } from 'redis';
 import type { Plugin } from './common/plugins';
 import type { Role } from './common/types/User';
 
@@ -60,7 +61,8 @@ interface Config {
     database: string
     username: string
     password: string
-  }
+  },
+  redis: RedisClientOptions
 }
 
 /*
@@ -74,7 +76,7 @@ export interface PluginConfig {
 }
 
 type DeepRequiredExcept<T, K extends keyof T> = DeepRequired<Omit<T, K>> & Pick<T, K>
-export type NormalizedConfig = DeepRequiredExcept<Config, 'sso'>
+export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis'>
 
 export const defineConfig = (config: Config): NormalizedConfig => ({
   ...config,

@@ -51,7 +51,10 @@ module.exports = {
     // I don't agree with Airbnb's reason for blocking for loops: https://github.com/airbnb/javascript/issues/1271
     'no-restricted-syntax': 'off',
     'no-continue': 'off',
-    'import/no-extraneous-dependencies': 'off'
+    'import/no-extraneous-dependencies': 'off',
+    'no-empty': ['error', {
+      allowEmptyCatch: true
+    }]
   },
   plugins: [
     '@typescript-eslint'

@@ -2,7 +2,9 @@ import { db } from './db';
 import type { Collection } from '../../common/types/Collection';
 import type { Website } from '../../common/types/Website';
 import type { DatabaseCollectionInput } from '../../common/types/CollectionInputs';
-import { ApiKeyWithWebsites, UserWithWebsites } from '../../common/types/User';
+import { ApiKeyWithWebsites, User, UserWebsite, UserWithWebsites } from '../../common/types/User';
+import { redis } from './redis';
+import ExpressError from '../../common/ExpressError';
 
 export async function exists<T extends { id: string }>(table: string, id: string) {
   const [result] = await db()<T>(table)
@@ -91,4 +93,52 @@ export function handleUserBooleanConversion
     ...user,
     active: Boolean(user.active)
   };
+}
+
+export async function getSession(token: string) {
+  return redis().get(`session:${token}`);
+}
+
+export async function getUserFromDatabase(id: string): Promise<UserWithWebsites> {
+  const user = await db()<User>('users')
+    .select('id', 'email', 'role', 'active')
+    .where({
+      id
+    })
+    .first();
+
+  if (!user) {
+    throw new ExpressError('User not found', 404);
+  }
+
+  const userWebsites = await db()<UserWebsite>('user_websites')
+    .select('userId', 'websiteId')
+    .where({
+      userId: id
+    });
+
+  return handleUserBooleanConversion({
+    ...user,
+    websites: userWebsites.filter((w) => w.userId === id).map((w) => w.websiteId)
+  });
+}
+
+export async function getUser(id: string): Promise<UserWithWebsites> {
+  const cachedUser = await redis().get(`user:${id}`);
+  if (cachedUser) return JSON.parse(cachedUser);
+
+  let user = null;
+
+  try {
+    user = await getUserFromDatabase(id);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_) {}
+
+  if (user && !cachedUser) {
+    await redis().set(`user:${id}`, JSON.stringify(user), {
+      EX: 10 * 60
+    });
+  }
+
+  return user;
 }

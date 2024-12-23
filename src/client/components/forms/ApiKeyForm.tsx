@@ -62,7 +62,9 @@ export default function ApiKeyForm({ apiKey }: Props) {
 
           <Text mb="sm">The full API key will not be shown again.</Text>
 
-          <Group gap="xs">
+          <Group gap="xs" style={{
+            wordBreak: 'break-word'
+          }}>
             <Code fz="sm">{newKey}</Code>
             <CopyButton value={newKey} timeout={2000}>
               {({ copied, copy }) => (
@@ -116,7 +118,8 @@ export default function ApiKeyForm({ apiKey }: Props) {
                       modals.openConfirmModal({
                         title: 'Reset API key',
                         children: 'Are you sure you want to reset this API key? ' +
-                        'Any apps currently using this key will stop working until they are updated.',
+                        'Any application(s) currently using this key will stop ' +
+                        'working until they are updated.',
                         labels: {
                           confirm: 'Reset API key',
                           cancel: 'Cancel'

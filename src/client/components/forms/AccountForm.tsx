@@ -1,3 +1,4 @@
+import { useContext } from 'react';
 import { ActionFunctionArgs, Form } from 'react-router-dom';
 import { Button, Checkbox, MultiSelect, PasswordInput, Select, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
@@ -8,12 +9,14 @@ import DataGetter from '../DataGetter';
 import FormSkeleton from '../FormSkeleton';
 import { Website } from '../../../common/types/Website';
 import { shortenUuid } from '../ShortUuid';
+import { UserContext } from '../../context/UserContext';
 
 interface Props {
   user?: UserWithWebsites
 }
 
 export default function AccountForm({ user }: Props) {
+  const loggedInUser = useContext(UserContext);
   const form = useForm({
     initialValues: {
       email: user?.email || '',
@@ -37,12 +40,38 @@ export default function AccountForm({ user }: Props) {
 
         return null;
       },
-      role: (value) => (!value ? 'Role is required' : null)
+      role: (value) => {
+        if (!value) {
+          return 'Role is required';
+        }
+
+        if (!user) return null;
+        if (user.id === loggedInUser.user.id && value !== loggedInUser.user.role) {
+          return 'You cannot change your own role';
+        }
+
+        return null;
+      },
+      active: (value) => {
+        if (!user) return null;
+        if (value !== user.active) {
+          if (loggedInUser.user.id === user.id) {
+            return 'You cannot disable your own account';
+          }
+
+          if (loggedInUser.user.role !== 'ADMIN') {
+            return 'Non-admin users cannot change their account active status';
+          }
+        }
+
+        return null;
+      }
     },
     validateInputOnChange: true
   });
 
   const passwordUpdateText = 'Leave password blank to leave unchanged';
+  const shouldDisableAdminFields = loggedInUser.user.role !== 'ADMIN';
 
   return (
     <DataGetter<Website[]> url="/api/websites" skeletonComponent={<FormSkeleton inputs={6} />}>
@@ -60,7 +89,8 @@ export default function AccountForm({ user }: Props) {
               {...form.getInputProps('confirmPassword')} key={form.key('confirmPassword')} />
 
             <Select label="Role" name="role" required data={Object.keys(ROLE_HIERARCHY)}
-              {...form.getInputProps('role')} key={form.key('role')} />
+              {...form.getInputProps('role')} key={form.key('role')}
+              readOnly={shouldDisableAdminFields} />
 
             <Checkbox label="Active" name="active"
               {...form.getInputProps('active', { type: 'checkbox' })} key={form.key('active')} />
@@ -69,7 +99,8 @@ export default function AccountForm({ user }: Props) {
               <MultiSelect label="Websites" name="websites" data={websites.map((w) => ({
                 label: `${w.name} (${shortenUuid(w.id)})`,
                 value: w.id
-              }))} {...form.getInputProps('websites')} key={form.key('websites')} />
+              }))} {...form.getInputProps('websites')} key={form.key('websites')}
+                readOnly={shouldDisableAdminFields} />
             )}
 
             <Button type="submit">{user ? 'Edit' : 'Create'} Account</Button>

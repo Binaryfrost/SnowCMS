@@ -11,7 +11,7 @@ export default defineConfig({
   port: 3080,
   // IMPORTANT: Test the Webpack config to make sure the secret doesn't leak to the client-side code
   secret: 'longrandomsecret',
-  sso: {
+  /*sso: {
     clientId: process.env.SSO_CLIENT_ID,
     // See comment above about secret
     clientSecret: process.env.SSO_CLIENT_SECRET,
@@ -19,7 +19,7 @@ export default defineConfig({
     tokenUrl: process.env.SSO_TOKEN_URL,
     userInfoUrl: process.env.SSO_USER_INFO_URL,
     logoutUrl: process.env.SSO_LOGOUT_URL
-  },
+  },*/
   // Future update
   media: {
     // Maximum size of one file
@@ -42,5 +42,10 @@ export default defineConfig({
     database: 'snowcms',
     username: 'snowcms',
     password: 'snowcms'
+  },
+  redis: {
+    socket: {
+      host: '127.0.0.1'
+    }
   }
 });

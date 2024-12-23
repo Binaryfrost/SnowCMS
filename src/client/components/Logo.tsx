@@ -1,4 +1,4 @@
-import { Anchor } from '@mantine/core';
+import { Anchor, Image, ImageProps } from '@mantine/core';
 import { Link } from 'react-router-dom';
 
 import logo from '../assets/logo.png';
@@ -15,10 +15,19 @@ const srcSet = Object.entries(imgSet)
   .reduce((a, [dpr, img]) => [...a, `${img} ${dpr}`], [])
   .join(', ');
 
-export default function Logo() {
-  return (
+interface Props extends ImageProps {
+  noLink?: boolean
+}
+
+export default function Logo({ noLink, ...props }: Props) {
+  const img = (
+    <Image src={imgSet['1x']} srcSet={srcSet} height={40} w="fit-content"
+      alt="SnowCMS" {...props} />
+  );
+
+  return noLink ? img : (
     <Anchor component={Link} to="/">
-      <img src={imgSet['1x']} srcSet={srcSet} height={40} alt="SnowCMS" />
+      {img}
     </Anchor>
   );
 }

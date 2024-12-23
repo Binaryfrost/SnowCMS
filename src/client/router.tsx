@@ -12,7 +12,7 @@ export const router = createBrowserRouter([{
     element: <Refresh />
   }, {
     path: '/login',
-    lazy: () => null
+    lazy: () => import('./pages/Login')
   }, {
     path: '/logout',
     element: <Logout />

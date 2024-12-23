@@ -5,10 +5,11 @@ import { randomBytes } from 'crypto';
 import type { Optional } from 'utility-types';
 import { db } from '../database/db';
 import { ROLE_HIERARCHY, handleAccessControl } from '../../common/users';
-import { exists, handleUserBooleanConversion } from '../database/util';
+import { exists, getUserFromDatabase, handleUserBooleanConversion } from '../database/util';
 import { asyncRouteFix } from '../util';
 import ExpressError from '../../common/ExpressError';
-import { ApiKey, ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, DatabaseUser, User, UserWebsite, UserWithWebsites } from '../../common/types/User';
+import { ApiKey, ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, DatabaseUser,
+  User, UserWebsite, UserWithWebsites } from '../../common/types/User';
 
 const router = express.Router();
 
@@ -175,30 +176,6 @@ function handleUserAccessControl(user: User, userId: string) {
   }
 }
 
-async function getUser(userId: string): Promise<UserWithWebsites> {
-  const user = await db()<User>('users')
-    .select('id', 'email', 'role', 'active')
-    .where({
-      id: userId
-    })
-    .first();
-
-  if (!user) {
-    throw new ExpressError('User not found', 404);
-  }
-
-  const userWebsites = await db()<UserWebsite>('user_websites')
-    .select('userId', 'websiteId')
-    .where({
-      userId
-    });
-
-  return handleUserBooleanConversion({
-    ...user,
-    websites: userWebsites.filter((w) => w.userId === userId).map((w) => w.websiteId)
-  });
-}
-
 async function ensureUserExists(userId) {
   if (!(await exists('users', userId))) {
     throw new ExpressError('User does not exist', 404);
@@ -217,7 +194,7 @@ router.get('/:userId', asyncRouteFix(async (req, res) => {
   const { userId } = req.params;
   handleUserAccessControl(req.user, userId);
 
-  res.json(await getUser(userId));
+  res.json(await getUserFromDatabase(userId));
 }));
 
 router.put('/:userId', asyncRouteFix(async (req, res) => {
@@ -229,6 +206,15 @@ router.put('/:userId', asyncRouteFix(async (req, res) => {
 
   if (!email || !role || !websites) {
     throw new ExpressError('Email, role, and websites are required');
+  }
+
+  if (req.user.role !== 'ADMIN') {
+    const user = await getUserFromDatabase(userId);
+
+    if (user.role !== role || user.active !== active || user.websites.length !== websites.length ||
+      !user.websites.every((w) => websites.includes(w))) {
+      throw new ExpressError('Non-admin users cannot modify their own role, websites, or active status');
+    }
   }
 
   await addOrUpdateUser({
@@ -385,7 +371,7 @@ async function validateApiKeyRequest(req: Request) {
     throw new ExpressError('Websites must be an array');
   }
 
-  const user = await getUser(userId);
+  const user = await getUserFromDatabase(userId);
 
   if (user.role !== 'ADMIN' && !websites.every((w) => user.websites.includes(w))) {
     throw new ExpressError('User does not have access to one or more websites');
