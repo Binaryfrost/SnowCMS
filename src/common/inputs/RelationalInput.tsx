@@ -112,10 +112,10 @@ const input: Input<string, RelationalInputSettings> = {
     const resp = await serverInputFetch(
       req,
       ({ websiteId }) => `/api/websites/${websiteId}/collections` +
-      `/${settings.collectionId}/entry/${value}`);
+      `/${settings.collectionId}/entries/${value}`);
 
     if (resp.status !== 200) {
-      throw new Error('Relational Input referenced non-existant entry');
+      throw new ExpressError('Relational Input referenced non-existant entry');
     }
   },
 
