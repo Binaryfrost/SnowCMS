@@ -1,4 +1,4 @@
-import { useContext, useRef } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { Button, Stack, Text } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
@@ -21,6 +21,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
   const { websiteId, collectionId } = useParams();
   const navigate = useNavigate();
   const inputsRef = useRef<Record<string, InputsRef>>({});
+  const [submitting, setSubmitting] = useState(false);
   const { user } = useContext(UserContext);
 
   function getValues(serialize: boolean = true) {
@@ -69,6 +70,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
     const apiRoot = `/api/websites/${websiteId}/collections/${collectionId}/entries`;
 
     let resp: HttpResponse;
+    setSubmitting(true);
     if (entryId) {
       resp = await patch(`${apiRoot}/${entryId}`, formData);
     } else {
@@ -76,6 +78,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
     }
 
     handleFormResponseNotification(resp);
+    setSubmitting(false);
     if (resp.status === 200) {
       navigate(`/websites/${websiteId}/collections/${collectionId}/entries`);
     }
@@ -127,7 +130,8 @@ export default function CollectionEntryForm({ entryId }: Props) {
                 );
               })}
 
-              <Button onClick={save} disabled={user.role === 'VIEWER'}>Save</Button>
+              <Button onClick={save} loading={submitting}
+                disabled={user.role === 'VIEWER'}>Save</Button>
             </>
           )}
         </Stack>
