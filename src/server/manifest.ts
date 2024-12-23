@@ -3,9 +3,14 @@ import fs from 'fs/promises';
 let manifest: Record<string, string> = {};
 
 export async function updateManifest() {
-  manifest = JSON.parse(await fs.readFile('../client/manifest.json', {
-    encoding: 'utf8'
-  }));
+  try {
+    manifest = JSON.parse(await fs.readFile('../client/manifest.json', {
+      encoding: 'utf8'
+    }));
+  } catch (e) {
+    console.error('Unable to open client manifest. Ensure that your working directory ' +
+      'is the "server" directory and that the "client" directory has not been moved.', e);
+  }
 }
 
 export async function getManifest() {

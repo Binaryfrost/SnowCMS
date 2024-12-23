@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ActionFunctionArgs, Form, useActionData, useNavigate } from 'react-router-dom';
-import { Button, Divider, Flex, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Anchor, Box, Button, Divider, Flex, Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { UseFormReturnType, useForm } from '@mantine/form';
 import { nprogress } from '@mantine/nprogress';
+import { ModalsProvider, openModal } from '@mantine/modals';
 import Logo from '../components/Logo';
 import Page from '../components/Page';
 import DataGetter from '../components/DataGetter';
@@ -10,6 +11,7 @@ import { LoginConfig } from '../../common/types/User';
 import FormSkeleton from '../components/FormSkeleton';
 import { formDataToObject, onSubmit } from '../util/form';
 import { HttpResponse, post } from '../util/api';
+import DarkModeToggle from '../components/DarkModeToggle';
 
 interface LoginFormProps {
   config: LoginConfig
@@ -20,11 +22,15 @@ interface LoginFormProps {
   submitting: boolean
 }
 
+function ssoRedirect() {
+  // TODO: Write server-side code
+  location.href = '/api/login/sso';
+}
+
 function LoginForm({ config, form, submitting } : LoginFormProps) {
   useEffect(() => {
     if (config.sso.forced) {
-      // TODO: Write server-side code
-      location.href = '/api/login/sso';
+      ssoRedirect();
     }
   }, []);
 
@@ -33,14 +39,30 @@ function LoginForm({ config, form, submitting } : LoginFormProps) {
       <TextInput label="Email" type="email" name="email" required {...form.getInputProps('email')}
         key={form.key('email')} />
 
-      <PasswordInput label="Password" name="password" required {...form.getInputProps('password')}
-        key={form.key('password')} />
+      <Box>
+        <PasswordInput label="Password" name="password" required {...form.getInputProps('password')}
+          key={form.key('password')} />
 
-      <Button type="submit" loading={submitting}>Log in</Button>
+        <Anchor component="span" fz="xs" style={{
+          // userSelect: 'none'
+        }} onClick={() => openModal({
+          title: 'Forgot password',
+          children: 'If you have forgotten your password, contact the administrator of this SnowCMS instance.',
+          centered: true
+        })}>Forgot password</Anchor>
+      </Box>
+
+      <Group>
+        <Button type="submit" loading={submitting} style={{
+          flexGrow: 1
+        }}>Log in</Button>
+        <DarkModeToggle />
+      </Group>
+
       {config.sso.enabled && (
         <>
           <Divider label="or" />
-          <Button color="violet" loading={submitting}>Log in with SSO</Button>
+          <Button color="violet" loading={submitting} onClick={ssoRedirect}>Log in with SSO</Button>
         </>
       )}
     </>
@@ -95,30 +117,32 @@ export function Component() {
 
   return (
     <Page title="Login">
-      <Flex justify="center" align="center" h="100dvh">
-        <Paper withBorder p="md" miw="25vw">
-          <Form method="POST" onSubmit={(e) => {
-            onSubmit(e, form);
-            if (!e.isDefaultPrevented()) {
-              setSubmitting(true);
-            }
-          }}>
-            <Stack>
-              <Logo noLink mx="auto" />
-              <Title ta="center">Login</Title>
+      <ModalsProvider>
+        <Flex justify="center" align="center" h="100dvh">
+          <Paper withBorder p="md" miw="25vw" w="fit-content">
+            <Form method="POST" onSubmit={(e) => {
+              onSubmit(e, form);
+              if (!e.isDefaultPrevented()) {
+                setSubmitting(true);
+              }
+            }}>
+              <Stack>
+                <Logo noLink mx="auto" />
+                <Title ta="center">Login</Title>
 
-              {error && <Text c="red">{error}</Text>}
+                {error && <Text c="red">{error}</Text>}
 
-              <DataGetter<LoginConfig> url="/api/login/config"
-                skeletonComponent={<FormSkeleton inputs={2} />}>
-                {(config) => (
-                  <LoginForm config={config} form={form} submitting={submitting} />
-                )}
-              </DataGetter>
-            </Stack>
-          </Form>
-        </Paper>
-      </Flex>
+                <DataGetter<LoginConfig> url="/api/login/config"
+                  skeletonComponent={<FormSkeleton inputs={2} />}>
+                  {(config) => (
+                    <LoginForm config={config} form={form} submitting={submitting} />
+                  )}
+                </DataGetter>
+              </Stack>
+            </Form>
+          </Paper>
+        </Flex>
+      </ModalsProvider>
     </Page>
   );
 }

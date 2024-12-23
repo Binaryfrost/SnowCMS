@@ -25,6 +25,7 @@ export interface UserWithWebsites extends User {
 export interface ApiKey {
   id: string
   userId: string
+  name: string
   role: Role
   active: boolean
 }

@@ -51,10 +51,8 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
   });
 
   if (resp.status === 401 && !opts.noRedirectOn401) {
-    // TODO: Figure out why this just reloads the page instead of redirecting to /login
-    // Might need to replace this file with a hook so react-router's navigate() hook can be called
+    localStorage.removeItem('token');
     location.href = '/login';
-    console.log('redirect');
     return {
       status: 401,
       body: null

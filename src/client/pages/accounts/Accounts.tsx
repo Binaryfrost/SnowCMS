@@ -7,8 +7,6 @@ import { UserWithWebsites } from '../../../common/types/User';
 import ListEntry from '../../components/ListEntry';
 import useRefresh from '../../util/refresh';
 
-// TODO: Write code for accounts and auth
-
 export function Component() {
   const refresh = useRefresh();
 

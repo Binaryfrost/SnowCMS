@@ -5,7 +5,7 @@ import devServer from './dev-server';
 import { getManifest } from './manifest';
 import initDb from './database/db';
 import { initConfig } from './config/config';
-import { getSession, getUser, handleUserBooleanConversion } from './database/util';
+import { getApiKey, getSession, getUser } from './database/util';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
@@ -15,8 +15,10 @@ import collectionEntriesRouter from './routes/collection-entries';
 import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
-import initRedis, { redis } from './database/redis';
-import { asyncRouteFix } from './util';
+import initRedis from './database/redis';
+import { asyncRouteFix, getAuthToken } from './util';
+import { UserWithWebsites } from '../common/types/User';
+import { ROLE_HIERARCHY } from '../common/users';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -34,46 +36,50 @@ export async function start(config: NormalizedConfig) {
     limit: '16MB'
   }));
 
-  app.use(asyncRouteFix(async (req, res, next) => {
-    // TODO: Read token from header and get from Redis/MySQL
-    // TODO: If the API key has a higher role than the user or websites that the user doesn't have access to, limit the API key to the user's role/websites
-    // TODO: Don't set the user object if the account or API key is not active (also check API key's user active value)
-    /*req.user = Object.freeze(handleUserBooleanConversion({
-      id: '1234',
-      email: 'testing@snowcms',
-      active: true,
-      role: 'ADMIN',
-      websites: []
-    }));*/
+  async function getAuthedUser(token: string): Promise<UserWithWebsites> {
+    if (!token) return null;
 
-    const { authorization } = req.headers;
-    if (!authorization || !authorization.includes(':')) {
-      next();
-      return;
-    }
-
-    const authHeaderParts = authorization.split(' ');
-    if (authHeaderParts.length < 2 || authHeaderParts[0] !== 'Bearer') {
-      next();
-      return;
-    }
-
-    const token = authHeaderParts[1];
-    const isApiKey = authorization.startsWith('apikey:');
-
-    console.log(token);
+    const isApiKey = token.startsWith('a:');
 
     if (!isApiKey) {
       const sessionUser = await getSession(token);
-      console.log(sessionUser);
-      if (sessionUser) {
-        const user = await getUser(sessionUser);
-        if (user) {
-          req.user = Object.freeze(user);
-        }
-      }
-    } else {
-      // TODO: API keys
+      if (!sessionUser) return null;
+
+      const user = await getUser(sessionUser);
+      return user;
+    }
+
+    if (!token.includes('.')) return null;
+
+    const apiToken = token.replace(/^a:/, '');
+    const [id, key] = apiToken.split('.');
+
+    const apiKey = await getApiKey(id, key);
+    if (!apiKey) return null;
+
+    const apiKeyUser = await getUser(apiKey.userId);
+    if (!apiKeyUser) return null;
+
+    if (ROLE_HIERARCHY[apiKey.role] > ROLE_HIERARCHY[apiKeyUser.role]) {
+      apiKey.role = apiKeyUser.role;
+    }
+
+    apiKey.websites = apiKeyUser.websites.filter((w) => apiKey.websites.includes(w));
+
+    return {
+      id: apiKey.id,
+      email: 'apikey@snowcms',
+      role: apiKey.role,
+      active: apiKey.active && apiKeyUser.active,
+      websites: apiKey.websites
+    };
+  }
+
+  app.use(asyncRouteFix(async (req, res, next) => {
+    const token = getAuthToken(req);
+    const user = await getAuthedUser(token);
+    if (user && user.active) {
+      req.user = user;
     }
 
     next();
@@ -120,10 +126,17 @@ export async function start(config: NormalizedConfig) {
                   through a reverse proxy for development
                 */
                 if (location.protocol === 'https:') return;
+
+                let unloading = false;
+                addEventListener('beforeunload', () => unloading = true);
+
                 const host = \`\${location.protocol === 'http:' ? 'ws' : 'wss'}` +
                   `://\${location.hostname}:${config.port + 1}/dev\`;
                 const ws = new WebSocket(host);
-                ws.addEventListener('close', () => location.reload());
+                ws.addEventListener('close', () => {
+                  if (unloading) return;
+                  location.reload()
+                });
               })();
             </script>
           ` : ''}
@@ -136,7 +149,7 @@ export async function start(config: NormalizedConfig) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
-      error: `${err.name}: ${err.message}`
+      error: err.message || err.name
     });
   });
 

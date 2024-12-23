@@ -146,6 +146,7 @@ export default async function init(knex: Knex) {
       table.string('id').primary();
       table.string('key');
       table.string('userId');
+      table.string('name');
       table.string('role');
       table.boolean('active');
 

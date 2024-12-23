@@ -1,7 +1,8 @@
 import { useContext } from 'react';
 import { ActionFunctionArgs, Form } from 'react-router-dom';
-import { Button, Checkbox, MultiSelect, PasswordInput, Select, Stack, TextInput } from '@mantine/core';
+import { Anchor, Box, Button, Checkbox, MultiSelect, PasswordInput, Select, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useDisclosure } from '@mantine/hooks';
 import type { UserWithWebsites } from '../../../common/types/User';
 import { formDataToObject, onSubmit } from '../../util/form';
 import { ROLE_HIERARCHY } from '../../../common/users';
@@ -17,6 +18,7 @@ interface Props {
 
 export default function AccountForm({ user }: Props) {
   const loggedInUser = useContext(UserContext);
+  const [passwordVisible, { toggle: togglePasswordVisible }] = useDisclosure(false);
   const form = useForm({
     initialValues: {
       email: user?.email || '',
@@ -81,12 +83,34 @@ export default function AccountForm({ user }: Props) {
             <TextInput label="Email" name="email" type="email" required {...form.getInputProps('email')}
               key={form.key('email')} />
 
-            <PasswordInput label="Password" name="password" required={!user}
-              description={passwordUpdateText} {...form.getInputProps('password')}
-              key={form.key('password')} />
+            <Box>
+              <PasswordInput label="Password" name="password" required={!user}
+                description={passwordUpdateText} visible={passwordVisible}
+                onVisibilityChange={togglePasswordVisible} {...form.getInputProps('password')}
+                key={form.key('password')} />
+              {typeof crypto !== 'undefined' && (
+                <Anchor component="span" fz="xs" style={{
+                  userSelect: 'none'
+                }} onClick={() => {
+                  const password = btoa(
+                    [...crypto.getRandomValues(new Uint8Array(12))]
+                      .map((e) => String.fromCharCode(e)).join('')
+                  ).replace(/=/g, '');
 
-            <PasswordInput label="Confirm Password" required={!user} description={passwordUpdateText}
-              {...form.getInputProps('confirmPassword')} key={form.key('confirmPassword')} />
+                  form.setFieldValue('password', password);
+                  form.setFieldValue('confirmPassword', password);
+
+                  if (!passwordVisible) {
+                    togglePasswordVisible();
+                  }
+                }}>Generate random password</Anchor>
+              )}
+            </Box>
+
+            <PasswordInput label="Confirm Password" required={!user}
+              description={passwordUpdateText} visible={passwordVisible}
+              onVisibilityChange={togglePasswordVisible} {...form.getInputProps('confirmPassword')}
+              key={form.key('confirmPassword')} />
 
             <Select label="Role" name="role" required data={Object.keys(ROLE_HIERARCHY)}
               {...form.getInputProps('role')} key={form.key('role')}

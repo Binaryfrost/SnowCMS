@@ -11,7 +11,6 @@ import { type HttpResponse, put } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import ListEntry from '../../components/ListEntry';
-import { shortenUuid } from '../../components/ShortUuid';
 import useRefresh from '../../util/refresh';
 
 export function Component() {
@@ -85,7 +84,7 @@ export function Component() {
                 <Stack>
                   {keys.map((k) => (
                     <ListEntry key={k.id} type="API Key"
-                      name={shortenUuid(k.id)} id={k.id}
+                      name={k.name} id={k.id}
                       additional={`Role: ${k.role}`} buttons={{
                         delete: {
                           keepTypeCase: true,

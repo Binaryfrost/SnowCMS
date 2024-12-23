@@ -5,42 +5,14 @@ import { randomBytes } from 'crypto';
 import type { Optional } from 'utility-types';
 import { db } from '../database/db';
 import { ROLE_HIERARCHY, handleAccessControl } from '../../common/users';
-import { exists, getUserFromDatabase, handleUserBooleanConversion } from '../database/util';
-import { asyncRouteFix } from '../util';
+import { exists, getUserFromDatabase, handleUserBooleanConversion, removeRedisKeysMatching } from '../database/util';
+import { asyncRouteFix, getAuthToken } from '../util';
 import ExpressError from '../../common/ExpressError';
 import { ApiKey, ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, DatabaseUser,
   User, UserWebsite, UserWithWebsites } from '../../common/types/User';
+import { redis } from '../database/redis';
 
 const router = express.Router();
-
-/*
- * TODO: Write code for accounts and auth
- *
- * All accounts are stored in MySQL tables:
- * - users: Contains user ID, email, password hash, role, active state
- * - user_websites: One-to-many relationship between user ID and website ID
- *
- * API keys should use the following tables:
- * - apikey: Contains API key, user ID (reference) and role
- * - apikey_websites: One-to-many relationship between API key and website ID
- *
- * Sessions will be stored in Redis with the following key format: `session:{userId}:{sessionId}`.
- * The value should simply be the user ID to simplify getting data from the Redis cache
- * or MySQL. Doing so allows all of a user's sessions to be invalidated when they change their
- * password. However, the user's current session should stay active
- * (unless they didn't change their own password).
- *
- * Because the user permissions and role is required for every request, that information should be
- * cached in Redis for 10 minutes with the key format `user:{userId}`. Whenever any changes are
- * made to the user data, the data should be removed from the Redis cache. This ensures that the
- * data is cached, but also always up to date.
- * For API keys, the key format `apikey:{apikey}` should be used.
- *
- * The format of the token in the authorization head depends on the type of token:
- * - User token: `{userId}:{sessionId}`
- * - API token: `apikey:{apikey}`
- *
- */
 
 type DatabaseUserWithWebsites = DatabaseUser & UserWithWebsites;
 
@@ -176,7 +148,7 @@ function handleUserAccessControl(user: User, userId: string) {
   }
 }
 
-async function ensureUserExists(userId) {
+async function ensureUserExists(userId: string) {
   if (!(await exists('users', userId))) {
     throw new ExpressError('User does not exist', 404);
   }
@@ -227,6 +199,14 @@ router.put('/:userId', asyncRouteFix(async (req, res) => {
 
   await addOrUpdateUserWebsites(userId, websites);
 
+  await redis().del(`user:${userId}`);
+
+  if (password) {
+    const sessionToken = getAuthToken(req);
+    await removeRedisKeysMatching(`session:${userId}:*`,
+      (key) => key !== `session:${sessionToken}`);
+  }
+
   res.json({
     message: 'Account edited'
   });
@@ -264,6 +244,8 @@ router.delete('/:userId', asyncRouteFix(async (req, res) => {
       .delete();
   });
 
+  await redis().del(`user:${userId}`);
+
   res.json({
     message: 'Account deleted'
   });
@@ -275,7 +257,7 @@ router.get('/:userId/keys', asyncRouteFix(async (req, res) => {
   await ensureUserExists(userId);
 
   const apiKeys = await db()<ApiKey>('apikeys')
-    .select('id', 'userId', 'role', 'active')
+    .select('id', 'userId', 'name', 'role', 'active')
     .where({
       userId
     });
@@ -310,11 +292,12 @@ async function addOrUpdateApiKey(user: User, apiKey: Optional<DatabaseApiKey, 'k
       .insert({
         id: apiKey.id,
         userId: apiKey.userId,
+        name: apiKey.name,
         role: apiKey.role,
         active: apiKey.active
       })
       .onConflict('id')
-      .merge(['role', 'active']);
+      .merge(['name', 'role', 'active']);
 
     if (apiKey.key) {
       await trx<DatabaseApiKey>('apikeys')
@@ -361,10 +344,10 @@ async function addOrUpdateApiKeyWebsites(apikeyId: string, websites: string[]) {
 
 async function validateApiKeyRequest(req: Request) {
   const { userId } = req.params;
-  const { role, websites }: ApiKeyWithWebsites = req.body;
+  const { name, role, websites }: ApiKeyWithWebsites = req.body;
 
-  if (!role || !websites) {
-    throw new ExpressError('Role and websites are required');
+  if (!name || !role || !websites) {
+    throw new ExpressError('Name, role and websites are required');
   }
 
   if (!Array.isArray(websites)) {
@@ -379,7 +362,7 @@ async function validateApiKeyRequest(req: Request) {
 }
 
 function generateApiKey() {
-  return randomBytes(24).toString('base64url');
+  return randomBytes(32).toString('base64url');
 }
 
 router.post('/:userId/keys', asyncRouteFix(async (req, res) => {
@@ -387,7 +370,7 @@ router.post('/:userId/keys', asyncRouteFix(async (req, res) => {
   handleUserAccessControl(req.user, userId);
   await validateApiKeyRequest(req);
 
-  const { role, active, websites }: ApiKeyWithWebsites = req.body;
+  const { name, role, active, websites }: ApiKeyWithWebsites = req.body;
 
   const id = uuid();
   const key = generateApiKey();
@@ -396,6 +379,7 @@ router.post('/:userId/keys', asyncRouteFix(async (req, res) => {
     id,
     key,
     userId,
+    name,
     role,
     active: active ?? false
   });
@@ -415,7 +399,7 @@ router.get('/:userId/keys/:keyId', asyncRouteFix(async (req, res) => {
   await ensureUserExists(userId);
 
   const apiKey = await db()<ApiKey>('apikeys')
-    .select('id', 'userId', 'role', 'active')
+    .select('id', 'userId', 'name', 'role', 'active')
     .where({
       id: keyId
     })
@@ -441,22 +425,32 @@ router.put('/:userId/keys/:keyId', asyncRouteFix(async (req, res) => {
   handleUserAccessControl(req.user, userId);
   await validateApiKeyRequest(req);
 
-  if (!(await exists('apikeys', keyId))) {
+  const apiKey = await db()<DatabaseApiKey>('apikeys')
+    .select('id', 'key')
+    .where({
+      id: keyId
+    })
+    .first();
+
+  if (!apiKey) {
     throw new ExpressError('API key does not exist');
   }
 
-  const { role, active, websites }: ApiKeyWithWebsites = req.body;
+  const { name, role, active, websites }: ApiKeyWithWebsites = req.body;
 
   const id = keyId;
 
   await addOrUpdateApiKey(req.user, {
     id,
     userId,
+    name,
     role,
     active: active ?? false
   });
 
   await addOrUpdateApiKeyWebsites(id, websites);
+
+  await redis().del(`apikey:${apiKey.id}:${apiKey.key}`);
 
   res.json({
     message: 'Edited API key'
@@ -495,7 +489,14 @@ router.delete('/:userId/keys/:keyId', asyncRouteFix(async (req, res) => {
   handleUserAccessControl(req.user, userId);
   await ensureUserExists(userId);
 
-  if (!(await exists('apikeys', keyId))) {
+  const apiKey = await db()<DatabaseApiKey>('apikeys')
+    .select('id', 'key')
+    .where({
+      id: keyId
+    })
+    .first();
+
+  if (!apiKey) {
     throw new ExpressError('API key does not exist');
   }
 
@@ -512,6 +513,8 @@ router.delete('/:userId/keys/:keyId', asyncRouteFix(async (req, res) => {
       })
       .delete();
   });
+
+  await redis().del(`apikey:${apiKey.id}:${apiKey.key}`);
 
   res.json({
     message: 'API key deleted'

@@ -10,7 +10,7 @@ export interface IconButtonProps {
   role?: Role
 }
 
-export default function IconButton({ label, children, role }: IconButtonProps) {
+function IconButtonWithContext({ role, children }: Omit<IconButtonProps, 'label'>) {
   const { user } = useContext(UserContext);
 
   if (role) {
@@ -18,9 +18,19 @@ export default function IconButton({ label, children, role }: IconButtonProps) {
     if (!hasAccess(user, role)) return null;
   }
 
-  return (
+  return children;
+}
+
+export default function IconButton({ label, children, role }: IconButtonProps) {
+  const tooltip = (
     <Tooltip label={label}>
       {children}
     </Tooltip>
   );
+
+  return role ? (
+    <IconButtonWithContext role={role}>
+      {tooltip}
+    </IconButtonWithContext>
+  ) : tooltip;
 }

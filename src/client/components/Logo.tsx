@@ -21,7 +21,9 @@ interface Props extends ImageProps {
 
 export default function Logo({ noLink, ...props }: Props) {
   const img = (
-    <Image src={imgSet['1x']} srcSet={srcSet} height={40} w="fit-content"
+    <Image src={imgSet['1x']} srcSet={srcSet} height={40} w={{
+      md: 'fit-content'
+    }}
       alt="SnowCMS" {...props} />
   );
 

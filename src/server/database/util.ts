@@ -1,8 +1,9 @@
+import { timingSafeEqual } from 'crypto';
 import { db } from './db';
 import type { Collection } from '../../common/types/Collection';
 import type { Website } from '../../common/types/Website';
 import type { DatabaseCollectionInput } from '../../common/types/CollectionInputs';
-import { ApiKeyWithWebsites, User, UserWebsite, UserWithWebsites } from '../../common/types/User';
+import { ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, User, UserWebsite, UserWithWebsites } from '../../common/types/User';
 import { redis } from './redis';
 import ExpressError from '../../common/ExpressError';
 
@@ -119,7 +120,7 @@ export async function getUserFromDatabase(id: string): Promise<UserWithWebsites>
 
   return handleUserBooleanConversion({
     ...user,
-    websites: userWebsites.filter((w) => w.userId === id).map((w) => w.websiteId)
+    websites: userWebsites.map((w) => w.websiteId)
   });
 }
 
@@ -141,4 +142,74 @@ export async function getUser(id: string): Promise<UserWithWebsites> {
   }
 
   return user;
+}
+
+export async function getApiKeyFromDatabase(id: string):
+  Promise<DatabaseApiKey & ApiKeyWithWebsites> {
+  const key = await db()<DatabaseApiKey>('apikeys')
+    .select('id', 'key', 'userId', 'name', 'role', 'active')
+    .where({
+      id
+    })
+    .first();
+
+  if (!key) {
+    throw new ExpressError('API key not found', 404);
+  }
+
+  const apiKeyWebsites = await db()<ApiKeyWebsite>('apikey_websites')
+    .select('apikeyId', 'websiteId')
+    .where({
+      apikeyId: id
+    });
+
+  return handleUserBooleanConversion({
+    ...key,
+    websites: apiKeyWebsites.map((w) => w.websiteId)
+  });
+}
+
+function secureCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
+export async function getApiKey(id: string, key: string): Promise<ApiKeyWithWebsites> {
+  const cachedKey = await redis().get(`apikey:${id}:${key}`);
+  if (cachedKey) return JSON.parse(cachedKey);
+
+  let apiKey = null;
+
+  try {
+    const tempApiKey = await getApiKeyFromDatabase(id);
+    if (secureCompare(key, tempApiKey.key)) {
+      apiKey = tempApiKey;
+    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_) {}
+
+  if (apiKey && !cachedKey) {
+    await redis().set(`apikey:${id}:${key}`, JSON.stringify(apiKey), {
+      EX: 10 * 60
+    });
+  }
+
+  return apiKey;
+}
+
+export async function removeRedisKeysMatching(pattern: string,
+  filter: (key: string) => boolean = () => true) {
+  const deletePromises: (() => Promise<any>)[] = [];
+
+  for await (const key of redis().scanIterator({
+    MATCH: pattern
+  })) {
+    if (filter(key)) {
+      deletePromises.push(() => redis().del(key));
+    }
+  }
+
+  await Promise.all(deletePromises.map((m) => m()));
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActionFunctionArgs, Form, useActionData, useParams } from 'react-router-dom';
-import { ActionIcon, Alert, Button, Checkbox, Code, CopyButton, Group, LoadingOverlay, MultiSelect, Select, Stack, Text, Tooltip, rem } from '@mantine/core';
+import { ActionIcon, Alert, Button, Checkbox, Code, CopyButton, Group, LoadingOverlay, MultiSelect, Select, Stack, Text, TextInput, Tooltip, rem } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
 import { IconCheck, IconCircleCheck, IconCopy, IconExclamationCircle } from '@tabler/icons-react';
@@ -24,6 +24,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
   const actionData = useActionData() as HttpResponse;
   const form = useForm({
     initialValues: {
+      name: apiKey?.name || '',
       role: apiKey?.role || 'VIEWER',
       active: apiKey?.active ?? true,
       websites: apiKey?.websites || []
@@ -37,7 +38,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
       if (actionData.status === 200) {
         const { id, key } = actionData.body;
         if (id) {
-          setNewKey(`${id}.${key}`);
+          setNewKey(`a:${id}.${key}`);
         }
       }
     }
@@ -88,6 +89,9 @@ export default function ApiKeyForm({ apiKey }: Props) {
           {([user, websites]) => (
             <Form method="POST" onSubmit={(e) => onSubmit(e, form)}>
               <Stack>
+                <TextInput label="Name" name="name" required {...form.getInputProps('name')}
+                  key={form.key('name')} />
+
                 <Select label="Role" name="role" required data={getAllowedRoles(user.role)}
                   {...form.getInputProps('role')} key={form.key('role')} />
 
@@ -138,7 +142,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
 
                           if (resp.status === 200) {
                             const { id, key } = resp.body;
-                            setNewKey(`${id}.${key}`);
+                            setNewKey(`a:${id}.${key}`);
                           }
                         }
                       });
