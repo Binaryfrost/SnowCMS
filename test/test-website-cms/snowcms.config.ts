@@ -11,16 +11,13 @@ export default defineConfig({
   port: 3080,
   // IMPORTANT: Test the Webpack config to make sure the secret doesn't leak to the client-side code
   secret: 'longrandomsecret',
-  /*sso: {
+  sso: process.env.SSO_CLIENT_ID ? {
     clientId: process.env.SSO_CLIENT_ID,
     // See comment above about secret
     clientSecret: process.env.SSO_CLIENT_SECRET,
-    authUrl: process.env.SSO_AUTH_URL,
-    tokenUrl: process.env.SSO_TOKEN_URL,
-    userInfoUrl: process.env.SSO_USER_INFO_URL,
-    logoutUrl: process.env.SSO_LOGOUT_URL
-  },*/
-  // Future update
+    issuer: process.env.SSO_ISSUER,
+    callbackUrl: process.env.SSO_CALLBACK_URL,
+  } : undefined,
   media: {
     // Maximum size of one file
     maxSize: 20971520, // 20 MB (default: 50MB)

@@ -1,4 +1,5 @@
 import express from 'express';
+import type { ServeStaticOptions } from 'serve-static';
 import { type NormalizedConfig } from '../config';
 import { callHook } from '../common/plugins';
 import devServer from './dev-server';
@@ -6,6 +7,11 @@ import { getManifest } from './manifest';
 import initDb from './database/db';
 import { initConfig } from './config/config';
 import { getApiKey, getSession, getUser } from './database/util';
+import initRedis from './database/redis';
+import { asyncRouteFix, getAuthToken } from './util';
+import { UserWithWebsites } from '../common/types/User';
+import { ROLE_HIERARCHY } from '../common/users';
+import ExpressError from '../common/ExpressError';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
@@ -15,10 +21,6 @@ import collectionEntriesRouter from './routes/collection-entries';
 import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
-import initRedis from './database/redis';
-import { asyncRouteFix, getAuthToken } from './util';
-import { UserWithWebsites } from '../common/types/User';
-import { ROLE_HIERARCHY } from '../common/users';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -30,8 +32,19 @@ export async function start(config: NormalizedConfig) {
   await initRedis();
 
   const app = express();
-  // TODO: Caching in production
-  app.use('/assets', express.static('../client'));
+  app.use('/assets', (req, res, next) => {
+    if (req.path === '/manifest.json') {
+      throw new ExpressError('Forbidden', 403);
+    }
+    next();
+  });
+
+  const cacheConfig: ServeStaticOptions = __SNOWCMS_IS_PRODUCTION__ ? {
+    maxAge: '30d',
+    immutable: true
+  } : {};
+  app.use('/assets', express.static('../client', cacheConfig));
+
   app.use(express.json({
     limit: '16MB'
   }));
@@ -92,7 +105,7 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
   app.use('/api/websites/:websiteId/media', mediaRouter);
   app.use('/api/accounts', accountRouter);
-  app.use('/api/login', loginRouter);
+  app.use('/api/login', await loginRouter(config.sso));
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);

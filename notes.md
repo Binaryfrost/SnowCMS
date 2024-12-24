@@ -2,7 +2,7 @@
 
 Similarly to Astro, let users install SnowCMS from npm (until open-sourcing, run `npm install git+https://{user}:{password}@github.com/Binaryfrost/SnowCMS` and have a read-only GitHub token in the Simofa build command), create their config and plugins, and run `snowcms build`.
 
-Node 18+
+Node v20+
 
 # CLI Commands
 

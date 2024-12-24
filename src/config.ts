@@ -16,10 +16,8 @@ interface Config {
   sso?: {
     clientId: string
     clientSecret: string
-    authUrl: string
-    tokenUrl: string
-    userInfoUrl: string
-    logoutUrl: string
+    issuer: string
+    callbackUrl: string
     /**
      * If enabled, the login form will be disabled and all logins will be handled using SSO
      */

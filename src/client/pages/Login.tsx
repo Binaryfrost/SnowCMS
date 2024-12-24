@@ -23,7 +23,6 @@ interface LoginFormProps {
 }
 
 function ssoRedirect() {
-  // TODO: Write server-side code
   location.href = '/api/login/sso';
 }
 
@@ -34,7 +33,9 @@ function LoginForm({ config, form, submitting } : LoginFormProps) {
     }
   }, []);
 
-  return !config.sso.forced && (
+  return config.sso.forced ? (
+    <Text>Redirecting to SSO login page...</Text>
+  ) : (
     <>
       <TextInput label="Email" type="email" name="email" required {...form.getInputProps('email')}
         key={form.key('email')} />
@@ -44,7 +45,7 @@ function LoginForm({ config, form, submitting } : LoginFormProps) {
           key={form.key('password')} />
 
         <Anchor component="span" fz="xs" style={{
-          // userSelect: 'none'
+          userSelect: 'none'
         }} onClick={() => openModal({
           title: 'Forgot password',
           children: 'If you have forgotten your password, contact the administrator of this SnowCMS instance.',
@@ -98,8 +99,15 @@ export function Component() {
     onValuesChange: () => setError(null)
   });
 
+  const token = location.hash.replace(/^#/, '');
+
   useEffect(() => {
     nprogress.complete();
+
+    if (token) {
+      localStorage.setItem('token', token);
+      navigate('/');
+    }
   }, []);
 
   useEffect(() => {
@@ -132,12 +140,14 @@ export function Component() {
 
                 {error && <Text c="red">{error}</Text>}
 
-                <DataGetter<LoginConfig> url="/api/login/config"
-                  skeletonComponent={<FormSkeleton inputs={2} />}>
-                  {(config) => (
-                    <LoginForm config={config} form={form} submitting={submitting} />
-                  )}
-                </DataGetter>
+                {!token && (
+                  <DataGetter<LoginConfig> url="/api/login/config"
+                    skeletonComponent={<FormSkeleton inputs={2} />}>
+                    {(config) => (
+                      <LoginForm config={config} form={form} submitting={submitting} />
+                    )}
+                  </DataGetter>
+                )}
               </Stack>
             </Form>
           </Paper>
