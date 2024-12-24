@@ -143,7 +143,7 @@ function handleUserAccessControl(user: User, userId: string) {
 
   if (user.role === 'ADMIN') return;
 
-  if (user.id !== userId) {
+  if (user.id !== userId || user.role === 'VIEWER') {
     throw new ExpressError('Forbidden', 403);
   }
 }
