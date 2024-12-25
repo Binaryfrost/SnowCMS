@@ -10,7 +10,7 @@ interface Config {
    */
   port?: number
   /**
-   * HMAC signing secret
+   * Secret used for signing HMACs and encrypting SSO cookie
    */
   secret: string
   sso?: {
