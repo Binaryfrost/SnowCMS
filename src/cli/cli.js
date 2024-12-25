@@ -4,11 +4,14 @@ import path from 'path';
 import { exists, findPackageRoot } from './util.js';
 import * as BuildCommand from './commands/build.js';
 import * as DevCommand from './commands/dev.js';
+import { verifyNodeVersion } from '../version.js';
 
 const command = process.argv.slice(2)[0];
 
 const userDir = process.cwd();
 const cmsSrcDir = await findPackageRoot(fileURLToPath(import.meta.url));
+
+verifyNodeVersion();
 
 console.log('CMS user directory:', userDir);
 console.log('CMS installation directory:', cmsSrcDir);

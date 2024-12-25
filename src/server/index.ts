@@ -1,5 +1,8 @@
 import type { NormalizedConfig } from '../config';
 import setup from '../common/setup';
+import { verifyNodeVersion } from '../version';
+
+verifyNodeVersion();
 
 // eslint-disable-next-line import/no-dynamic-require
 const configFile = require(__SNOWCMS_CONFIG_FILE__);
