@@ -32,6 +32,12 @@ export async function start(config: NormalizedConfig) {
   await initRedis();
 
   const app = express();
+
+  app.use((req, res, next) => {
+    res.header('X-Robots-Tag', 'noindex');
+    next();
+  });
+
   app.use('/assets', (req, res, next) => {
     if (req.path === '/manifest.json') {
       throw new ExpressError('Forbidden', 403);
