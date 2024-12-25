@@ -118,6 +118,10 @@ const plugin: Plugin = {
         cancel();
       }
 
+      if (website.hook.includes('example')) {
+        cancel();
+      }
+
       logger.log('before website hook called', website, collection, reason);
     }
   }

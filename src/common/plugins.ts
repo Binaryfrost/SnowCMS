@@ -178,6 +178,30 @@ export interface Plugin {
   hooks: Hooks
 }
 
+/*
+ * TODO: Change how plugins are structured
+ * Instead of having snowcms-plugins.config.ts, have the following
+ * directories in a `src` directory relative to the main config file:
+ * - hooks: Server-side hooks
+ * - inputs: Inputs (shared between client and server)
+ * - routes: Server-side routes
+ *
+ * Having this structure allows the custom routes feature to be added back to the CMS while
+ * preventing secrets from leaking to the client-side (as the client-side code will never
+ * load routes with this file structure). Additionally, because there's no chance of the routes
+ * ending up in the client bundle, the routes can be given access to the database and config which
+ * significantly increases their usefulness. The same is true for hooks.
+ *
+ * Care still needs to be taken to ensure Inputs don't leak data. For this reason, all server-side
+ * plugin methods should be exported from a different file (e.g. import x from `snowcms/server`).
+ *
+ * The files in these directories do not need to be named according to the hook/route/input names.
+ * The developer is free to choose their own names for these files as long as they are alphanumeric
+ * and have a `.ts` extension. The logger identifier will be the file name.
+ *
+ * Each file exports an array of the appropriate data structure (e.g. files in the inputs directory
+ * will export an array of Inputs).
+ */
 export function loadPlugins(config: PluginConfig) {
   config.plugins.forEach((plugin) => {
     if (!plugin.name.match(/^[0-9A-Za-z\-_]+$/)) {
