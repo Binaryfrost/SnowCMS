@@ -186,6 +186,8 @@ export interface Plugin {
  * - inputs: Inputs (shared between client and server)
  * - routes: Server-side routes
  *
+ * All directories, including parent `src` directory are optional.
+ *
  * Having this structure allows the custom routes feature to be added back to the CMS while
  * preventing secrets from leaking to the client-side (as the client-side code will never
  * load routes with this file structure). Additionally, because there's no chance of the routes
@@ -201,6 +203,9 @@ export interface Plugin {
  *
  * Each file exports an array of the appropriate data structure (e.g. files in the inputs directory
  * will export an array of Inputs).
+ *
+ * Code for loading custom inputs will stay in this file (but will be renamed),
+ * code for hooks and routes will be in the server directory.
  */
 export function loadPlugins(config: PluginConfig) {
   config.plugins.forEach((plugin) => {
