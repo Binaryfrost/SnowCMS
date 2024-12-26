@@ -42,7 +42,7 @@ export async function run(opts) {
         base: packageRoot
       });
 
-      const ignored = ['knex, mysql2'];
+      const ignored = ['knex', 'mysql2', 'bcrypt', 'node-fetch'];
 
       // eslint-disable-next-line no-restricted-syntax
       for (const error of result.warnings) {
