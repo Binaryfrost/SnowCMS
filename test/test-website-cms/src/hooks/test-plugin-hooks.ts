@@ -54,13 +54,14 @@ export default defineHookPlugin({
       if (collection.id === '0192c4a8-9d0b-7ee9-a0b6-b87e38003c06' &&
         reason.reason === WebsiteHookCallReasons.COLLECTION_ENTRY_CREATED) {
         cancel();
+        return;
       }
+
+      logger.log('before website hook called', website, collection, reason);
 
       if (website.hook.includes('example')) {
         cancel();
       }
-
-      logger.log('before website hook called', website, collection, reason);
     }
   })
 });
