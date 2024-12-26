@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import type { Request } from 'express';
 import type { PluginConfig } from '../../config';
 import { PluginLogger } from './PluginLogger';
 
