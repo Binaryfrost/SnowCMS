@@ -34,7 +34,7 @@ export async function run(opts) {
         return;
       }
 
-      const packageRoot = await findPackageRoot(fileURLToPath(import.meta.url));
+      const packageRoot = await findPackageRoot(fileURLToPath(import.meta.url), true);
       const entryFile = path.join(serverConfig.output.path, serverConfig.output.filename);
 
       // https://github.com/withastro/adapters/blob/main/packages/netlify/src/lib/nft.ts
@@ -50,7 +50,7 @@ export async function run(opts) {
           const [, module, file] =
             /Cannot find module '(.+?)' loaded from (.+)/.exec(error.message) || [];
 
-          if (!ignored.some((i) => file.includes(`/${i}/`))) {
+          if (!ignored.some((i) => file.includes(`/${i}/`) || file.includes(`\\${i}\\`))) {
             if (entryFile === file) {
               console.log(
                 `The module "${module}" couldn't be resolved. ` +
