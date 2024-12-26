@@ -276,7 +276,6 @@ const input: Input<JSONContent, RichTextInputSettings> = {
 
               <RichTextEditor.Control onClick={() => showVideoModal({
                 close(video) {
-                  console.log(video);
                   if (!video) return;
                   editor.commands.insertContent({
                     type: 'video',

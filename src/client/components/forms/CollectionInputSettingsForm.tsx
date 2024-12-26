@@ -45,8 +45,6 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
     }
 
     if (!form.validate().hasErrors && !settingsHasError) {
-      console.log(form.getValues());
-
       const formValues = form.getValues();
       update((input) => ({
         ...input,

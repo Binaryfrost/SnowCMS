@@ -51,8 +51,6 @@ const input: Input<any[], ArrayInputSettings> = {
     const inputsRef = useRef<{ id: string, ref: InputRef<any>}[]>([]);
     const [error, setError] = useState(null);
 
-    console.log('array', inputs, props.value);
-
     useImperativeHandle(ref, () => ({
       getValues: () => inputsRef.current.map((i) => {
         const { getValues } = i.ref;
@@ -248,7 +246,6 @@ const input: Input<any[], ArrayInputSettings> = {
   },
 
   renderHtml: (value, settings, req) => {
-    console.log('array', value, settings);
     const selectedInput = getInput(settings?.input);
     if (!input) return null;
     const inputConfig = selectedInput.deserializeSettings && settings?.inputConfig ?

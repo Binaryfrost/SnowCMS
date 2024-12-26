@@ -52,7 +52,6 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
               ];
               const thumbnail = generateThumbnailFor.includes(fileType as any) &&
                 await generateThumbnail(file);
-              console.log('thumbnail', thumbnail.size, thumbnail);
 
               const metadata: FileMetadata = {
                 name: file.name,
@@ -67,7 +66,6 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
               const resp = await post<FileUploadResponse>(
                 `/api/websites/${props.websiteId}/media/upload`, metadata
               );
-              console.log(resp);
 
               if (resp.status !== 200) {
                 throw new Error(resp.body.error || 'An error occurred');

@@ -134,8 +134,6 @@ const input: Input<string, RelationalInputSettings> = {
       throw new ExpressError('Collection ID must be a string');
     }
 
-    console.log(settings.collectionId, req.params.collectionId);
-
     if (settings.collectionId === req.params.collectionId) {
       throw new ExpressError('Cannot reference same Collection');
     }

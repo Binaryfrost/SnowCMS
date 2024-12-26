@@ -124,8 +124,6 @@ export async function callHttpHook(website: Website, collection: Collection,
 
   if (cancelled) return;
 
-  console.log('call website hook', website, collection, reason);
-
   const resp = await fetch(website.hook, {
     method: 'POST'
   });

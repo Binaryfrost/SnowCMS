@@ -5,7 +5,6 @@ import { Notifications } from '@mantine/notifications';
 import { RouterProvider } from 'react-router-dom';
 
 import { router } from './router';
-import InputRegistry from '../common/InputRegistry';
 import setup from '../common/setup';
 
 import '@mantine/core/styles.css';
@@ -15,8 +14,6 @@ import '@mantine/dropzone/styles.css';
 import '@mantine/tiptap/styles.css';
 
 setup();
-
-console.log('inputs', InputRegistry.getAllInputs());
 
 const theme = createTheme({
   components: {
