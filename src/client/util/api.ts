@@ -51,6 +51,7 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
   });
 
   if (resp.status === 401 && !opts.noRedirectOn401) {
+    localStorage.setItem('redirect', location.pathname);
     localStorage.removeItem('token');
     location.href = '/login';
     return {

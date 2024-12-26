@@ -101,12 +101,20 @@ export function Component() {
 
   const token = location.hash.replace(/^#/, '');
 
+  function redirectAfterLogin() {
+    const url = localStorage.getItem('redirect') || '/';
+    localStorage.removeItem('redirect');
+    navigate(url);
+  }
+
   useEffect(() => {
     nprogress.complete();
 
     if (token) {
       localStorage.setItem('token', token);
-      navigate('/');
+      redirectAfterLogin();
+    } else if (localStorage.getItem('token')) {
+      redirectAfterLogin();
     }
   }, []);
 
