@@ -1,7 +1,10 @@
 import type { DeepRequired } from 'utility-types';
 import type { RedisClientOptions } from 'redis';
-import type { Plugin } from './common/plugins';
+import type { Plugin } from './common/plugins/plugins';
 import type { Role } from './common/types/User';
+import { Input } from './common/InputRegistry';
+import { Hooks } from './server/plugins/hooks';
+import { Route } from './server/plugins/routes';
 
 interface Config {
   /**
@@ -69,8 +72,8 @@ interface Config {
  * are loaded in a completely separate config file. It's not an ideal
  * solution, but it works as long as one of the files doesn't import the other.
  */
-export interface PluginConfig {
-  plugins: Plugin[]
+export interface PluginConfig<T> {
+  plugins: Plugin<T>[]
 }
 
 type DeepRequiredExcept<T, K extends keyof T> = DeepRequired<Omit<T, K>> & Pick<T, K>
@@ -91,4 +94,17 @@ export const defineConfig = (config: Config): NormalizedConfig => ({
 });
 
 // To provide types in config file
-export const definePluginConfig = (config: PluginConfig) => config;
+export const defineInputPluginConfig = (config: PluginConfig<Input<any>>) => config;
+export function defineInputPlugin<T = any, S = any>(plugin: Plugin<Input<T, S>>) {
+  return plugin;
+}
+
+export const defineHookPluginConfig = (config: PluginConfig<Hooks>) => config;
+export function defineHookPlugin(plugin: Plugin<Hooks>) {
+  return plugin;
+}
+
+export const defineRoutePluginConfig = (config: PluginConfig<Route>) => config;
+export function defineRoutePlugin(plugin: Plugin<Route>) {
+  return plugin;
+}

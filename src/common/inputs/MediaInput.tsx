@@ -11,7 +11,7 @@ import FilePreview from '../../client/components/FilePreview';
 import { get } from '../../client/util/api';
 import { mimeTypeMatch } from '../util';
 import ExpressError from '../ExpressError';
-import { serverInputFetch } from '../plugins';
+import { serverInputFetch } from '../plugins/plugins';
 
 interface MediaInputSettings {
   mimeTypes: string[]

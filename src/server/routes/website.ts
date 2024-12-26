@@ -3,13 +3,13 @@ import { v7 as uuid } from 'uuid';
 import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
 import { db } from '../database/db';
 import { type Website } from '../../common/types/Website';
-import { handleAccessControl } from '../../common/users';
+import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { asyncRouteFix } from '../util';
 import { Collection } from '../../common/types/Collection';
 import { getConfig } from '../config/config';
 import { deleteCollection } from './collections';
-import { callHook } from '../../common/plugins';
+import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
 import { ApiKeyWebsite, UserWebsite } from '../../common/types/User';
 

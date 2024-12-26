@@ -4,6 +4,7 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
+import { exists } from './util.js';
 
 /**
  * @callback WebpackFunction
@@ -11,16 +12,19 @@ import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
  * @returns {Promise<import('webpack').Configuration>}
  */
 
-/**
- * @callback WebpackBaseFunction
- * @param {import('./webpack').WebpackOptions & { side: 'CLIENT' | 'SERVER' }} options
- * @returns {Promise<import('webpack').Configuration>}
- */
-
 const SERVER_DIST = (dir) => path.join(dir, 'dist', 'server');
 const CLIENT_DIST = (dir) => path.join(dir, 'dist', 'client');
 
-/** @type {WebpackBaseFunction} */
+/**
+ * @param {string} userDir
+ * @param {import('../common/plugins/plugins').PluginTypes} type
+ */
+async function pluginConfig(userDir, type) {
+  const configFile = path.join(userDir, 'src', type, `${type}.config.ts`);
+  return await exists(configFile) && JSON.stringify(configFile);
+}
+
+/** @type {WebpackFunction} */
 const BASE_WEBPACK_TEMPLATE = async (opts) => ({
   context: opts.cmsSrcDir,
   mode: opts.mode,
@@ -91,21 +95,18 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
       React: 'react'
     }),
     new webpack.DefinePlugin({
-      __SNOWCMS_CONFIG_FILE__: JSON.stringify(opts.configPath),
-      __SNOWCMS_PLUGIN_CONFIG_FILE__: opts.pluginConfigPath &&
-        JSON.stringify(opts.pluginConfigPath),
-      __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production',
-      SNOWCMS_PUBLIC__SIDE: JSON.stringify(opts.side)
+      __SNOWCMS_CONFIG_FILE__: JSON.stringify(path.join(opts.userDir, 'snowcms.config.ts')),
+      __SNOWCMS_INPUTS_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'inputs'),
+      __SNOWCMS_HOOKS_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'hooks'),
+      __SNOWCMS_ROUTES_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'routes'),
+      __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production'
     })
   ]
 });
 
 /** @type {WebpackFunction} */
 export async function getWebpackServerConfig(opts) {
-  const baseConfig = await BASE_WEBPACK_TEMPLATE({
-    ...opts,
-    side: 'SERVER'
-  });
+  const baseConfig = await BASE_WEBPACK_TEMPLATE(opts);
   return {
     ...baseConfig,
     target: 'node',
@@ -142,10 +143,7 @@ export async function getWebpackServerConfig(opts) {
 
 /** @type {WebpackFunction} */
 export async function getWebpackClientConfig(opts) {
-  const baseConfig = await BASE_WEBPACK_TEMPLATE({
-    ...opts,
-    side: 'CLIENT'
-  });
+  const baseConfig = await BASE_WEBPACK_TEMPLATE(opts);
   return {
     ...baseConfig,
     entry: './src/client/index.ts',

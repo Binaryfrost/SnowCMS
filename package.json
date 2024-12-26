@@ -7,8 +7,14 @@
     "snowcms": "./src/cli/cli.js"
   },
   "exports": {
-    "types": "./src/index.ts",
-    "default": "./src/index.ts"
+    ".": {
+      "types": "./src/lib/index.ts",
+      "default": "./src/lib/index.ts"
+    },
+    "./server": {
+      "types": "./src/lib/server.ts",
+      "default": "./src/lib/server.ts"
+    }
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

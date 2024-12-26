@@ -4,7 +4,7 @@ import { useField, useForm } from '@mantine/form';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
-import { serverInputFetch } from '../plugins';
+import { serverInputFetch } from '../plugins/plugins';
 import { CollectionInput } from '../types/CollectionInputs';
 
 interface SlugInputSettings {

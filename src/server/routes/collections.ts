@@ -2,10 +2,10 @@ import express from 'express';
 import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import { type Collection } from '../../common/types/Collection';
-import { handleAccessControl } from '../../common/users';
+import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { asyncRouteFix } from '../util';
-import { callHook } from '../../common/plugins';
+import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
 
 const router = express.Router({ mergeParams: true });

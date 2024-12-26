@@ -1,14 +1,14 @@
 import express, { type Request } from 'express';
 import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
-import { handleAccessControl } from '../../common/users';
+import handleAccessControl from '../handleAccessControl';
 import { exists, getCollection, getCollectionInputs, getWebsite, reorderCollectionInputs } from '../database/util';
 import { CollectionInput, DatabaseCollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
 import { CollectionTitle } from '../../common/types/CollectionTitle';
 import { asyncRouteFix } from '../util';
 import { CollectionEntryInputs } from '../../common/types/CollectionEntry';
-import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../../common/plugins';
+import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
 
 const router = express.Router({ mergeParams: true });

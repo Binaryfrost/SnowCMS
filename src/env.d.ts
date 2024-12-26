@@ -3,9 +3,10 @@ import type { UserWithWebsites } from './common/types/User';
 declare global {
   /* eslint-disable no-underscore-dangle */
   const __SNOWCMS_CONFIG_FILE__: string;
-  const __SNOWCMS_PLUGIN_CONFIG_FILE__: string;
+  const __SNOWCMS_INPUTS_PLUGIN_CONFIG__: string;
+  const __SNOWCMS_HOOKS_PLUGIN_CONFIG__: string;
+  const __SNOWCMS_ROUTES_PLUGIN_CONFIG__: string;
   const __SNOWCMS_IS_PRODUCTION__: string;
-  const SNOWCMS_PUBLIC__SIDE: 'CLIENT' | 'SERVER';
 
   namespace Express {
     interface Request {

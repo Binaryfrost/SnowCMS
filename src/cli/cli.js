@@ -27,25 +27,19 @@ if (userDir === cmsSrcDir) {
 const configFile = path.join(userDir, 'snowcms.config.ts');
 if (!(await exists(configFile))) throw new Error('Could not find SnowCMS config file');
 
-const pluginConfigFile = path.join(userDir, 'snowcms-plugins.config.ts');
-
 switch (command) {
   case 'build':
     await BuildCommand.run({
       cmsSrcDir,
       userDir,
-      mode: 'production',
-      configPath: configFile,
-      pluginConfigPath: await exists(pluginConfigFile) ? pluginConfigFile : null
+      mode: 'production'
     });
     break;
   case 'dev':
     await DevCommand.run({
       cmsSrcDir,
       userDir,
-      mode: 'development',
-      configPath: configFile,
-      pluginConfigPath: await exists(pluginConfigFile) ? pluginConfigFile : null
+      mode: 'development'
     });
     break;
   default:

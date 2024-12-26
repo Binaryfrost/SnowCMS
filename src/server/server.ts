@@ -1,7 +1,7 @@
 import express from 'express';
 import type { ServeStaticOptions } from 'serve-static';
 import { type NormalizedConfig } from '../config';
-import { callHook } from '../common/plugins';
+import { callHook } from './plugins/hooks';
 import devServer from './dev-server';
 import { getManifest } from './manifest';
 import initDb from './database/db';
@@ -12,6 +12,7 @@ import { asyncRouteFix, getAuthToken } from './util';
 import { UserWithWebsites } from '../common/types/User';
 import { ROLE_HIERARCHY } from '../common/users';
 import ExpressError from '../common/ExpressError';
+import { loadPlugins } from './plugins/plugins';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
@@ -21,9 +22,12 @@ import collectionEntriesRouter from './routes/collection-entries';
 import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
+import { router as pluginRouter } from './plugins/routes';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
+
+  loadPlugins();
 
   console.log('Connecting to database');
   await initDb();
@@ -112,12 +116,19 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites/:websiteId/media', mediaRouter);
   app.use('/api/accounts', accountRouter);
   app.use('/api/login', await loginRouter(config.sso));
+  app.use('/c', pluginRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
     devServer(config.port + 1);
   }
 
   app.use('/api/', (req, res) => {
+    res.status(404).json({
+      error: 'Route not found'
+    });
+  });
+
+  app.use('/c/', (req, res) => {
     res.status(404).json({
       error: 'Route not found'
     });

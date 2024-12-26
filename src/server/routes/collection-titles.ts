@@ -1,10 +1,10 @@
 import express from 'express';
 import { db } from '../database/db';
-import { handleAccessControl } from '../../common/users';
+import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { CollectionTitle } from '../../common/types/CollectionTitle';
 import { asyncRouteFix } from '../util';
-import { callHook } from '../../common/plugins';
+import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
 
 const router = express.Router({ mergeParams: true });

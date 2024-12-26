@@ -9,7 +9,7 @@ import DataGetter from '../../client/components/DataGetter';
 import { shortenUuid } from '../../client/components/ShortUuid';
 import FormSkeleton from '../../client/components/FormSkeleton';
 import ExpressError from '../ExpressError';
-import { serverInputFetch } from '../plugins';
+import { serverInputFetch } from '../plugins/plugins';
 
 /*
  * Setting field to select other collection. In Collection Entry, allow selecting specific entry

@@ -1,7 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { defineConfig } from '../../src/index';
+import { defineConfig } from '../../src/lib/index';
 
 dotenv.config({
   path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.env')

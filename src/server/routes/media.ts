@@ -6,13 +6,13 @@ import slug from 'slug';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { db } from '../database/db';
-import { handleAccessControl } from '../../common/users';
+import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { getConfig } from '../config/config';
 import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig } from '../../common/types/Media';
 import { asyncRouteFix } from '../util';
 import { BLOCKED_MIME_TYPES } from '../../common/blocked-mime-types';
-import { callHook } from '../../common/plugins';
+import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
 
 const router = express.Router({ mergeParams: true });
