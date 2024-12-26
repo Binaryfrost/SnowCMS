@@ -10,14 +10,18 @@ export async function exists(f) {
   }
 }
 
-export async function findPackageRoot(dir) {
+export async function findPackageRoot(dir, skipNodeModules = false) {
   const packageJson = path.join(dir, 'package.json');
-  if (await exists(packageJson)) return dir;
+  if (await exists(packageJson)) {
+    if (!skipNodeModules || (skipNodeModules && !packageJson.includes('node_modules'))) {
+      return dir;
+    }
+  }
 
   const upOneLevel = path.join(dir, '..');
   // At the root of the file system going up one level won't change the path
   if (dir === upOneLevel) throw new Error('Failed to find package root');
-  return findPackageRoot(upOneLevel);
+  return findPackageRoot(upOneLevel, skipNodeModules);
 }
 
 /*
