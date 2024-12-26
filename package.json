@@ -16,6 +16,9 @@
       "default": "./src/lib/server.ts"
     }
   },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
