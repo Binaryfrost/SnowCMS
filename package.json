@@ -14,7 +14,8 @@
     "./server": {
       "types": "./src/lib/server.ts",
       "default": "./src/lib/server.ts"
-    }
+    },
+    "./types/*": "./src/common/types/*.d.ts"
   },
   "engines": {
     "node": ">=20"
