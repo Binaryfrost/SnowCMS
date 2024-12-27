@@ -22,7 +22,7 @@ import { generateHTML } from '@tiptap/html';
 import { all, createLowlight } from 'lowlight';
 // @ts-ignore
 import UniqueId from 'tiptap-unique-id';
-import { IconArrowMerge, IconArrowsSplit, IconBrandYoutube, IconColumnInsertLeft,
+import { IconAlertSquare, IconArrowMerge, IconArrowsSplit, IconBrandYoutube, IconColumnInsertLeft,
   IconColumnInsertRight, IconColumnRemove, IconLinkMinus, IconPhoto, IconRowInsertBottom,
   IconRowInsertTop, IconRowRemove, IconTable, IconTableColumn, IconTableOff,
   IconTableRow, IconVideo } from '@tabler/icons-react';
@@ -38,6 +38,8 @@ import './RichTextInput/RichTextInput.css';
 import { showYoutubeModal } from './RichTextInput/YoutubeModal';
 import { showVideoModal } from './RichTextInput/VideoModal';
 import ExpressError from '../ExpressError';
+import { showAlertModal } from './RichTextInput/AlertModal';
+import Alert, { AlertProps } from './RichTextInput/Alert';
 
 interface RichTextInputSettings {
   maxLength: number
@@ -82,7 +84,8 @@ const extensions = [
       loading: 'lazy'
     }
   }),
-  Video
+  Video,
+  Alert
 ];
 
 const input: Input<JSONContent, RichTextInputSettings> = {
@@ -184,6 +187,24 @@ const input: Input<JSONContent, RichTextInputSettings> = {
               <RichTextEditor.OrderedList />
               <RichTextEditor.Subscript />
               <RichTextEditor.Superscript />
+              <RichTextEditor.Control onClick={() => {
+                const alertAttrs = editor.getAttributes('alert');
+                console.log(alertAttrs);
+
+                showAlertModal({
+                  current: alertAttrs as AlertProps,
+                  close: (alert) => {
+                    if (!alert) return;
+                    editor.commands.insertContent({
+                      type: 'alert',
+                      attrs: alert
+                    });
+                  }
+                });
+              }}
+                title="Insert Alert" aria-label="Insert Alert">
+                <IconAlertSquare stroke={1.5} size="1rem" />
+              </RichTextEditor.Control>
             </RichTextEditor.ControlsGroup>
 
             <RichTextEditor.ControlsGroup>
