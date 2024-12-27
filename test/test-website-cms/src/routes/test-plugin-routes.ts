@@ -1,5 +1,7 @@
+import { User } from '../../../../src/common/types/User';
 import { defineRoutePlugin } from '../../../../src/config';
 import { ExpressError } from '../../../../src/lib';
+import { db } from '../../../../src/lib/server';
 import handleAccessControl from '../../../../src/server/handleAccessControl';
 import { asyncRouteFix } from '../../../../src/server/util';
 
@@ -30,6 +32,16 @@ export default defineRoutePlugin({
 
       res.json({
         message: 'This public async route can throw an error'
+      });
+    }));
+
+    router.get('/users', asyncRouteFix(async (req, res) => {
+      const users = await db()<User>('users')
+        .select('id');
+
+      res.json({
+        message: 'You can also access the database in routes',
+        users
       });
     }));
   }
