@@ -1,5 +1,6 @@
 import webpack from 'webpack';
 import path from 'path';
+import fs from 'fs/promises';
 import { fork } from 'child_process';
 import { getWebpackClientConfig, getWebpackServerConfig } from '../webpack.js';
 import { exists } from '../util.js';
@@ -10,6 +11,16 @@ export async function run(opts) {
   const serverConfig = await getWebpackServerConfig(opts);
 
   console.log('Running development build');
+
+  const serverNodeModules = path.join(serverConfig.output.path, 'node_modules');
+  if (await exists(serverNodeModules)) {
+    try {
+      await fs.unlink(serverNodeModules);
+    } catch (e) {
+      console.error('Failed to delete production node_modules, you may need to delete it ' +
+      'manually for the development build to succeed. Error: ', e.message);
+    }
+  }
 
   const serverJs = path.join(serverConfig.output.path, serverConfig.output.filename);
   /** @type {import('child_process').ChildProcess} */
