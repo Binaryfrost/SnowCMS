@@ -115,7 +115,7 @@ export async function getWebpackServerConfig(opts) {
       ...baseConfig.output,
       path: SERVER_DIST(opts.userDir),
       module: true,
-      filename: 'server.js',
+      filename: 'server.mjs',
       chunkFormat: 'module'
     },
     externalsPresets: {
