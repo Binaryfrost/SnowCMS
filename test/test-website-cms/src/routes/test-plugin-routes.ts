@@ -12,7 +12,7 @@ export default defineRoutePlugin({
 
     router.get('/custom-route', (req, res) => {
       console.log(req.user);
-      handleAccessControl(res, req.user, 'USER');
+      handleAccessControl(req.user, 'USER');
 
       res.json({
         message: 'Only users with the USER role and higher can access this route'
