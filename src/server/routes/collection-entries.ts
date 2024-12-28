@@ -40,7 +40,7 @@ async function checkInputValueValidity(input: string, data: string,
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
     throw new ExpressError('Collection not found', 404);
@@ -75,7 +75,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
   const { render } = req.query;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   const entry = await db()<CollectionEntry>('collection_entries')
     .select('id', 'collectionId', 'createdAt', 'updatedAt')
@@ -217,7 +217,7 @@ async function addOrUpdate(data: CollectionEntryWithData) {
 router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  handleAccessControl(res, req.user, 'USER', websiteId);
+  handleAccessControl(req.user, 'USER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
     throw new ExpressError('Collection not found', 404);
@@ -253,7 +253,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
 router.patch('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'USER', websiteId);
+  handleAccessControl(req.user, 'USER', websiteId);
 
   if (!(await exists('collection_entries', id))) {
     throw new ExpressError('Collection Entry not found', 404);
@@ -287,7 +287,7 @@ router.patch('/:id', asyncRouteFix(async (req, res) => {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'USER', websiteId);
+  handleAccessControl(req.user, 'USER', websiteId);
 
   if (!(await exists('collection_entries', id))) {
     throw new ExpressError('Collection Entry not found', 404);

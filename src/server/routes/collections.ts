@@ -13,7 +13,7 @@ const router = express.Router({ mergeParams: true });
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
     throw new ExpressError('Website not found', 404);
@@ -30,7 +30,7 @@ router.get('/', asyncRouteFix(async (req, res) => {
 router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
+  handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
   const { name } = req.body;
 
@@ -68,7 +68,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
 router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   const collection = await db()<Collection>('collections')
     .select('id', 'websiteId', 'name')
@@ -87,7 +87,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
 router.put('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
+  handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
   const { name } = req.body;
   if (!name) {
@@ -163,7 +163,7 @@ export async function deleteCollection(id: string) {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
+  handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collections', id))) {
     throw new ExpressError('Collection not found', 404);

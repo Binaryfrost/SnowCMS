@@ -82,7 +82,7 @@ function hmac(secret: string, ...data: any[]) {
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
     throw new ExpressError('Website not found', 404);
@@ -117,7 +117,7 @@ router.get('/', asyncRouteFix(async (req, res) => {
 router.get('/config', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
     throw new ExpressError('Website not found', 404);
@@ -135,7 +135,7 @@ router.get('/config', asyncRouteFix(async (req, res) => {
 router.get('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   if (!(await exists('media', id))) {
     throw new ExpressError('File not found', 404);
@@ -168,7 +168,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
 router.post('/upload', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  handleAccessControl(res, req.user, 'USER', websiteId);
+  handleAccessControl(req.user, 'USER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
     throw new ExpressError('Website not found', 404);
@@ -250,7 +250,7 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
 router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
-  handleAccessControl(res, req.user, 'USER', websiteId);
+  handleAccessControl(req.user, 'USER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
     throw new ExpressError('Website not found', 404);
@@ -313,7 +313,7 @@ router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'USER', websiteId);
+  handleAccessControl(req.user, 'USER', websiteId);
 
   if (!(await exists('websites', websiteId))) {
     throw new ExpressError('Website not found', 404);

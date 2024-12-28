@@ -1,9 +1,8 @@
-import { type Response } from 'express';
 import type { Role, UserWithWebsites } from '../common/types/User';
 import ExpressError from '../common/ExpressError';
 import { hasAccess } from '../common/users';
 
-export default function handleAccessControl(res: Response, user: UserWithWebsites,
+export default function handleAccessControl(user: UserWithWebsites,
   requiredRole: Role, websiteId?: string) {
   if (hasAccess(user, requiredRole, websiteId)) return;
 

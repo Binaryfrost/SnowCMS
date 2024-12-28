@@ -18,7 +18,7 @@ const router = express.Router();
 type DatabaseUserWithWebsites = DatabaseUser & UserWithWebsites;
 
 router.get('/', asyncRouteFix(async (req, res) => {
-  handleAccessControl(res, req.user, 'ADMIN');
+  handleAccessControl(req.user, 'ADMIN');
 
   const users = await db()<User>('users').select('id', 'email', 'role', 'active');
   const userWebsites = await db()<UserWebsite>('user_websites').select('userId', 'websiteId');
@@ -111,7 +111,7 @@ async function addOrUpdateUserWebsites(userId: string, websites: string[]) {
 }
 
 router.post('/', asyncRouteFix(async (req, res) => {
-  handleAccessControl(res, req.user, 'ADMIN');
+  handleAccessControl(req.user, 'ADMIN');
 
   const { email, password, role, active, websites }: DatabaseUserWithWebsites = req.body;
 
@@ -215,7 +215,7 @@ router.put('/:userId', asyncRouteFix(async (req, res) => {
 
 router.delete('/:userId', asyncRouteFix(async (req, res) => {
   const { userId } = req.params;
-  handleAccessControl(res, req.user, 'ADMIN');
+  handleAccessControl(req.user, 'ADMIN');
   await ensureUserExists(userId);
 
   await db().transaction(async (trx) => {

@@ -16,7 +16,7 @@ const router = express.Router({ mergeParams: true });
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  handleAccessControl(res, req.user, 'VIEWER', websiteId);
+  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
     throw new ExpressError('Collection not found', 404);
@@ -48,7 +48,7 @@ async function checkIfInputAllowed(input: string, inputConfig: string, req: Requ
 router.post('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
 
-  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
+  handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collections', collectionId))) {
     throw new ExpressError('Collection not found', 404);
@@ -110,7 +110,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
 router.put('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
+  handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collection_inputs', id))) {
     throw new ExpressError('Collection Input not found', 404);
@@ -171,7 +171,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
 router.patch('/:id/order', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
+  handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collection_inputs', id))) {
     throw new ExpressError('Collection Input not found', 404);
@@ -193,7 +193,7 @@ router.patch('/:id/order', asyncRouteFix(async (req, res) => {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId, id } = req.params;
 
-  handleAccessControl(res, req.user, 'SUPERUSER', websiteId);
+  handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
   if (!(await exists('collection_inputs', id))) {
     throw new ExpressError('Collection Input not found', 404);

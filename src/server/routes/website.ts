@@ -16,7 +16,7 @@ import { ApiKeyWebsite, UserWebsite } from '../../common/types/User';
 const router = express.Router();
 
 router.get('/', asyncRouteFix(async (req, res) => {
-  handleAccessControl(res, req.user, 'VIEWER');
+  handleAccessControl(req.user, 'VIEWER');
 
   const websites = await db()<Website>('websites').select('id', 'name', 'hook');
   res.json(websites.filter((w) => {
@@ -26,7 +26,7 @@ router.get('/', asyncRouteFix(async (req, res) => {
 }));
 
 router.post('/', asyncRouteFix(async (req, res) => {
-  handleAccessControl(res, req.user, 'ADMIN');
+  handleAccessControl(req.user, 'ADMIN');
 
   const { name, hook } = req.body;
   if (!name) {
@@ -57,7 +57,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
 }));
 
 router.get('/:id', asyncRouteFix(async (req, res) => {
-  handleAccessControl(res, req.user, 'VIEWER', req.params.id);
+  handleAccessControl(req.user, 'VIEWER', req.params.id);
 
   const website = await db()<Website>('websites')
     .select('id', 'name', 'hook')
@@ -74,7 +74,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
 }));
 
 router.put('/:id', asyncRouteFix(async (req, res) => {
-  handleAccessControl(res, req.user, 'SUPERUSER', req.params.id);
+  handleAccessControl(req.user, 'SUPERUSER', req.params.id);
 
   const { name, hook } = req.body;
   if (!name) {
@@ -160,7 +160,7 @@ async function deleteFolder(location: string) {
 router.delete('/:id', asyncRouteFix(async (req, res) => {
   const { id } = req.params;
 
-  handleAccessControl(res, req.user, 'ADMIN');
+  handleAccessControl(req.user, 'ADMIN');
 
   if (!(await exists('websites', id))) {
     throw new ExpressError('Website not found', 404);
