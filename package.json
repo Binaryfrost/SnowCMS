@@ -1,7 +1,10 @@
 {
-  "name": "snowcms",
+  "name": "@binaryfrost/snowcms",
   "version": "0.0.1",
-  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "A headless, multi-tenant, extendable CMS",
   "bin": {
     "snowcms": "./src/cli/cli.js"
   },
