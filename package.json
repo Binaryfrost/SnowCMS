@@ -1,7 +1,6 @@
 {
   "name": "snowcms",
   "version": "0.0.1",
-  "private": true,
   "description": "",
   "bin": {
     "snowcms": "./src/cli/cli.js"
