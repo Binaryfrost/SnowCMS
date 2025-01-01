@@ -37,6 +37,8 @@ export async function start(config: NormalizedConfig) {
 
   const app = express();
 
+  app.set('trust proxy', config.trustProxy);
+
   app.use((req, res, next) => {
     res.header('X-Robots-Tag', 'noindex');
     next();

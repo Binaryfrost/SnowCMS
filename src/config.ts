@@ -63,7 +63,8 @@ interface Config {
     username: string
     password: string
   },
-  redis: RedisClientOptions
+  redis: RedisClientOptions,
+  trustProxy?: any
 }
 
 /*
@@ -90,7 +91,8 @@ export const defineConfig = (config: Config): NormalizedConfig => ({
   database: {
     ...config.database,
     port: config.database.port || 3306
-  }
+  },
+  trustProxy: false
 });
 
 // To provide types in config file
