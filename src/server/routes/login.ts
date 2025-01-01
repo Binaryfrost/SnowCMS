@@ -138,7 +138,7 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
     const decrypted: SsoCookie = JSON.parse(decrypt(encrypted, secret, iv));
     res.clearCookie('sso');
 
-    const url = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    const url = new URL(req.originalUrl, sso.callbackUrl);
     // Some SSO servers include the state parameter even if the original request didn't have it
     if (!url.searchParams.get('state')) {
       url.searchParams.delete('state');
