@@ -4,6 +4,7 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
 import { exists } from './util.js';
 
 /**
@@ -115,7 +116,7 @@ export async function getWebpackServerConfig(opts) {
       ...baseConfig.output,
       path: SERVER_DIST(opts.userDir),
       module: true,
-      filename: 'server.mjs',
+      filename: 'server.js',
       chunkFormat: 'module'
     },
     externalsPresets: {
@@ -137,6 +138,15 @@ export async function getWebpackServerConfig(opts) {
       '@aws-sdk/client-s3',
       '@aws-sdk/s3-request-presigner',
       'redis'
+    ],
+    plugins: [
+      ...baseConfig.plugins,
+      new CopyPlugin({
+        patterns: [{
+          from: path.join(opts.cmsSrcDir, 'src', 'cli', 'server-package.json'),
+          to: 'package.json'
+        }]
+      })
     ]
   };
 }
