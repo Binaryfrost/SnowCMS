@@ -23,7 +23,9 @@ const Alert = Node.create({
       'data-alert': '',
       style: {
         backgroundColor: HTMLAttributes.bg,
-        color: HTMLAttributes.color
+        color: HTMLAttributes.color,
+        padding: '1rem',
+        borderRadius: '0.25rem'
       }
     };
 
@@ -47,13 +49,13 @@ const Alert = Node.create({
       container.style.border = `1px solid ${themeBorderColors[theme]}`;
       container.style.width = 'fit-content';
       container.style.padding = '0.5rem';
-      container.style.borderRadius = '8px';
+      container.style.borderRadius = '0.5rem';
 
       const content = document.createElement('div');
       content.style.backgroundColor = node.attrs.bg;
       content.style.color = node.attrs.color;
-      content.style.padding = '0.75rem';
-      content.style.borderRadius = '4px';
+      content.style.padding = '1rem';
+      content.style.borderRadius = '0.25rem';
       content.innerText = node.attrs.text;
 
       container.append(content);
