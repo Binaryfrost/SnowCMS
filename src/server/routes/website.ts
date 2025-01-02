@@ -40,7 +40,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     hook
   };
 
-  callHook('beforeWebsiteCreateHook', {
+  await callHook('beforeWebsiteCreateHook', {
     website
   });
 
@@ -51,7 +51,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     id
   });
 
-  callHook('afterWebsiteCreateHook', {
+  await callHook('afterWebsiteCreateHook', {
     website
   });
 }));
@@ -91,7 +91,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     hook
   };
 
-  callHook('beforeWebsiteModifyHook', {
+  await callHook('beforeWebsiteModifyHook', {
     website
   });
 
@@ -108,7 +108,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     message: 'Website edited'
   });
 
-  callHook('afterWebsiteModifyHook', {
+  await callHook('afterWebsiteModifyHook', {
     website
   });
 }));
@@ -173,7 +173,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     })
     .first();
 
-  callHook('beforeWebsiteDeleteHook', {
+  await callHook('beforeWebsiteDeleteHook', {
     website
   });
 
@@ -218,7 +218,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     message: 'Website deleted'
   });
 
-  callHook('afterWebsiteDeleteHook', {
+  await callHook('afterWebsiteDeleteHook', {
     website
   });
 }));

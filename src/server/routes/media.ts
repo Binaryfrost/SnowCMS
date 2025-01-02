@@ -227,7 +227,7 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
     thumbName: thumbFileName
   };
 
-  callHook('beforeMediaCreateHook', {
+  await callHook('beforeMediaCreateHook', {
     media: uploadMedia
   });
 
@@ -242,7 +242,7 @@ router.post('/upload', asyncRouteFix(async (req, res) => {
     hmac: hmac(secret, id, name, newFileName, size, type, thumbFileName)
   } satisfies FileUploadResponse);
 
-  callHook('afterMediaCreateHook', {
+  await callHook('afterMediaCreateHook', {
     media: uploadMedia
   });
 }));
@@ -301,7 +301,7 @@ router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
     message: `Uploaded file with name ${name}`
   });
 
-  callHook('afterMediaConfirmHook', {
+  await callHook('afterMediaConfirmHook', {
     media: {
       ...uploadMedia,
       url: mediaUrl(websiteId, uploadMedia.fileName),
@@ -339,7 +339,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     throw new ExpressError('File not found', 404);
   }
 
-  callHook('beforeMediaDeleteHook', {
+  await callHook('beforeMediaDeleteHook', {
     media: file
   });
 
@@ -380,7 +380,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     message: 'File deleted'
   });
 
-  callHook('afterMediaDeleteHook', {
+  await callHook('afterMediaDeleteHook', {
     media: file
   });
 }));

@@ -226,7 +226,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
   const entryId = uuid();
   const collectionEntry = await prepareData(req.body, collectionId, entryId, req);
 
-  callHook('beforeCollectionEntryCreateHook', {
+  await callHook('beforeCollectionEntryCreateHook', {
     collectionEntry
   });
 
@@ -237,7 +237,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     id: entryId
   });
 
-  callHook('afterCollectionEntryCreateHook', {
+  await callHook('afterCollectionEntryCreateHook', {
     collectionEntry
   });
 
@@ -261,7 +261,7 @@ router.patch('/:id', asyncRouteFix(async (req, res) => {
 
   const collectionEntry = await prepareData(req.body, collectionId, id, req);
 
-  callHook('beforeCollectionEntryModifyHook', {
+  await callHook('beforeCollectionEntryModifyHook', {
     collectionEntry
   });
 
@@ -271,7 +271,7 @@ router.patch('/:id', asyncRouteFix(async (req, res) => {
     message: 'Collection Entry edited'
   });
 
-  callHook('afterCollectionEntryModifyHook', {
+  await callHook('afterCollectionEntryModifyHook', {
     collectionEntry
   });
 
@@ -310,7 +310,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
       })
   };
 
-  callHook('beforeCollectionEntryDeleteHook', {
+  await callHook('beforeCollectionEntryDeleteHook', {
     collectionEntry
   });
 
@@ -332,7 +332,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     message: 'Collection Entry deleted'
   });
 
-  callHook('afterCollectionEntryDeleteHook', {
+  await callHook('afterCollectionEntryDeleteHook', {
     collectionEntry
   });
 

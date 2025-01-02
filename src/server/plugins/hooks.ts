@@ -60,7 +60,7 @@ type CombinedBeforeAfterHook<K extends string> =
   BeforeAfterCreateHook<K> | BeforeAfterModifyHook<K> | BeforeAfterDeleteHook<K>;
 
 type BeforeAfterHook<K extends string, H> = {
-  [x in CombinedBeforeAfterHook<K>]?: (hook: H) => void;
+  [x in CombinedBeforeAfterHook<K>]?: (hook: H) => void | Promise<void>;
 };
 
 type AllBeforeAfterHooks =
@@ -72,19 +72,23 @@ type AllBeforeAfterHooks =
 // TODO: Move doc comments to docs site
 export interface Hooks extends AllBeforeAfterHooks {
   /** Called server-side */
-  serverStart?: (hook: ServerStartHook) => void;
-  beforeCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) => void;
-  afterCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) => void;
-  beforeMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) => void;
-  afterMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) => void;
-  afterMediaConfirmHook?: (hook: BeforeAfterMediaHook<MediaWithUrls>) => void;
-  beforeMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void;
-  afterMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void;
+  serverStart?: (hook: ServerStartHook) => void | Promise<void>;
+  beforeCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) =>
+    void | Promise<void>;
+  afterCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) =>
+    void | Promise<void>;
+  beforeMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) =>
+    void | Promise<void>;
+  afterMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) =>
+    void | Promise<void>;
+  afterMediaConfirmHook?: (hook: BeforeAfterMediaHook<MediaWithUrls>) => void | Promise<void>;
+  beforeMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void | Promise<void>;
+  afterMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void | Promise<void>;
   /** Called server-side before a POST request is sent to the website hook */
-  beforeWebsiteHookCalled?: (hook: BeforeWebsiteHookCalledHook) => void;
+  beforeWebsiteHookCalled?: (hook: BeforeWebsiteHookCalledHook) => void | Promise<void>;
 }
 
-type HookRegistryFunction<T> = (props: T) => void;
+type HookRegistryFunction<T> = (props: T) => void | Promise<void>;
 
 export const HookRegistry = new Map<keyof Hooks,
   HookRegistryFunction<Parameters<Hooks[keyof Hooks]>[0]>[]>();
@@ -93,11 +97,12 @@ const ignoreThrowFromHooks: (keyof Hooks)[] = [
   'beforeWebsiteHookCalled'
 ];
 
-export function callHook<T extends keyof Hooks>(name: T, data: Parameters<Hooks[T]>[0]) {
+export async function callHook<T extends keyof Hooks>(name: T, data: Parameters<Hooks[T]>[0]) {
   if (!HookRegistry.has(name)) return;
-  HookRegistry.get(name).forEach((hook) => {
+  const hooks = HookRegistry.get(name);
+  for await (const hook of hooks) {
     try {
-      hook(data);
+      await hook(data);
     } catch (e) {
       if (ignoreThrowFromHooks.includes(name) || name.startsWith('after')) {
         console.warn(`Hook ${name} attempted to throw error from hook that does not allow errors`);
@@ -106,7 +111,7 @@ export function callHook<T extends keyof Hooks>(name: T, data: Parameters<Hooks[
 
       throw new ExpressError(e.message || e.name, e.status || 500);
     }
-  });
+  }
 }
 
 export async function callHttpHook(website: Website, collection: Collection,
@@ -115,7 +120,7 @@ export async function callHttpHook(website: Website, collection: Collection,
 
   let cancelled = false;
 
-  callHook('beforeWebsiteHookCalled', {
+  await callHook('beforeWebsiteHookCalled', {
     cancel: () => cancelled = true,
     website,
     collection,

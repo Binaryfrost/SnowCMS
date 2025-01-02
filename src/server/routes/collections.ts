@@ -49,7 +49,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     name
   };
 
-  callHook('beforeCollectionCreateHook', {
+  await callHook('beforeCollectionCreateHook', {
     collection
   });
 
@@ -60,7 +60,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     id
   });
 
-  callHook('afterCollectionCreateHook', {
+  await callHook('afterCollectionCreateHook', {
     collection
   });
 }));
@@ -104,7 +104,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     name
   };
 
-  callHook('beforeCollectionModifyHook', {
+  await callHook('beforeCollectionModifyHook', {
     collection
   });
 
@@ -120,7 +120,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     message: 'Collection edited'
   });
 
-  callHook('afterCollectionModifyHook', {
+  await callHook('afterCollectionModifyHook', {
     collection
   });
 }));
@@ -176,7 +176,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     })
     .first();
 
-  callHook('beforeCollectionDeleteHook', {
+  await callHook('beforeCollectionDeleteHook', {
     collection
   });
 
@@ -186,7 +186,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
     message: 'Collection deleted'
   });
 
-  callHook('afterCollectionDeleteHook', {
+  await callHook('afterCollectionDeleteHook', {
     collection
   });
 }));

@@ -52,7 +52,7 @@ router.put('/', asyncRouteFix(async (req, res) => {
     inputId
   };
 
-  callHook('beforeCollectionTitleModifyHook', {
+  await callHook('beforeCollectionTitleModifyHook', {
     collectionTitle
   });
 
@@ -66,7 +66,7 @@ router.put('/', asyncRouteFix(async (req, res) => {
     message: 'Collection Title updated'
   });
 
-  callHook('afterCollectionTitleModifyHook', {
+  await callHook('afterCollectionTitleModifyHook', {
     collectionTitle
   });
 }));
