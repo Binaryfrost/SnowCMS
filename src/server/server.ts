@@ -89,7 +89,9 @@ export async function start(config: NormalizedConfig) {
       apiKey.role = apiKeyUser.role;
     }
 
-    apiKey.websites = apiKeyUser.websites.filter((w) => apiKey.websites.includes(w));
+    if (apiKeyUser.role !== 'ADMIN') {
+      apiKey.websites = apiKeyUser.websites.filter((w) => apiKey.websites.includes(w));
+    }
 
     return {
       id: apiKey.id,
