@@ -70,7 +70,7 @@ export async function start(config: NormalizedConfig) {
       const sessionUser = await getSession(token);
       if (!sessionUser) return null;
 
-      const user = await getUser(sessionUser);
+      const user = await getUser(sessionUser.user);
       return user;
     }
 

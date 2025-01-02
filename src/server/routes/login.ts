@@ -5,26 +5,35 @@ import bcrypt from 'bcrypt';
 import * as oidcClient from 'openid-client';
 import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
-import { asyncRouteFix, decrypt, encrypt } from '../util';
+import { asyncRouteFix, decrypt, encrypt, getAuthToken } from '../util';
 import ExpressError from '../../common/ExpressError';
 import { DatabaseUser, LoginConfig, User } from '../../common/types/User';
 import { redis } from '../database/redis';
 import { NormalizedConfig } from '../../config';
 import { getConfig } from '../config/config';
-import { getUser } from '../database/util';
+import { Session, getSession, getUser } from '../database/util';
 
 export default async function loginRouter(sso?: NormalizedConfig['sso']) {
   const router = express.Router();
   router.use(cookieParser());
 
-  async function createSession(userId: string) {
+  async function createSession(userId: string, usingSso: boolean = false) {
     const token = `${userId}:${randomBytes(32).toString('base64url')}`;
 
-    await redis().set(`session:${token}`, userId, {
+    const session: Session = {
+      user: userId,
+      sso: usingSso
+    };
+
+    await redis().set(`session:${token}`, JSON.stringify(session), {
       EX: 86400
     });
 
     return token;
+  }
+
+  async function deleteSession(token: string) {
+    await redis().del(`session:${token}`);
   }
 
   router.post('/', asyncRouteFix(async (req, res) => {
@@ -72,6 +81,24 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
     sso.clientId,
     sso.clientSecret
   ) : null;
+
+  router.get('/logout', asyncRouteFix(async (req, res) => {
+    let redirect = '/login';
+
+    const token = getAuthToken(req);
+    const session = token ? await getSession(token) : null;
+    if (token && session) {
+      await deleteSession(token);
+
+      if (session.sso && ssoConfig && ssoConfig.serverMetadata().end_session_endpoint) {
+        redirect = ssoConfig.serverMetadata().end_session_endpoint;
+      }
+    }
+
+    res.json({
+      redirect
+    });
+  }));
 
   router.use('/sso', asyncRouteFix(async (req, res, next) => {
     if (!sso) {
@@ -176,7 +203,7 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
         throw new ExpressError('User is not active');
       }
 
-      token = await createSession(user.id);
+      token = await createSession(user.id, true);
     } else {
       const id = uuid();
       await db()<DatabaseUser>('users')
@@ -188,7 +215,7 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
           role: sso.defaultRole || 'USER'
         });
 
-      token = await createSession(id);
+      token = await createSession(id, true);
     }
 
     res.redirect(`/login#${token}`);

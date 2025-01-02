@@ -1,13 +1,20 @@
+import { LoadingOverlay } from '@mantine/core';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { get } from '../util/api';
 
 export default function Logout() {
-  const navigate = useNavigate();
-
   useEffect(() => {
-    localStorage.removeItem('token');
-    navigate('/login');
+    get('/api/login/logout').then((resp) => {
+      if (resp.status !== 200) {
+        throw new Error(resp.body.error || 'An error occurred');
+      }
+
+      localStorage.removeItem('token');
+      location.href = resp.body.redirect || '/login';
+    }).catch(alert);
   }, []);
 
-  return null;
+  return (
+    <LoadingOverlay visible />
+  );
 }

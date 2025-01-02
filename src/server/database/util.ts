@@ -96,8 +96,20 @@ export function handleUserBooleanConversion
   };
 }
 
-export async function getSession(token: string) {
-  return redis().get(`session:${token}`);
+export interface Session {
+  user: string
+  sso: boolean
+}
+
+export async function getSession(token: string): Promise<Session> {
+  const session = await redis().get(`session:${token}`);
+
+  try {
+    return session ? JSON.parse(session) : null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_) {
+    return null;
+  }
 }
 
 export async function getUserFromDatabase(id: string): Promise<UserWithWebsites> {
