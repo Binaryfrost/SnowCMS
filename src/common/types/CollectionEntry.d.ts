@@ -19,6 +19,6 @@ export interface CollectionEntryWithData extends CollectionEntry {
   data: CollectionEntryInputs[]
 }
 
-export interface CollectionEntryWithRenderedData extends CollectionEntry {
-  data: Record<string, any>
+export interface CollectionEntryWithRenderedData<T = Record<string, any>> extends CollectionEntry {
+  data: T
 }
