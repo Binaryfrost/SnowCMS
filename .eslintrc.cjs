@@ -54,6 +54,17 @@ module.exports = {
     'import/no-extraneous-dependencies': 'off',
     'no-empty': ['error', {
       allowEmptyCatch: true
+    }],
+    'lines-between-class-members': ['error', {
+      enforce: [{
+        blankLine: 'always',
+        prev: '*',
+        next: '*'
+      }, {
+        blankLine: 'never',
+        prev: 'field',
+        next: 'field'
+      }]
     }]
   },
   plugins: [
