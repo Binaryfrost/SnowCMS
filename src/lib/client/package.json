@@ -1,10 +1,11 @@
 {
   "name": "@binaryfrost/snowcms-client",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publishConfig": {
     "access": "public"
   },
   "description": "Node.js client for SnowCMS",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
