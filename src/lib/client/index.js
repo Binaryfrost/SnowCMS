@@ -1,5 +1,4 @@
-/** @type {import('.').SnowCMSClient} */
-export class SnowCMSClient {
+export default class SnowCMSClient {
   #url;
   #website;
   #apiKey;

@@ -1,6 +1,6 @@
 import type { CollectionEntry } from './types/CollectionEntry';
 
-export class SnowCMSClient {
+export default class SnowCMSClient {
   constructor(url: string, websiteId: string, apiKey: string);
 
   getCollectionEntry<T extends CollectionEntry = CollectionEntry>
