@@ -3,12 +3,13 @@ import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import handleAccessControl from '../handleAccessControl';
 import { exists, getCollection, getCollectionInputs, getWebsite } from '../database/util';
-import { CollectionEntry, CollectionEntryInputs, CollectionEntryWithData } from '../../common/types/CollectionEntry';
+import { CollectionEntry, CollectionEntryInputs, CollectionEntryWithData, CollectionEntryWithTitle } from '../../common/types/CollectionEntry';
 import { CollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
-import { asyncRouteFix } from '../util';
+import { asyncRouteFix, paginate, pagination } from '../util';
 import ExpressError from '../../common/ExpressError';
 import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../plugins/hooks';
+import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router({ mergeParams: true });
 
@@ -39,6 +40,7 @@ async function checkInputValueValidity(input: string, data: string,
 
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId, collectionId } = req.params;
+  const { search } = req.query;
 
   handleAccessControl(req.user, 'VIEWER', websiteId);
 
@@ -46,29 +48,57 @@ router.get('/', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection not found', 404);
   }
 
-  const renderedTitles = {};
-  const titles = await db()
-    .select('data', 'input', 'entryId', 'inputConfig')
-    .from('collection_titles')
-    .innerJoin('collection_entry_inputs', 'collection_titles.inputId', 'collection_entry_inputs.inputId')
-    .innerJoin('collection_inputs', 'collection_inputs.id', 'collection_entry_inputs.inputId')
-    .where('collection_titles.collectionId', collectionId);
+  const searchQuery = search ? `%${search}%` : undefined;
+  const query = (withSelect: boolean) => {
+    const q = db()
+      .from('collection_titles')
+      .innerJoin(
+        'collection_entry_inputs',
+        'collection_titles.inputId',
+        'collection_entry_inputs.inputId'
+      )
+      .innerJoin(
+        'collection_inputs',
+        'collection_inputs.id',
+        'collection_entry_inputs.inputId'
+      )
+      .innerJoin(
+        'collection_entries',
+        'collection_entries.id',
+        'collection_entry_inputs.entryId'
+      )
+      .where((builder) => {
+        if (searchQuery) {
+          builder.whereILike('collection_entries.id', searchQuery);
+          builder.orWhereILike('collection_entry_inputs.data', searchQuery);
+        }
+      })
+      .andWhere('collection_entries.collectionId', collectionId);
 
-  for await (const title of titles) {
-    const renderedTitle = await renderInput(title.input, title.data, title.inputConfig, req);
-    renderedTitles[title.entryId] = renderedTitle || undefined;
-  }
+    return withSelect ? q.select(
+      'collection_entries.id',
+      'collection_entries.collectionId',
+      'createdAt',
+      'updatedAt',
+      db().ref('data').as('title')
+    ) : q;
+  };
 
-  const entries = await db()<CollectionEntry>('collection_entries')
-    .select('id', 'collectionId', 'createdAt', 'updatedAt')
-    .where({
-      collectionId
-    });
+  const p = await pagination(req, query(false));
 
-  res.json(entries.map((entry) => ({
-    ...entry,
-    title: renderedTitles[entry.id] || null
-  })));
+  const entries = await paginate(
+    query(true),
+    p,
+    'collection_entries.id'
+  );
+
+  const response: PaginatedResponse<CollectionEntryWithTitle> = {
+    data: entries,
+    page: p.page,
+    pages: p.pages
+  };
+
+  res.json(response);
 }));
 
 router.get('/:id', asyncRouteFix(async (req, res) => {

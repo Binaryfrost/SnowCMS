@@ -20,3 +20,11 @@ export function mimeTypeMatch(imageMime: string, filterMime: string) {
 
   return filterMime === imageMime;
 }
+
+export function convertMimeTypeForSqlQuery(mime: string) {
+  if (mime.endsWith('/*')) {
+    return mime.replace('/*', '/%');
+  }
+
+  return mime;
+}

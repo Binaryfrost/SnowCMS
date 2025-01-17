@@ -28,12 +28,12 @@ function ssoRedirect() {
 
 function LoginForm({ config, form, submitting } : LoginFormProps) {
   useEffect(() => {
-    if (config.sso.forced) {
+    if (config.sso?.forced) {
       ssoRedirect();
     }
   }, []);
 
-  return config.sso.forced ? (
+  return config.sso?.forced ? (
     <Text>Redirecting to SSO login page...</Text>
   ) : (
     <>
@@ -152,7 +152,7 @@ export function Component() {
                   <DataGetter<LoginConfig> url="/api/login/config"
                     skeletonComponent={<FormSkeleton inputs={2} />}>
                     {(config) => (
-                      <LoginForm config={config} form={form} submitting={submitting} />
+                      <LoginForm config={config.data} form={form} submitting={submitting} />
                     )}
                   </DataGetter>
                 )}

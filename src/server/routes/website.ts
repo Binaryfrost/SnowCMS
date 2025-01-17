@@ -1,28 +1,46 @@
 import express from 'express';
 import { v7 as uuid } from 'uuid';
 import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
+import type { Knex } from 'knex';
 import { db } from '../database/db';
 import { type Website } from '../../common/types/Website';
 import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
-import { asyncRouteFix } from '../util';
+import { asyncRouteFix, paginate, pagination } from '../util';
 import { Collection } from '../../common/types/Collection';
 import { getConfig } from '../config/config';
 import { deleteCollection } from './collections';
 import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
 import { ApiKeyWebsite, UserWebsite } from '../../common/types/User';
+import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router();
 
 router.get('/', asyncRouteFix(async (req, res) => {
   handleAccessControl(req.user, 'VIEWER');
 
-  const websites = await db()<Website>('websites').select('id', 'name', 'hook');
-  res.json(websites.filter((w) => {
-    if (req.user.role === 'ADMIN') return true;
-    return req.user.websites.includes(w.id);
-  }));
+  const where = (builder: Knex.QueryBuilder) => {
+    if (req.user.role !== 'ADMIN') {
+      builder.whereIn('id', req.user.websites);
+    }
+  };
+  const p = await pagination(req, 'websites', where);
+
+  const websites = await paginate(
+    db()<Website>('websites')
+      .select('id', 'name', 'hook')
+      .where(where),
+    p
+  );
+
+  const response: PaginatedResponse<Website> = {
+    data: websites,
+    page: p.page,
+    pages: p.pages
+  };
+
+  res.json(response);
 }));
 
 router.post('/', asyncRouteFix(async (req, res) => {

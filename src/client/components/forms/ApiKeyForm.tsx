@@ -83,10 +83,9 @@ export default function ApiKeyForm({ apiKey }: Props) {
           </Group>
         </Alert>
       ) : (
-        <DataGetter.Multiple<[UserWithWebsites, Website[]]>
-          urls={[`/api/accounts/${accountId}`, '/api/websites']}
+        <DataGetter<UserWithWebsites> url={`/api/accounts/${accountId}`}
           skeletonComponent={<FormSkeleton inputs={2} />}>
-          {([user, websites]) => (
+          {({ data: user }) => (
             <Form method="POST" onSubmit={(e) => onSubmit(e, form)}>
               <Stack>
                 <TextInput label="Name" name="name" required {...form.getInputProps('name')}
@@ -107,12 +106,16 @@ export default function ApiKeyForm({ apiKey }: Props) {
                   {...form.getInputProps('active', { type: 'checkbox' })} key={form.key('active')} />
 
                 {form.values.role !== 'ADMIN' && (
-                  <MultiSelect label="Websites" name="websites" data={websites
-                    .filter((w) => (user.role === 'ADMIN' ? true : user.websites.includes(w.id)))
-                    .map((w) => ({
-                      label: `${w.name} (${shortenUuid(w.id)})`,
-                      value: w.id
-                    }))} {...form.getInputProps('websites')} key={form.key('websites')} />
+                  <DataGetter.AllPages<Website> url="/api/websites">
+                    {(websites) => (
+                      <MultiSelect label="Websites" name="websites" data={websites
+                        .filter((w) => (user.role === 'ADMIN' ? true : user.websites.includes(w.id)))
+                        .map((w) => ({
+                          label: `${w.name} (${shortenUuid(w.id)})`,
+                          value: w.id
+                        }))} {...form.getInputProps('websites')} key={form.key('websites')} />
+                    )}
+                  </DataGetter.AllPages>
                 )}
 
                 <Group grow>
@@ -152,7 +155,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
               </Stack>
             </Form>
           )}
-        </DataGetter.Multiple>
+        </DataGetter>
       )}
     </>
   );

@@ -1,4 +1,5 @@
-import type { CollectionEntry } from './types/CollectionEntry';
+import type { PaginatedQueryClient, PaginatedQueryOpts } from './PaginatedQueryClient';
+import type { CollectionEntry, CollectionEntryWithData } from './types/CollectionEntry';
 
 export default class SnowCMSClient {
   constructor(url: string, websiteId: string, apiKey: string);
@@ -7,5 +8,8 @@ export default class SnowCMSClient {
     (collection: string, entry: string): Promise<T[]>;
 
   getCollectionEntries<T extends CollectionEntry = CollectionEntry>
-    (collection: string): Promise<T[]>;
+    (collection: string, opts?: PaginatedQueryOpts): PaginatedQueryClient<T>;
+
+  getCollectionEntriesData<T extends CollectionEntryWithData = CollectionEntryWithData>
+    (entries: CollectionEntry[]): Promise<T[]>;
 }

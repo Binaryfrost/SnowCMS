@@ -12,6 +12,8 @@ import { handleFormResponseNotification } from '../../util/form';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import ListEntry from '../../components/ListEntry';
 import useRefresh from '../../util/refresh';
+import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
+import Pagination from '../../components/Pagination';
 
 export function Component() {
   const { accountId } = useParams();
@@ -54,7 +56,7 @@ export function Component() {
 
           <DataGetter<UserWithWebsites> url={`/api/accounts/${accountId}`}
             skeletonComponent={<FormSkeleton />}>
-            {(user) => (
+            {({ data: user }) => (
               <AccountForm user={user} />
             )}
           </DataGetter>
@@ -75,14 +77,14 @@ export function Component() {
             once after creating the API key.
           </Text>
 
-          <DataGetter<ApiKeyWithWebsites[]> url={`/api/accounts/${accountId}/keys`}
-            skeletonProps={{ h: 85 }} skeletonNum={3}>
-            {(keys) => (
-              keys.length === 0 ? (
+          <DataGetter<PaginatedResponse<ApiKeyWithWebsites>> url={`/api/accounts/${accountId}/keys`}
+            paginate skeletonProps={{ h: 85 }} skeletonNum={3}>
+            {({ data: keys, setPage }) => (
+              keys.page === 1 && keys.data.length === 0 ? (
                 <Text>No API keys exist yet</Text>
               ) : (
                 <Stack>
-                  {keys.map((k) => (
+                  {keys.data.map((k) => (
                     <ListEntry key={k.id} type="API Key"
                       name={k.name} id={k.id}
                       additional={`Role: ${k.role}`} buttons={{
@@ -100,6 +102,8 @@ export function Component() {
                         }
                       }} />
                   ))}
+
+                  <Pagination page={keys.page} pages={keys.pages} setPage={setPage} />
                 </Stack>
               )
             )}

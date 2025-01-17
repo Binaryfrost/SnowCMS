@@ -5,15 +5,18 @@ import { createHmac } from 'crypto';
 import slug from 'slug';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { Knex } from 'knex';
 import { db } from '../database/db';
 import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { getConfig } from '../config/config';
-import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig } from '../../common/types/Media';
-import { asyncRouteFix } from '../util';
+import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig, MediaWithUrls } from '../../common/types/Media';
+import { asyncRouteFix, paginate, pagination } from '../util';
 import { BLOCKED_MIME_TYPES } from '../../common/blocked-mime-types';
 import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
+import { PaginatedResponse } from '../../common/types/PaginatedResponse';
+import { convertMimeTypeForSqlQuery } from '../../common/util';
 
 const router = express.Router({ mergeParams: true });
 
@@ -81,6 +84,7 @@ function hmac(secret: string, ...data: any[]) {
 
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
+  const { search, mime } = req.query;
 
   handleAccessControl(req.user, 'VIEWER', websiteId);
 
@@ -88,30 +92,58 @@ router.get('/', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Website not found', 404);
   }
 
-  const files: Media[] = await db<Media>()
-    .select(
-      'id',
-      'websiteId',
-      'fileName',
-      'fileSize',
-      'origFileName',
-      'fileType',
-      'thumbName',
-      'timestamp'
-    )
-    .from('media')
-    .where({
-      websiteId
-    })
-    .orderBy('id', 'desc');
+  const searchQuery = search ? `%${search}%` : undefined;
+  const where = (builder: Knex.QueryBuilder) => {
+    builder.where((builder2) => {
+      if (searchQuery) {
+        builder2.whereILike('id', searchQuery);
+        builder2.orWhereILike('fileName', searchQuery);
+        builder2.orWhereILike('origFileName', searchQuery);
+      }
+    });
 
-  res.json(
-    files.map((file) => ({
+    if (mime) {
+      builder.andWhere((builder2) => {
+        const mimeTypes = (mime as string).split(',')
+          .map(convertMimeTypeForSqlQuery);
+        for (const mimeType of mimeTypes) {
+          builder2.orWhereILike('fileType', mimeType);
+        }
+      });
+    }
+
+    builder.andWhere('websiteId', websiteId);
+  };
+  const p = await pagination(req, 'media', where);
+
+  const files: Media[] = await paginate(
+    db<Media>()
+      .select(
+        'id',
+        'websiteId',
+        'fileName',
+        'fileSize',
+        'origFileName',
+        'fileType',
+        'thumbName',
+        'timestamp'
+      )
+      .from('media')
+      .where(where),
+    p
+  );
+
+  const response: PaginatedResponse<MediaWithUrls> = {
+    data: files.map((file) => ({
       ...file,
       url: mediaUrl(websiteId, file.fileName),
       thumbUrl: file.thumbName ? mediaUrl(websiteId, file.thumbName) : undefined
-    }))
-  );
+    })),
+    page: p.page,
+    pages: p.pages
+  };
+
+  res.json(response);
 }));
 
 router.get('/config', asyncRouteFix(async (req, res) => {

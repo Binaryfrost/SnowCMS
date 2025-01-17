@@ -4,9 +4,10 @@ import { db } from '../database/db';
 import { type Collection } from '../../common/types/Collection';
 import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
-import { asyncRouteFix } from '../util';
+import { asyncRouteFix, paginate, pagination } from '../util';
 import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
+import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router({ mergeParams: true });
 
@@ -19,12 +20,26 @@ router.get('/', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Website not found', 404);
   }
 
-  res.json(await db<Collection>()
-    .select('id', 'websiteId', 'name')
-    .from('collections')
-    .where({
-      websiteId
-    }));
+  const where = {
+    websiteId
+  };
+  const p = await pagination(req, 'collections', where);
+
+  const collections = await paginate(
+    db<Collection>()
+      .select('id', 'websiteId', 'name')
+      .from('collections')
+      .where(where),
+    p
+  );
+
+  const response: PaginatedResponse<Collection> = {
+    data: collections,
+    page: p.page,
+    pages: p.pages
+  };
+
+  res.json(response);
 }));
 
 router.post('/', asyncRouteFix(async (req, res) => {

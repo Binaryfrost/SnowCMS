@@ -7,11 +7,12 @@ import { db } from '../database/db';
 import { ROLE_HIERARCHY } from '../../common/users';
 import handleAccessControl from '../handleAccessControl';
 import { exists, getUserFromDatabase, handleUserBooleanConversion, removeRedisKeysMatching } from '../database/util';
-import { asyncRouteFix, getAuthToken } from '../util';
+import { asyncRouteFix, getAuthToken, paginate, pagination } from '../util';
 import ExpressError from '../../common/ExpressError';
 import { ApiKey, ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, DatabaseUser,
   User, UserWebsite, UserWithWebsites } from '../../common/types/User';
 import { redis } from '../database/redis';
+import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router();
 
@@ -20,17 +21,30 @@ type DatabaseUserWithWebsites = DatabaseUser & UserWithWebsites;
 router.get('/', asyncRouteFix(async (req, res) => {
   handleAccessControl(req.user, 'ADMIN');
 
-  const users = await db()<User>('users').select('id', 'email', 'role', 'active');
-  const userWebsites = await db()<UserWebsite>('user_websites').select('userId', 'websiteId');
+  const p = await pagination(req, 'users', {});
 
-  res.json(
-    users
-      .map((u) => ({
+  const users = await paginate(
+    db()<User>('users')
+      .select('id', 'email', 'role', 'active'),
+    p
+  );
+
+  const userWebsites = await db()<UserWebsite>('user_websites')
+    .select('userId', 'websiteId')
+    .whereIn('userId', users.map((user) => user.id));
+
+  const response: PaginatedResponse<UserWithWebsites> = {
+    data: users
+      .map((u: User) => ({
         ...u,
         websites: userWebsites.filter((w) => w.userId === u.id).map((w) => w.websiteId)
       }))
-      .map(handleUserBooleanConversion)
-  );
+      .map(handleUserBooleanConversion),
+    page: p.page,
+    pages: p.pages
+  };
+
+  res.json(response);
 }));
 
 async function addOrUpdateUser(user: DatabaseUser) {
@@ -257,26 +271,35 @@ router.get('/:userId/keys', asyncRouteFix(async (req, res) => {
   handleUserAccessControl(req.user, userId);
   await ensureUserExists(userId);
 
-  const apiKeys = await db()<ApiKey>('apikeys')
-    .select('id', 'userId', 'name', 'role', 'active')
-    .where({
-      userId
-    });
+  const where = {
+    userId
+  };
+  const p = await pagination(req, 'apikeys', where);
+
+  const apiKeys = await paginate(
+    db()<ApiKey>('apikeys')
+      .select('id', 'userId', 'name', 'role', 'active')
+      .where(where),
+    p
+  );
+
   const apiKeyWebsites: ApiKeyWebsite[] = await db()<ApiKeyWebsite>('apikey_websites')
     .select('apikeyId', 'websiteId')
     .innerJoin('apikeys', 'apikeys.id', 'apikey_websites.apikeyId')
-    .where({
-      userId
-    });
+    .whereIn('apikeys.id', apiKeys.map((key: ApiKey) => key.id));
 
-  res.json(
-    apiKeys
+  const response: PaginatedResponse<ApiKeyWithWebsites> = {
+    data: apiKeys
       .map((a) => ({
         ...a,
         websites: apiKeyWebsites.filter((w) => w.apikeyId === a.id).map((w) => w.websiteId)
       }))
-      .map(handleUserBooleanConversion)
-  );
+      .map(handleUserBooleanConversion),
+    page: p.page,
+    pages: p.pages
+  };
+
+  res.json(response);
 }));
 
 async function addOrUpdateApiKey(user: User, apiKey: Optional<DatabaseApiKey, 'key'>) {

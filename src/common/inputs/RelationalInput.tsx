@@ -44,9 +44,9 @@ const input: Input<string, RelationalInputSettings> = {
     }));
 
     return props.settings.collectionId ? (
-      <DataGetter<CollectionEntryWithTitle[]>
+      <DataGetter.AllPages<CollectionEntryWithTitle>
         skeletonComponent={<FormSkeleton inputs={1} withButton={false} />}
-        url={`/api/websites/${websiteId}/collections/${props.settings.collectionId}/entries  `}>
+        url={`/api/websites/${websiteId}/collections/${props.settings.collectionId}/entries`}>
         {(entries) => (
           <Select label={props.name} description={props.description}
             data={entries.map((e) => ({
@@ -54,7 +54,7 @@ const input: Input<string, RelationalInputSettings> = {
               label: `${e.title || 'Untitled Entry'} (${shortenUuid(e.id)})`
             }))} required={props.settings?.required} {...field.getInputProps()} key={field.key} />
         )}
-      </DataGetter>
+      </DataGetter.AllPages>
     ) : (
       <Text c="red">No Collection selected</Text>
     );
@@ -80,7 +80,8 @@ const input: Input<string, RelationalInputSettings> = {
     }));
 
     return (
-      <DataGetter<Collection[]> url={`/api/websites/${websiteId}/collections`}>
+      <DataGetter.AllPages<Collection> url={`/api/websites/${websiteId}/collections`}
+        skeletonNum={1}>
         {(collections) => (
           <>
             <Select label="Collection" required data={collections
@@ -94,7 +95,7 @@ const input: Input<string, RelationalInputSettings> = {
               key={form.key('required')} />
           </>
         )}
-      </DataGetter>
+      </DataGetter.AllPages>
     );
   }),
 

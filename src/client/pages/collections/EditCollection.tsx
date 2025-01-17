@@ -70,7 +70,7 @@ export function Component() {
         `/api/websites/${websiteId}/collections/${collectionId}/title`
       ]}
         key={collectionId} skeletonComponent={<FormSkeleton inputs={1} />}>
-        {([collection, inputs, title]) => (
+        {({ data: [collection, inputs, title] }) => (
           <EditCollectionPage collection={collection} collectionInputs={inputs}
             collectionTitle={title} />
         )}

@@ -6,6 +6,8 @@ import DataGetter from '../../components/DataGetter';
 import { UserWithWebsites } from '../../../common/types/User';
 import ListEntry from '../../components/ListEntry';
 import useRefresh from '../../util/refresh';
+import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
+import Pagination from '../../components/Pagination';
 
 export function Component() {
   const refresh = useRefresh();
@@ -20,13 +22,14 @@ export function Component() {
           children: <IconPlus />
         }} tooltipLabel="Create Account" />
 
-      <DataGetter<UserWithWebsites[]> url="/api/accounts" skeletonProps={{ h: 85 }} skeletonNum={3}>
-        {(users) => (
-          users.length === 0 ? (
+      <DataGetter<PaginatedResponse<UserWithWebsites>> url="/api/accounts" paginate
+        skeletonProps={{ h: 85 }} skeletonNum={3}>
+        {({ data: users, setPage }) => (
+          users.page === 1 && users.data.length === 0 ? (
             <Text>No accounts exist</Text>
           ) : (
             <Stack>
-              {users.map((user) => (
+              {users.data.map((user) => (
                 <ListEntry key={user.id} type="User" name={user.email} id={user.id} buttons={{
                   delete: {
                     role: 'ADMIN',
@@ -41,6 +44,8 @@ export function Component() {
                   }
                 }} />
               ))}
+
+              <Pagination page={users.page} pages={users.pages} setPage={setPage} />
             </Stack>
           )
         )}

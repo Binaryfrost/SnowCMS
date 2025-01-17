@@ -91,7 +91,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
         `/api/websites/${websiteId}/collections/${collectionId}/inputs`,
         entryId ? `/api/websites/${websiteId}/collections/${collectionId}/entries/${entryId}` : null
       ].filter(Boolean)}>
-      {([inputs, data]) => (
+      {({ data: [inputs, data] }) => (
         <Stack>
           {inputs.length === 0 ? (
             <Text>No Inputs exist for this Collection</Text>

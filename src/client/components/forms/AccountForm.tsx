@@ -7,7 +7,6 @@ import type { UserWithWebsites } from '../../../common/types/User';
 import { formDataToObject, onSubmit } from '../../util/form';
 import { ROLE_HIERARCHY } from '../../../common/users';
 import DataGetter from '../DataGetter';
-import FormSkeleton from '../FormSkeleton';
 import { Website } from '../../../common/types/Website';
 import { shortenUuid } from '../ShortUuid';
 import { UserContext } from '../../context/UserContext';
@@ -76,62 +75,62 @@ export default function AccountForm({ user }: Props) {
   const shouldDisableAdminFields = loggedInUser.user.role !== 'ADMIN';
 
   return (
-    <DataGetter<Website[]> url="/api/websites" skeletonComponent={<FormSkeleton inputs={6} />}>
-      {(websites) => (
-        <Form method="POST" onSubmit={(e) => onSubmit(e, form)}>
-          <Stack>
-            <TextInput label="Email" name="email" type="email" required {...form.getInputProps('email')}
-              key={form.key('email')} />
+    <Form method="POST" onSubmit={(e) => onSubmit(e, form)}>
+      <Stack>
+        <TextInput label="Email" name="email" type="email" required {...form.getInputProps('email')}
+          key={form.key('email')} />
 
-            <Box>
-              <PasswordInput label="Password" name="password" required={!user}
-                description={passwordUpdateText} visible={passwordVisible}
-                onVisibilityChange={togglePasswordVisible} {...form.getInputProps('password')}
-                key={form.key('password')} />
-              {typeof crypto !== 'undefined' && (
-                <Anchor component="span" fz="xs" style={{
-                  userSelect: 'none'
-                }} onClick={() => {
-                  const password = btoa(
-                    [...crypto.getRandomValues(new Uint8Array(12))]
-                      .map((e) => String.fromCharCode(e)).join('')
-                  ).replace(/=/g, '');
+        <Box>
+          <PasswordInput label="Password" name="password" required={!user}
+            description={passwordUpdateText} visible={passwordVisible}
+            onVisibilityChange={togglePasswordVisible} {...form.getInputProps('password')}
+            key={form.key('password')} />
+          {typeof crypto !== 'undefined' && (
+            <Anchor component="span" fz="xs" style={{
+              userSelect: 'none'
+            }} onClick={() => {
+              const password = btoa(
+                [...crypto.getRandomValues(new Uint8Array(12))]
+                  .map((e) => String.fromCharCode(e)).join('')
+              ).replace(/=/g, '');
 
-                  form.setFieldValue('password', password);
-                  form.setFieldValue('confirmPassword', password);
+              form.setFieldValue('password', password);
+              form.setFieldValue('confirmPassword', password);
 
-                  if (!passwordVisible) {
-                    togglePasswordVisible();
-                  }
-                }}>Generate random password</Anchor>
-              )}
-            </Box>
+              if (!passwordVisible) {
+                togglePasswordVisible();
+              }
+            }}>Generate random password</Anchor>
+          )}
+        </Box>
 
-            <PasswordInput label="Confirm Password" required={!user}
-              description={passwordUpdateText} visible={passwordVisible}
-              onVisibilityChange={togglePasswordVisible} {...form.getInputProps('confirmPassword')}
-              key={form.key('confirmPassword')} />
+        <PasswordInput label="Confirm Password" required={!user}
+          description={passwordUpdateText} visible={passwordVisible}
+          onVisibilityChange={togglePasswordVisible} {...form.getInputProps('confirmPassword')}
+          key={form.key('confirmPassword')} />
 
-            <Select label="Role" name="role" required data={Object.keys(ROLE_HIERARCHY)}
-              {...form.getInputProps('role')} key={form.key('role')}
-              readOnly={shouldDisableAdminFields} />
+        <Select label="Role" name="role" required data={Object.keys(ROLE_HIERARCHY)}
+          {...form.getInputProps('role')} key={form.key('role')}
+          readOnly={shouldDisableAdminFields} />
 
-            <Checkbox label="Active" name="active"
-              {...form.getInputProps('active', { type: 'checkbox' })} key={form.key('active')} />
+        <Checkbox label="Active" name="active"
+          {...form.getInputProps('active', { type: 'checkbox' })} key={form.key('active')} />
 
-            {form.getValues().role !== 'ADMIN' && (
+        {form.getValues().role !== 'ADMIN' && (
+          <DataGetter.AllPages<Website> url="/api/websites" skeletonNum={1}>
+            {(websites) => (
               <MultiSelect label="Websites" name="websites" data={websites.map((w) => ({
                 label: `${w.name} (${shortenUuid(w.id)})`,
                 value: w.id
               }))} {...form.getInputProps('websites')} key={form.key('websites')}
                 readOnly={shouldDisableAdminFields} />
             )}
+          </DataGetter.AllPages>
+        )}
 
-            <Button type="submit">{user ? 'Edit' : 'Create'} Account</Button>
-          </Stack>
-        </Form>
-      )}
-    </DataGetter>
+        <Button type="submit">{user ? 'Edit' : 'Create'} Account</Button>
+      </Stack>
+    </Form>
   );
 }
 

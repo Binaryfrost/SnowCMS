@@ -1,8 +1,10 @@
 import { type ReactNode, useContext } from 'react';
-import { Text } from '@mantine/core';
+import { useParams } from 'react-router-dom';
+import { Stack, Text } from '@mantine/core';
 import { CollectionsContext } from '../context/CollectionsContext';
 import GenericSkeleton, { GenericSkeletonProps } from './GenericSkeleton';
 import type { Collection } from '../../common/types/Collection';
+import Pagination from './Pagination';
 
 interface Props {
   children: (collections: Collection[]) => ReactNode
@@ -11,6 +13,7 @@ interface Props {
 
 export default function CollectionsGetter({ children, skeleton }: Props) {
   const collectionContext = useContext(CollectionsContext);
+  const { websiteId } = useParams();
 
   if (collectionContext.loading) {
     return (
@@ -22,9 +25,16 @@ export default function CollectionsGetter({ children, skeleton }: Props) {
     return <Text c="red">{collectionContext.error}</Text>;
   }
 
-  return collectionContext.data.length === 0 ? (
+  const { data, page, pages } = collectionContext.data;
+
+  return page === 1 && data.length === 0 ? (
     <Text>No Collections exist yet</Text>
   ) : (
-    children(collectionContext.data)
+    <Stack>
+      {children(data)}
+
+      <Pagination page={page} pages={pages}
+        setPage={(p) => collectionContext.refresh(websiteId, p)} />
+    </Stack>
   );
 }

@@ -8,6 +8,11 @@ interface Props {
 export default function SearchInput({ setSearch }: Props) {
   return (
     <TextInput leftSection={<IconSearch />}
-      onChange={(e) => setSearch(e.target.value.toLowerCase())} />
+      onKeyUp={(e) => {
+        if (e.key === 'Enter') {
+          const { value } = (e.target as HTMLInputElement);
+          setSearch(value.toLowerCase());
+        }
+      }} />
   );
 }
