@@ -246,6 +246,8 @@ const input: Input<any[], ArrayInputSettings> = {
   },
 
   renderHtml: (value, settings, req) => {
+    if (!value) return [];
+
     const selectedInput = getInput(settings?.input);
     if (!input) return null;
     const inputConfig = selectedInput.deserializeSettings && settings?.inputConfig ?
