@@ -106,7 +106,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
                   {...form.getInputProps('active', { type: 'checkbox' })} key={form.key('active')} />
 
                 {form.values.role !== 'ADMIN' && (
-                  <DataGetter.AllPages<Website> url="/api/websites">
+                  <DataGetter.AllPages<Website> url="/api/websites" skeletonNum={1}>
                     {(websites) => (
                       <MultiSelect label="Websites" name="websites" data={websites
                         .filter((w) => (user.role === 'ADMIN' ? true : user.websites.includes(w.id)))

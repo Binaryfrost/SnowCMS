@@ -16,7 +16,7 @@ export function Component() {
 
       <DataGetter<ApiKeyWithWebsites> url={`/api/accounts/${accountId}/keys/${keyId}`}
         skeletonComponent={<FormSkeleton inputs={2} />}>
-        {(key) => (
+        {({ data: key }) => (
           <ApiKeyForm apiKey={key} />
         )}
       </DataGetter>
