@@ -3,8 +3,12 @@ import { Knex } from 'knex';
 import { v7 as uuid } from 'uuid';
 import bcrypt from 'bcrypt';
 import { DatabaseUser, User } from '../../common/types/User';
+import { LAST_MIGRATION_METADATA_KEY, getMigrationTimestamp, runMigrations } from './migrations';
 
 export default async function init(knex: Knex) {
+  // See comments below about migrations
+  const existingInstallation = await knex.schema.hasTable('websites');
+
   if (!await knex.schema.hasTable('websites')) {
     console.log('Creating websites table');
     await knex.schema.createTable('websites', (table) => {
@@ -20,6 +24,7 @@ export default async function init(knex: Knex) {
       table.string('id').primary();
       table.string('websiteId').notNullable();
       table.string('name').notNullable();
+      table.boolean('callHook').defaultTo(true);
 
       table.foreign('websiteId').references('websites.id');
     });
@@ -165,4 +170,34 @@ export default async function init(knex: Knex) {
       table.foreign('websiteId').references('websites.id');
     });
   }
+
+  if (!await knex.schema.hasTable('metadata')) {
+    console.log('Creating metadata table');
+    await knex.schema.createTable('metadata', (table) => {
+      table.string('key').primary();
+      table.string('value');
+    });
+
+    /*
+     * To ensure that old migrations don't run on new installations,
+     * we store the installation time in the database as the timestamp
+     * of the last migration, thus stopping older migrations from running.
+     * However, because the version that added migration code contains
+     * a migration, this solution would prevent that migration from
+     * running. The solution to this is to detect whether this is an
+     * existing installation, and if so, set the timestamp to 0,
+     * forcing the migration to run.
+     *
+     * TODO: Remove the existing installation check in a future version.
+     */
+    const migrationTimestamp = existingInstallation ? '0' : getMigrationTimestamp();
+
+    await knex('metadata')
+      .insert({
+        key: LAST_MIGRATION_METADATA_KEY,
+        value: migrationTimestamp
+      });
+  }
+
+  await runMigrations();
 }

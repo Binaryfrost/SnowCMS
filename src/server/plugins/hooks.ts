@@ -116,7 +116,7 @@ export async function callHook<T extends keyof Hooks>(name: T, data: Parameters<
 
 export async function callHttpHook(website: Website, collection: Collection,
   reason: BeforeWebsiteHookCalledHook['reason']) {
-  if (!website.hook) return;
+  if (!website.hook || !collection.callHook) return;
 
   let cancelled = false;
 

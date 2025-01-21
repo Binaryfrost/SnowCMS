@@ -11,6 +11,13 @@ import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router({ mergeParams: true });
 
+function handleBooleanConversion(collection: Collection): Collection {
+  return {
+    ...collection,
+    callHook: !!collection.callHook
+  };
+}
+
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
 
@@ -27,14 +34,14 @@ router.get('/', asyncRouteFix(async (req, res) => {
 
   const collections = await paginate(
     db<Collection>()
-      .select('id', 'websiteId', 'name')
+      .select('id', 'websiteId', 'name', 'callHook')
       .from('collections')
       .where(where),
     p
   );
 
   const response: PaginatedResponse<Collection> = {
-    data: collections,
+    data: collections.map(handleBooleanConversion),
     page: p.page,
     pages: p.pages
   };
@@ -61,7 +68,8 @@ router.post('/', asyncRouteFix(async (req, res) => {
   const collection: Collection = {
     id,
     websiteId,
-    name
+    name,
+    callHook: true
   };
 
   await callHook('beforeCollectionCreateHook', {
@@ -86,7 +94,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   handleAccessControl(req.user, 'VIEWER', websiteId);
 
   const collection = await db()<Collection>('collections')
-    .select('id', 'websiteId', 'name')
+    .select('id', 'websiteId', 'name', 'callHook')
     .where({
       id
     })
@@ -96,7 +104,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection not found', 404);
   }
 
-  res.json(collection);
+  res.json(handleBooleanConversion(collection));
 }));
 
 router.put('/:id', asyncRouteFix(async (req, res) => {
@@ -104,7 +112,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
 
   handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
-  const { name } = req.body;
+  const { name, callHook: ch } = req.body;
   if (!name) {
     throw new ExpressError('Name is required', 404);
   }
@@ -113,11 +121,12 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection not found', 404);
   }
 
-  const collection: Collection = {
+  const collection: Collection = handleBooleanConversion({
     id,
     websiteId,
-    name
-  };
+    name,
+    callHook: ch || false
+  });
 
   await callHook('beforeCollectionModifyHook', {
     collection
@@ -128,7 +137,8 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
       id
     })
     .update({
-      name
+      name,
+      callHook: collection.callHook
     });
 
   res.json({
@@ -185,7 +195,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
   }
 
   const collection = await db()<Collection>('collections')
-    .select('id', 'name', 'websiteId')
+    .select('id', 'name', 'websiteId', 'callHook')
     .where({
       id
     })

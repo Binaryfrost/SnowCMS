@@ -1,9 +1,9 @@
 import { useContext, useEffect } from 'react';
-import { Flex, Stack, Title } from '@mantine/core';
+import { Stack, Title } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
 import { useActionData, useParams, type ActionFunctionArgs } from 'react-router-dom';
 import Page from '../../components/Page';
-import CollectionForm from '../../components/forms/CollectionForm';
+import CollectionForm, { prepareData } from '../../components/forms/CollectionForm';
 import { type HttpResponse, put } from '../../util/api';
 import { formDataToObject, handleFormResponseNotification } from '../../util/form';
 import { CollectionsContext } from '../../context/CollectionsContext';
@@ -11,7 +11,6 @@ import DataGetter from '../../components/DataGetter';
 import type { Collection } from '../../../common/types/Collection';
 import FormSkeleton from '../../components/FormSkeleton';
 import CollectionTitleForm from '../../components/forms/CollectionTitleForm';
-import FlexGrow from '../../components/FlexGrow';
 import useRefresh from '../../util/refresh';
 import CollectionInputsForm from '../../components/forms/CollectionInputsForm';
 import type { CollectionInput } from '../../../common/types/CollectionInputs';
@@ -29,14 +28,8 @@ function EditCollectionPage({ collection, collectionInputs, collectionTitle }:
 
   return (
     <Stack>
-      <Flex direction={{ base: 'column', sm: 'row' }} gap="sm">
-        <FlexGrow>
-          <CollectionForm collection={collection} />
-        </FlexGrow>
-        <FlexGrow>
-          <CollectionTitleForm collectionTitle={collectionTitle} inputs={inputs} />
-        </FlexGrow>
-      </Flex>
+      <CollectionForm collection={collection} />
+      <CollectionTitleForm collectionTitle={collectionTitle} inputs={inputs} />
 
       <CollectionInputsForm collection={collection} inputs={inputs}
         inputsHandlers={inputsHandlers} />
@@ -85,7 +78,7 @@ export async function action(args: ActionFunctionArgs) {
 
   switch (form) {
     case 'name':
-      return put(apiRoot, data);
+      return put(apiRoot, prepareData(data));
     case 'title':
       return put(`${apiRoot}/title`, {
         inputId: data.title
