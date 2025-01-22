@@ -11,5 +11,5 @@ export default class SnowCMSClient {
     (collection: string, opts?: PaginatedQueryOpts): PaginatedQueryClient<T>;
 
   getCollectionEntriesData<T = Record<string, any>>
-    (entries: CollectionEntry[]): Promise<CollectionEntryWithRenderedData<T>>;
+    (entries: CollectionEntry[]): Promise<CollectionEntryWithRenderedData<T>[]>;
 }
