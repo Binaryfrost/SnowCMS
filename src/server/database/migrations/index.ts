@@ -68,10 +68,14 @@ export async function runMigrations() {
         .onConflict()
         .merge();
     } catch (e) {
-      console.log(`Rolling back migration ${migration.id} due to error`);
-      await migration.rollback?.();
+      console.log(`Rolling back migration ${migration.id} due to error`, e);
 
-      throw new Error(`Failed to run migration ${migration.id}: ${e}`);
+      try {
+        await migration.rollback?.();
+        throw new Error(`Failed to run migration ${migration.id}: ${e}`);
+      } catch (r) {
+        throw new Error(`Failed to roll back migration ${migration.id}: ${r}`);
+      }
     }
   }
 }
