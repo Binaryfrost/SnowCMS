@@ -48,18 +48,6 @@ router.get('/', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection not found', 404);
   }
 
-  /*
-    SELECT `collection_entries`.`id`, `collection_entries`.`collectionId`, `createdAt`, `updatedAt`,
-    (
-      SELECT `data` FROM `collection_entry_inputs`
-      WHERE `collection_entry_inputs`.`entryId` = `collection_entries`.`id`
-      AND `collections`.`title` IS NOT NULL
-      AND `collection_entry_inputs`.`inputId` = `collections`.`title`
-    ) AS `title`
-    FROM `collection_entries`
-    INNER JOIN `collections` ON `collection_entries`.`collectionId` = `collections`.`id`;
-  */
-
   const searchQuery = search ? `%${search}%` : undefined;
   const query = (withSelect: boolean) => {
     const q = db()
