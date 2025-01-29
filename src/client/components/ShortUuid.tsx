@@ -1,4 +1,5 @@
-import { Text, Tooltip } from '@mantine/core';
+import { Box, Text, Tooltip } from '@mantine/core';
+import CopyButton from './CopyButton';
 
 interface Props {
   uuid: string
@@ -10,8 +11,11 @@ export function shortenUuid(uuid: string) {
 
 export default function ShortUuid({ uuid }: Props) {
   return (
-    <Tooltip label={uuid} inline>
-      <Text inherit component="span">{shortenUuid(uuid)}</Text>
-    </Tooltip>
+    <Box component="span">
+      <Tooltip label={uuid} inline>
+        <Text inherit component="span">{shortenUuid(uuid)}</Text>
+      </Tooltip>
+      <CopyButton value={uuid} ml="xs" />
+    </Box>
   );
 }

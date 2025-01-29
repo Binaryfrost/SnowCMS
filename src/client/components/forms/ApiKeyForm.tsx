@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ActionFunctionArgs, Form, useActionData, useParams } from 'react-router-dom';
-import { ActionIcon, Alert, Button, Checkbox, Code, CopyButton, Group, LoadingOverlay, MultiSelect, Select, Stack, Text, TextInput, Tooltip, rem } from '@mantine/core';
+import { Alert, Button, Checkbox, Code, Group, LoadingOverlay, MultiSelect, Select, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
-import { IconCheck, IconCircleCheck, IconCopy, IconExclamationCircle } from '@tabler/icons-react';
+import { IconCircleCheck, IconExclamationCircle } from '@tabler/icons-react';
 import DataGetter from '../DataGetter';
 import type { ApiKeyWithWebsites, Role, UserWithWebsites } from '../../../common/types/User';
 import FormSkeleton from '../FormSkeleton';
@@ -12,6 +12,7 @@ import { shortenUuid } from '../ShortUuid';
 import { Website } from '../../../common/types/Website';
 import { formDataToObject, handleFormResponseNotification, onSubmit } from '../../util/form';
 import { HttpResponse, post } from '../../util/api';
+import CopyButton from '../CopyButton';
 
 interface Props {
   apiKey?: ApiKeyWithWebsites
@@ -67,19 +68,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
             wordBreak: 'break-word'
           }}>
             <Code fz="sm">{newKey}</Code>
-            <CopyButton value={newKey} timeout={2000}>
-              {({ copied, copy }) => (
-                <Tooltip label={copied ? 'Copied' : 'Copy'} withArrow position="right">
-                  <ActionIcon color={copied ? 'teal' : 'gray'} variant="subtle" onClick={copy}>
-                    {copied ? (
-                      <IconCheck style={{ width: rem(16) }} />
-                    ) : (
-                      <IconCopy style={{ width: rem(16) }} />
-                    )}
-                  </ActionIcon>
-                </Tooltip>
-              )}
-            </CopyButton>
+            <CopyButton value={newKey} />
           </Group>
         </Alert>
       ) : (
