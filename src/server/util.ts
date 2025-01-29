@@ -95,9 +95,6 @@ export async function pagination(req: Request, query: string | Knex.QueryBuilder
 
   const { count } = await newQuery.first();
 
-  console.log(newQuery.toQuery());
-  console.log(count, await newQuery);
-
   return {
     limit,
     page,
