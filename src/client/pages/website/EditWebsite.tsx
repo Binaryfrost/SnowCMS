@@ -29,7 +29,7 @@ export function Component() {
       <Title>Edit Website</Title>
       <DataGetter<Website> url={`/api/websites/${websiteId}`}
         skeletonComponent={<FormSkeleton inputs={2} />}>
-        {(website) => (
+        {({ data: website }) => (
           <WebsiteForm website={website} />
         )}
       </DataGetter>
