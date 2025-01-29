@@ -168,6 +168,14 @@ export async function deleteCollection(id: string) {
       })
       .delete();
 
+    await trx('collections')
+      .update({
+        title: null
+      })
+      .where({
+        id
+      });
+
     await trx('collection_inputs')
       .where({
         collectionId: id
