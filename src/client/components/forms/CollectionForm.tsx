@@ -10,7 +10,7 @@ import { isTemporaryInput } from '../CollectionInputListItem';
 
 interface Props {
   collection?: Collection
-  collectionInputs: CollectionInput[]
+  collectionInputs?: CollectionInput[]
 }
 
 export default function CollectionForm({ collection, collectionInputs }: Props) {
