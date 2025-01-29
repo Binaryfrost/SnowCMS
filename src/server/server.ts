@@ -17,7 +17,6 @@ import { loadPlugins } from './plugins/plugins';
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
 import collectionInputsRouter from './routes/collection-inputs';
-import collectionTitleRouter from './routes/collection-titles';
 import collectionEntriesRouter from './routes/collection-entries';
 import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
@@ -115,7 +114,6 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites', websiteRouter);
   app.use('/api/websites/:websiteId/collections', collectionRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/inputs', collectionInputsRouter);
-  app.use('/api/websites/:websiteId/collections/:collectionId/title', collectionTitleRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
   app.use('/api/websites/:websiteId/media', mediaRouter);
   app.use('/api/accounts', accountRouter);

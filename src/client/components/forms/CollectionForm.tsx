@@ -1,33 +1,37 @@
 import { Form } from 'react-router-dom';
-import { Button, Checkbox, TextInput } from '@mantine/core';
+import { Button, Checkbox, Select, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import type { Collection } from '../../../common/types/Collection';
 import { onSubmit } from '../../util/form';
 import IconButton from '../IconButton';
-import ConditionalFlexDirection from '../ConditionalFlexDirection';
+import { CollectionInput } from '../../../common/types/CollectionInputs';
+import { isTemporaryInput } from '../CollectionInputListItem';
 
 interface Props {
   collection?: Collection
+  collectionInputs: CollectionInput[]
 }
 
-export default function CollectionForm({ collection }: Props) {
+export default function CollectionForm({ collection, collectionInputs }: Props) {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
       name: collection?.name || '',
-      callHook: collection?.callHook || false
+      callHook: collection?.callHook || false,
+      title: collection?.title || ''
     }
   });
 
-  // TODO: Test HTTP hook checkbox
+  const inputs = collectionInputs?.filter((input) => !isTemporaryInput(input.id))
+    .reduce((a, c) => [
+      ...a,
+      { value: c.id, label: c.name }
+    ], []);
+
   return (
     <Form method="POST" onSubmit={(e) => onSubmit(e, form)}>
-      <ConditionalFlexDirection group={() => !!collection} props={{
-        gap: 'md'
-      }} groupProps={{
-        align: 'end'
-      }}>
+      <Stack>
         <TextInput label="Name" name="name" required description="Collection name"
           style={{
             flexGrow: 1
@@ -37,14 +41,22 @@ export default function CollectionForm({ collection }: Props) {
           description="Whether to send a POST request to the website's HTTP hook"
           {...form.getInputProps('callHook', { type: 'checkbox' })} key={form.key('callHook')} />
 
-        <Button type="submit" name="form" value="name" px={collection ? 'xs' : undefined}>
+        {collection && (
+          <Select label="Title" name="title" required data={inputs}
+            description="Name of input that will be called to render title"
+            style={{
+              flexGrow: 1
+            }} {...form.getInputProps('title')} key={form.key('title')} />
+        )}
+
+        <Button type="submit" px={collection ? 'xs' : undefined}>
           {collection ? (
             <IconButton label="Save">
               <IconDeviceFloppy />
             </IconButton>
           ) : 'Create Collection'}
         </Button>
-      </ConditionalFlexDirection>
+      </Stack>
     </Form>
   );
 }

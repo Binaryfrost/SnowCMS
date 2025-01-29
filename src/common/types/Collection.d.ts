@@ -3,4 +3,5 @@ export interface Collection {
   websiteId: string
   name: string
   callHook: boolean
+  title: string
 }

@@ -5,11 +5,11 @@ import handleAccessControl from '../handleAccessControl';
 import { exists, getCollection, getCollectionInputs, getWebsite, reorderCollectionInputs } from '../database/util';
 import { CollectionInput, DatabaseCollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
-import { CollectionTitle } from '../../common/types/CollectionTitle';
 import { asyncRouteFix } from '../util';
 import { CollectionEntryInputs } from '../../common/types/CollectionEntry';
 import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
+import { Collection } from '../../common/types/Collection';
 
 const router = express.Router({ mergeParams: true });
 
@@ -225,11 +225,13 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
       })
       .andWhere('order', '>', order);
 
-    await trx<CollectionTitle>('collection_titles')
-      .where({
-        inputId: id
+    await trx<Collection>('collections')
+      .update({
+        title: null
       })
-      .delete();
+      .where({
+        title: id
+      });
 
     await trx<CollectionEntryInputs>('collection_entry_inputs')
       .where({

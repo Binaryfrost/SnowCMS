@@ -69,7 +69,8 @@ router.post('/', asyncRouteFix(async (req, res) => {
     id,
     websiteId,
     name,
-    callHook: true
+    callHook: true,
+    title: null
   };
 
   await callHook('beforeCollectionCreateHook', {
@@ -94,7 +95,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   handleAccessControl(req.user, 'VIEWER', websiteId);
 
   const collection = await db()<Collection>('collections')
-    .select('id', 'websiteId', 'name', 'callHook')
+    .select('id', 'websiteId', 'name', 'callHook', 'title')
     .where({
       id
     })
@@ -112,9 +113,9 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
 
   handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
-  const { name, callHook: ch } = req.body;
-  if (!name) {
-    throw new ExpressError('Name is required', 404);
+  const { name, callHook: ch, title } = req.body;
+  if (!name || !title) {
+    throw new ExpressError('Name and title are required', 404);
   }
 
   if (!(await exists('collections', id))) {
@@ -125,7 +126,8 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     id,
     websiteId,
     name,
-    callHook: ch || false
+    callHook: ch || false,
+    title
   });
 
   await callHook('beforeCollectionModifyHook', {
@@ -138,7 +140,8 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     })
     .update({
       name,
-      callHook: collection.callHook
+      callHook: collection.callHook,
+      title
     });
 
   res.json({
@@ -160,12 +163,6 @@ export async function deleteCollection(id: string) {
       .delete();
 
     await trx('collection_entries')
-      .where({
-        collectionId: id
-      })
-      .delete();
-
-    await trx('collection_titles')
       .where({
         collectionId: id
       })
@@ -195,7 +192,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
   }
 
   const collection = await db()<Collection>('collections')
-    .select('id', 'name', 'websiteId', 'callHook')
+    .select('id', 'name', 'websiteId', 'callHook', 'title')
     .where({
       id
     })

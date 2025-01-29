@@ -25,8 +25,10 @@ export default async function init(knex: Knex) {
       table.string('websiteId').notNullable();
       table.string('name').notNullable();
       table.boolean('callHook').defaultTo(true);
+      table.string('title');
 
       table.foreign('websiteId').references('websites.id');
+      table.foreign('title').references('collection_inputs.id');
     });
   }
 
@@ -43,17 +45,6 @@ export default async function init(knex: Knex) {
       table.integer('order').unsigned().notNullable();
 
       table.foreign('collectionId').references('collections.id');
-    });
-  }
-
-  if (!await knex.schema.hasTable('collection_titles')) {
-    console.log('Creating collection_titles table');
-    await knex.schema.createTable('collection_titles', (table) => {
-      table.string('collectionId').primary();
-      table.string('inputId');
-
-      table.foreign('collectionId').references('collections.id');
-      table.foreign('inputId').references('collection_inputs.id');
     });
   }
 

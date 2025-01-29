@@ -48,40 +48,49 @@ router.get('/', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection not found', 404);
   }
 
+  /*
+    SELECT `collection_entries`.`id`, `collection_entries`.`collectionId`, `createdAt`, `updatedAt`,
+    (
+      SELECT `data` FROM `collection_entry_inputs`
+      WHERE `collection_entry_inputs`.`entryId` = `collection_entries`.`id`
+      AND `collections`.`title` IS NOT NULL
+      AND `collection_entry_inputs`.`inputId` = `collections`.`title`
+    ) AS `title`
+    FROM `collection_entries`
+    INNER JOIN `collections` ON `collection_entries`.`collectionId` = `collections`.`id`;
+  */
+
   const searchQuery = search ? `%${search}%` : undefined;
   const query = (withSelect: boolean) => {
     const q = db()
-      .from('collection_titles')
+      .from('collection_entries')
       .innerJoin(
-        'collection_entry_inputs',
-        'collection_titles.inputId',
-        'collection_entry_inputs.inputId'
+        'collections',
+        'collection_entries.collectionId',
+        'collections.id'
       )
-      .innerJoin(
-        'collection_inputs',
-        'collection_inputs.id',
-        'collection_entry_inputs.inputId'
-      )
-      .innerJoin(
-        'collection_entries',
-        'collection_entries.id',
-        'collection_entry_inputs.entryId'
-      )
-      .where((builder) => {
+      .having((builder) => {
         if (searchQuery) {
           builder.whereILike('collection_entries.id', searchQuery);
-          builder.orWhereILike('collection_entry_inputs.data', searchQuery);
+          builder.orWhereILike('title', searchQuery);
         }
       })
       .andWhere('collection_entries.collectionId', collectionId);
+
+    const titleSelect = () => db().select('data')
+      .from('collection_entry_inputs')
+      .whereRaw('`collection_entry_inputs`.`entryId` = `collection_entries`.`id`')
+      .andWhereRaw('`collections`.`title` IS NOT NULL')
+      .andWhereRaw('`collection_entry_inputs`.`inputId` = `collections`.`title`')
+      .as('title');
 
     return withSelect ? q.select(
       'collection_entries.id',
       'collection_entries.collectionId',
       'createdAt',
       'updatedAt',
-      db().ref('data').as('title')
-    ) : q;
+      titleSelect()
+    ) : q.select('collection_entries.id', titleSelect());
   };
 
   const p = await pagination(req, query(false));

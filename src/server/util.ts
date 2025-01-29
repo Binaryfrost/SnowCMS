@@ -87,13 +87,16 @@ export async function pagination(req: Request, query: string | Knex.QueryBuilder
 
   const newQuery = typeof query === 'string' ? (
     db()(query)
-      .count('id')
+      .count({ count: '*' })
       .where(where)
-  ) : query;
-
-  const { count } = await newQuery
+  ) : db()
     .count({ count: '*' })
-    .first();
+    .from(query.as('C'));
+
+  const { count } = await newQuery.first();
+
+  console.log(newQuery.toQuery());
+  console.log(count, await newQuery);
 
   return {
     limit,

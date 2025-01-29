@@ -3,17 +3,12 @@ import { loadPlugins } from '../../common/plugins/plugins';
 import type { Collection } from '../../common/types/Collection';
 import type { CollectionEntryWithData } from '../../common/types/CollectionEntry';
 import type { CollectionInput } from '../../common/types/CollectionInputs';
-import type { CollectionTitle } from '../../common/types/CollectionTitle';
 import type { Media, MediaWithUrls } from '../../common/types/Media';
 import type { Website } from '../../common/types/Website';
 import { PluginConfig } from '../../config';
 
 interface ServerStartHook {
   port: number
-}
-
-interface BeforeAfterCollectionTitlesModifyHook {
-  collectionTitle: CollectionTitle
 }
 
 interface BeforeAfterMediaHook<T = Media> {
@@ -73,10 +68,6 @@ type AllBeforeAfterHooks =
 export interface Hooks extends AllBeforeAfterHooks {
   /** Called server-side */
   serverStart?: (hook: ServerStartHook) => void | Promise<void>;
-  beforeCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) =>
-    void | Promise<void>;
-  afterCollectionTitleModifyHook?: (hook: BeforeAfterCollectionTitlesModifyHook) =>
-    void | Promise<void>;
   beforeMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) =>
     void | Promise<void>;
   afterMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) =>

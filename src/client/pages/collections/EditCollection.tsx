@@ -10,26 +10,22 @@ import { CollectionsContext } from '../../context/CollectionsContext';
 import DataGetter from '../../components/DataGetter';
 import type { Collection } from '../../../common/types/Collection';
 import FormSkeleton from '../../components/FormSkeleton';
-import CollectionTitleForm from '../../components/forms/CollectionTitleForm';
 import useRefresh from '../../util/refresh';
 import CollectionInputsForm from '../../components/forms/CollectionInputsForm';
 import type { CollectionInput } from '../../../common/types/CollectionInputs';
-import { CollectionTitle } from '../../../common/types/CollectionTitle';
 
 interface EditCollectionPageProps {
   collection: Collection
   collectionInputs: CollectionInput[]
-  collectionTitle: CollectionTitle
 }
 
-function EditCollectionPage({ collection, collectionInputs, collectionTitle }:
+function EditCollectionPage({ collection, collectionInputs }:
   EditCollectionPageProps) {
   const [inputs, inputsHandlers] = useListState<CollectionInput>(collectionInputs);
 
   return (
     <Stack>
-      <CollectionForm collection={collection} />
-      <CollectionTitleForm collectionTitle={collectionTitle} inputs={inputs} />
+      <CollectionForm collection={collection} collectionInputs={collectionInputs} />
 
       <CollectionInputsForm collection={collection} inputs={inputs}
         inputsHandlers={inputsHandlers} />
@@ -57,15 +53,13 @@ export function Component() {
   return (
     <Page title="Edit Collection">
       <Title>Edit Collection</Title>
-      <DataGetter.Multiple<[Collection, CollectionInput[], CollectionTitle]> urls={[
+      <DataGetter.Multiple<[Collection, CollectionInput[]]> urls={[
         `/api/websites/${websiteId}/collections/${collectionId}`,
-        `/api/websites/${websiteId}/collections/${collectionId}/inputs`,
-        `/api/websites/${websiteId}/collections/${collectionId}/title`
+        `/api/websites/${websiteId}/collections/${collectionId}/inputs`
       ]}
         key={collectionId} skeletonComponent={<FormSkeleton inputs={1} />}>
-        {({ data: [collection, inputs, title] }) => (
-          <EditCollectionPage collection={collection} collectionInputs={inputs}
-            collectionTitle={title} />
+        {({ data: [collection, inputs] }) => (
+          <EditCollectionPage collection={collection} collectionInputs={inputs} />
         )}
       </DataGetter.Multiple>
     </Page>
@@ -73,18 +67,9 @@ export function Component() {
 }
 
 export async function action(args: ActionFunctionArgs) {
-  const { form, ...data } = await formDataToObject(args.request);
-  const apiRoot = `/api/websites/${args.params.websiteId}/collections/${args.params.collectionId}`;
-
-  switch (form) {
-    case 'name':
-      return put(apiRoot, prepareData(data));
-    case 'title':
-      return put(`${apiRoot}/title`, {
-        inputId: data.title
-      });
-    default:
-      console.error('Not implemented yet');
-      return null;
-  }
+  const data = await formDataToObject(args.request);
+  return put(
+    `/api/websites/${args.params.websiteId}/collections/${args.params.collectionId}`,
+    prepareData(data)
+  );
 }
