@@ -54,7 +54,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
 
   handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
-  const { name } = req.body;
+  const { name, callHook: ch } = req.body;
 
   if (!name) {
     throw new ExpressError('Name is required');
@@ -69,7 +69,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     id,
     websiteId,
     name,
-    callHook: true,
+    callHook: ch || false,
     title: null
   };
 

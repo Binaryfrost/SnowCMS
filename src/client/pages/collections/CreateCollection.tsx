@@ -2,7 +2,7 @@ import { useContext, useEffect } from 'react';
 import { Title } from '@mantine/core';
 import { useActionData, useNavigate, useParams, type ActionFunctionArgs } from 'react-router-dom';
 import Page from '../../components/Page';
-import CollectionForm from '../../components/forms/CollectionForm';
+import CollectionForm, { prepareData } from '../../components/forms/CollectionForm';
 import { HttpResponse, post } from '../../util/api';
 import { formDataToObject, handleFormResponseNotification } from '../../util/form';
 import { CollectionsContext } from '../../context/CollectionsContext';
@@ -34,5 +34,6 @@ export function Component() {
 
 export async function action(args: ActionFunctionArgs) {
   return post(`/api/websites/${args.params.websiteId}/collections`,
-    await formDataToObject(args.request));
+    prepareData(await formDataToObject(args.request))
+  );
 }
