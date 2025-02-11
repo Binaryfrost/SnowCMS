@@ -6,6 +6,7 @@ import { ModalsProvider } from '@mantine/modals';
 import { Outlet, useLocation, useNavigation } from 'react-router-dom';
 import DarkModeToggle from './components/DarkModeToggle';
 import LogoutButton from './components/LogoutButton';
+import HelpButton from './components/HelpButton';
 import Navbar from './components/Navbar';
 import Logo from './components/Logo';
 import CollectionsProvider from './context/CollectionsProvider';
@@ -83,6 +84,7 @@ export function Component() {
               <MyAccountButton />
               <AccountsButton />
               <LogoutButton />
+              <HelpButton />
             </Group>
           </AppShell.Section>
         </AppShell.Navbar>
