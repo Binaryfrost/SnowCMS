@@ -26,9 +26,11 @@ export default async function init(knex: Knex) {
       table.string('name').notNullable();
       table.boolean('callHook').defaultTo(true);
       table.string('title');
+      table.string('slug');
 
       table.foreign('websiteId').references('websites.id');
       table.foreign('title').references('collection_inputs.id');
+      table.foreign('slug').references('collection_inputs.id');
     });
   }
 
@@ -71,6 +73,8 @@ export default async function init(knex: Knex) {
       table.foreign('entryId').references('collection_entries.id');
       table.foreign('inputId').references('collection_inputs.id');
     });
+
+    await knex.schema.raw('CREATE INDEX collection_entry_inputs_data_prefix ON collection_entry_inputs (data(10));');
   }
 
   if (!await knex.schema.hasTable('media')) {

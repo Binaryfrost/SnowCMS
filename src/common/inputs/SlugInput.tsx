@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { Checkbox, NumberInput, Stack, TextInput } from '@mantine/core';
+import { Checkbox, Code, Input as MantineInput, NumberInput, Stack, TextInput } from '@mantine/core';
 import { useField, useForm } from '@mantine/form';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
@@ -11,6 +11,38 @@ interface SlugInputSettings {
   fieldName: string
   maxLength: number
   required: boolean
+  before?: string
+}
+
+function populatePlaceholders(str: string) {
+  if (!str) return '';
+
+  const date = new Date();
+  let output = str;
+
+  const placeholders = {
+    year: () => date.getFullYear().toString(),
+    uyear: () => date.getUTCFullYear().toString(),
+    month: () => (date.getMonth() + 1).toString().padStart(2, '0'),
+    umonth: () => (date.getUTCMonth() + 1).toString().padStart(2, '0'),
+    day: () => date.getDate().toString().padStart(2, '0'),
+    uday: () => date.getUTCDate().toString().padStart(2, '0'),
+    hour: () => date.getHours().toString().padStart(2, '0'),
+    uhour: () => date.getUTCHours().toString().padStart(2, '0'),
+    minute: () => date.getMinutes().toString().padStart(2, '0'),
+    uminute: () => date.getUTCMinutes().toString().padStart(2, '0'),
+    second: () => date.getSeconds().toString().padStart(2, '0'),
+    usecond: () => date.getUTCSeconds().toString().padStart(2, '0')
+  };
+
+  for (const placeholder in placeholders) {
+    if (Object.prototype.hasOwnProperty.call(placeholders, placeholder)) {
+      const fn = placeholders[placeholder as keyof typeof placeholders];
+      output = output.replaceAll(`{${placeholder}}`, fn());
+    }
+  }
+
+  return output;
 }
 
 const input: Input<string, SlugInputSettings> = {
@@ -43,6 +75,7 @@ const input: Input<string, SlugInputSettings> = {
     });
 
     const dependentFieldValue = useRef('');
+    const beforeValue = useRef(populatePlaceholders(props.settings?.before));
 
     useImperativeHandle(ref, () => ({
       getValues: () => field.getValue(),
@@ -54,7 +87,7 @@ const input: Input<string, SlugInputSettings> = {
         const value = values[fieldName];
         if (dependentFieldValue.current === value) return;
 
-        field.setValue(slug(value, {
+        field.setValue(beforeValue.current + slug(value, {
           fallback: false
         }));
         dependentFieldValue.current = value;
@@ -76,7 +109,8 @@ const input: Input<string, SlugInputSettings> = {
       initialValues: {
         fieldName: props.settings?.fieldName || '',
         maxLength: props.settings?.maxLength || 0,
-        required: props.settings?.required ?? true
+        required: props.settings?.required ?? true,
+        before: props.settings?.before || ''
       },
       validateInputOnChange: true,
       validate: (values) => ({
@@ -104,6 +138,19 @@ const input: Input<string, SlugInputSettings> = {
           {...form.getInputProps('maxLength')} key={form.key('maxLength')} />
         <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
           key={form.key('required')} />
+        <TextInput label="Before"
+          description={(
+            <MantineInput.Label>
+              Value prepended to slug. The following placeholder values are available:&nbsp;
+              <Code>{'{year}'}</Code>, <Code>{'{month}'}</Code>, <Code>{'{day}'}</Code>,&nbsp;
+              <Code>{'{hour}'}</Code>, <Code>{'{minute}'}</Code>, <Code>{'{second}'}</Code>&nbsp;
+              (all returned in local time),&nbsp;
+              <Code>{'{uyear}'}</Code>, <Code>{'{umonth}'}</Code>, <Code>{'{uday}'}</Code>,&nbsp;
+              <Code>{'{uhour}'}</Code>, <Code>{'{uminute}'}</Code>, <Code>{'{usecond}'}</Code>&nbsp;
+              (all returned in UTC).
+            </MantineInput.Label>
+          )}
+          {...form.getInputProps('before')} key={form.key('before')} />
       </Stack>
     );
   }),

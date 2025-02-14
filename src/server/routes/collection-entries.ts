@@ -98,11 +98,9 @@ router.get('/', asyncRouteFix(async (req, res) => {
   res.json(response);
 }));
 
-router.get('/:id', asyncRouteFix(async (req, res) => {
-  const { websiteId, collectionId, id } = req.params;
+async function getCollectionEntry(id: string, req: Request) {
+  const { collectionId } = req.params;
   const { render } = req.query;
-
-  handleAccessControl(req.user, 'VIEWER', websiteId);
 
   const entry = await db()<CollectionEntry>('collection_entries')
     .select('id', 'collectionId', 'createdAt', 'updatedAt')
@@ -163,14 +161,49 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
     inputsData = inputs;
   }
 
-  res.json({
+  return {
     ...entry,
     data: inputsData
-  });
+  };
+}
+
+router.get('/:id', asyncRouteFix(async (req, res) => {
+  const { websiteId, id } = req.params;
+
+  handleAccessControl(req.user, 'VIEWER', websiteId);
+
+  res.json(await getCollectionEntry(id, req));
+}));
+
+router.get('/slug/*', asyncRouteFix(async (req, res) => {
+  const { collectionId } = req.params;
+  const slug = req.params[0];
+
+  const { slug: slugInput } = await getCollection(collectionId);
+
+  if (!slugInput) {
+    throw new ExpressError('Accessing entries using a slug is not configured for this Collection');
+  }
+
+  const entry = await db()<CollectionEntryInputs>('collection_entry_inputs')
+    .select('entryId')
+    .where({
+      inputId: slugInput,
+      data: slug
+    })
+    .first();
+
+  if (!entry) {
+    throw new ExpressError('Collection Entry not found');
+  }
+
+  res.json(await getCollectionEntry(entry.entryId, req));
 }));
 
 async function prepareData(data: Record<string, string>, collectionId: string,
   entryId: string, req: Request): Promise<CollectionEntryWithData> {
+  const { slug } = await getCollection(collectionId);
+
   const collectionInputs: Record<string, CollectionInput> =
     (await getCollectionInputs(collectionId)).reduce((a, c) => ({
       ...a,
@@ -192,6 +225,23 @@ async function prepareData(data: Record<string, string>, collectionId: string,
         collectionInput.inputConfig,
         req
       );
+
+      if (slug && slug === collectionInputs[key].id && data[key]) {
+        // eslint-disable-next-line no-await-in-loop
+        const duplicateSlug = await db()<CollectionEntryInputs>('collection_entry_inputs')
+          .where({
+            inputId: slug,
+            data: data[key]
+          })
+          .andWhereNot({
+            entryId
+          })
+          .first();
+
+        if (duplicateSlug) {
+          throw new ExpressError('An Entry with that slug already exists');
+        }
+      }
 
       updates.push({
         inputId: collectionInputs[key].id,

@@ -19,7 +19,8 @@ export default function CollectionForm({ collection, collectionInputs }: Props) 
     initialValues: {
       name: collection?.name || '',
       callHook: collection?.callHook || false,
-      title: collection?.title || ''
+      title: collection?.title || '',
+      slug: collection?.slug || ''
     }
   });
 
@@ -42,11 +43,19 @@ export default function CollectionForm({ collection, collectionInputs }: Props) 
           {...form.getInputProps('callHook', { type: 'checkbox' })} key={form.key('callHook')} />
 
         {collection && (
-          <Select label="Title" name="title" required data={inputs}
-            description="Name of input that will be called to render title"
-            style={{
-              flexGrow: 1
-            }} {...form.getInputProps('title')} key={form.key('title')} />
+          <>
+            <Select label="Title" name="title" required data={inputs}
+              description="Name of input used for the title"
+              style={{
+                flexGrow: 1
+              }} {...form.getInputProps('title')} key={form.key('title')} />
+
+            <Select label="Slug" name="slug" data={inputs}
+              description="Name of input used for the slug"
+              style={{
+                flexGrow: 1
+              }} {...form.getInputProps('slug')} key={form.key('slug')} />
+          </>
         )}
 
         <Button type="submit" px={collection ? 'xs' : undefined}>

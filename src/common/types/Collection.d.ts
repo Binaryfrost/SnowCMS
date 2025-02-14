@@ -4,4 +4,5 @@ export interface Collection {
   name: string
   callHook: boolean
   title: string
+  slug?: string
 }
