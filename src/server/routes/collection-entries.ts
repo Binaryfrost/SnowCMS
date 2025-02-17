@@ -72,13 +72,21 @@ router.get('/', asyncRouteFix(async (req, res) => {
       .andWhereRaw('`collection_entry_inputs`.`inputId` = `collections`.`title`')
       .as('title');
 
+    const slugSelect = () => db().select('data')
+      .from('collection_entry_inputs')
+      .whereRaw('`collection_entry_inputs`.`entryId` = `collection_entries`.`id`')
+      .andWhereRaw('`collections`.`slug` IS NOT NULL')
+      .andWhereRaw('`collection_entry_inputs`.`inputId` = `collections`.`slug`')
+      .as('slug');
+
     return withSelect ? q.select(
       'collection_entries.id',
       'collection_entries.collectionId',
       'createdAt',
       'updatedAt',
-      titleSelect()
-    ) : q.select('collection_entries.id', titleSelect());
+      titleSelect(),
+      slugSelect()
+    ) : q.select('collection_entries.id', titleSelect(), slugSelect());
   };
 
   const p = await pagination(req, query(false));
