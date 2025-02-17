@@ -23,6 +23,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
   const inputsRef = useRef<Record<string, InputsRef>>({});
   const [submitting, setSubmitting] = useState(false);
   const { user } = useContext(UserContext);
+  const values = useRef<Record<string, any>>({});
 
   function getValues(serialize: boolean = true) {
     return Object.entries(inputsRef.current).reduce((a, [fieldName, input]) => {
@@ -49,6 +50,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
   async function save() {
     const formData = getValues();
     let hasError = false;
+    values.current = formData;
 
     for await (const [, input] of Object.entries(inputsRef.current)) {
       if (input.hasError && await input.hasError()) {
@@ -105,9 +107,10 @@ export default function CollectionEntryForm({ entryId }: Props) {
                 const settings = registryInput.deserializeSettings && input.inputConfig ?
                   registryInput.deserializeSettings(input.inputConfig) : null;
                 let value;
-                if (data) {
+                if (data || values.current[input.fieldName]) {
                   const inputData = data.data.filter((d) => d.inputId === input.id)[0]?.data;
-                  value = inputData ? registryInput.deserialize(inputData) : null;
+                  const valueToDeserialize = values.current[input.fieldName] || inputData;
+                  value = valueToDeserialize ? registryInput.deserialize(valueToDeserialize) : null;
                 }
 
                 const props = {
