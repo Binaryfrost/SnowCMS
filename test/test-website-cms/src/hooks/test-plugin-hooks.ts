@@ -29,6 +29,12 @@ export default defineHookPlugin({
     afterWebsiteDeleteHook: ({ website }) => {
       logger.log('website deleted', website);
     },
+    beforeCollectionEntryModifyHook: ({ collectionEntry }) => {
+      const containsProfanity = collectionEntry.data.some((e) => e.data.includes('profanity'));
+      if (containsProfanity) {
+        throw new ExpressError('Collection Entry contains profanity');
+      }
+    },
     afterCollectionEntryModifyHook: ({ collectionEntry }) => {
       logger.log('collection entry modified', collectionEntry);
     },
