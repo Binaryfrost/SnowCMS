@@ -1,6 +1,7 @@
 import type { Request } from 'express';
 import type { PluginConfig } from '../../config';
 import { PluginLogger } from './PluginLogger';
+import { PaginatedQueryClient } from '../../lib/client/PaginatedQueryClient';
 
 export type PluginTypes = 'inputs' | 'hooks' | 'routes';
 
@@ -77,4 +78,31 @@ export async function serverInputFetch(req: Request, fn: Fn) {
       authorization
     }
   });
+}
+
+interface Paginated<T> {
+  data: T[]
+  page: number
+  pages: number
+}
+
+export async function serverGetAllPagesFetch<T>(req: Request, fn: Fn): Promise<T[]> {
+  const result: T[][] = [];
+  const query = `limit=100&page=`
+
+  let page = 0;
+  let pages = null;
+
+  while (page !== pages) {
+    page++;
+
+    const resp: Paginated<T> = await (
+      await serverInputFetch(req, (d) => `${fn(d)}?${query}${page}`)
+    ).json();
+
+    pages = resp.pages;
+    result.push(resp.data);
+  }
+
+  return result.flat();
 }

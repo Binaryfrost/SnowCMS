@@ -9,7 +9,7 @@ import DataGetter from '../../client/components/DataGetter';
 import { shortenUuid } from '../../client/components/ShortUuid';
 import FormSkeleton from '../../client/components/FormSkeleton';
 import ExpressError from '../ExpressError';
-import { serverInputFetch } from '../plugins/plugins';
+import { serverGetAllPagesFetch, serverInputFetch } from '../plugins/plugins';
 
 /*
  * Setting field to select other collection. In Collection Entry, allow selecting specific entry
@@ -139,16 +139,11 @@ const input: Input<string, RelationalInputSettings> = {
       throw new ExpressError('Cannot reference same Collection');
     }
 
-    const resp = await serverInputFetch(
+    const collections = await serverGetAllPagesFetch<Collection>(
       req,
       ({ websiteId }) => `/api/websites/${websiteId}/collections`
     );
 
-    if (resp.status !== 200) {
-      throw new ExpressError('Failed to validate settings', 500);
-    }
-
-    const collections: Collection[] = await resp.json();
     if (collections.filter((c) => c.id === settings.collectionId).length === 0) {
       throw new ExpressError('Collection with that ID does not exist');
     }
