@@ -20,7 +20,8 @@ export function Component() {
   const [search, setSearch] = useState('');
 
   return (
-    <DataGetter<Collection> url={`/api/websites/${websiteId}/collections/${collectionId}`}>
+    <DataGetter<Collection> url={`/api/websites/${websiteId}/collections/${collectionId}`}
+      key={collectionId}>
       {({ data: collection }) => (
         <Page title={`Collection Entries: ${collection.name}`}>
           <Group justify="space-between" mb="sm">
