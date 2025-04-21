@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Title } from '@mantine/core';
 import Page from '../../components/Page';
-import CollectionEntryForm from '../../components/forms/CollectionEntryForm';
+import LazyLoadedCollectionEntryForm from '../../components/forms/LazyLoadedCollectionEntryForm';
 
 export function Component() {
   const { entryId } = useParams();
@@ -9,7 +9,7 @@ export function Component() {
   return (
     <Page title="Edit Collection Entry">
       <Title>Edit Collection Entry</Title>
-      <CollectionEntryForm entryId={entryId} />
+      <LazyLoadedCollectionEntryForm entryId={entryId} />
     </Page>
   );
 }

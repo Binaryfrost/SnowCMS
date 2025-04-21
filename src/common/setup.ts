@@ -1,7 +1,11 @@
 import { registerBuiltInInputs } from './inputs';
 import loadInputs from './plugins/inputs';
 
+let setupComplete = false;
+
 export default function setup() {
+  if (setupComplete) return;
+
   registerBuiltInInputs();
 
   if (__SNOWCMS_INPUTS_PLUGIN_CONFIG__) {
@@ -9,4 +13,6 @@ export default function setup() {
     const pluginConfig = require(__SNOWCMS_INPUTS_PLUGIN_CONFIG__);
     loadInputs(pluginConfig.default);
   }
+
+  setupComplete = true;
 }

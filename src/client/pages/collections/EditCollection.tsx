@@ -1,5 +1,5 @@
-import { useContext, useEffect } from 'react';
-import { Stack, Title } from '@mantine/core';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { LoadingOverlay, Stack, Title } from '@mantine/core';
 import { useListState } from '@mantine/hooks';
 import { useActionData, useParams, type ActionFunctionArgs } from 'react-router-dom';
 import Page from '../../components/Page';
@@ -22,13 +22,27 @@ interface EditCollectionPageProps {
 function EditCollectionPage({ collection, collectionInputs }:
   EditCollectionPageProps) {
   const [inputs, inputsHandlers] = useListState<CollectionInput>(collectionInputs);
+  const didSetup = useRef(false);
+  const [loading, setLoading] = useState(true);
+  
+  if (!didSetup.current) {
+    import('../../../common/setup').then(({ default: setup }) => {
+      setup();
+      setLoading(false);
+      didSetup.current = true;
+    });
+  }
 
   return (
     <Stack>
       <CollectionForm collection={collection} collectionInputs={collectionInputs} />
 
-      <CollectionInputsForm collection={collection} inputs={inputs}
-        inputsHandlers={inputsHandlers} />
+      {loading ? (
+        <LoadingOverlay visible />
+      ) : (
+        <CollectionInputsForm collection={collection} inputs={inputs}
+          inputsHandlers={inputsHandlers} />
+      )}
     </Stack>
   );
 }

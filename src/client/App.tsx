@@ -5,7 +5,7 @@ import { Notifications } from '@mantine/notifications';
 import { RouterProvider } from 'react-router-dom';
 
 import { router } from './router';
-import setup from '../common/setup';
+// import setup from '../common/setup';
 
 import '@mantine/core/styles.css';
 import '@mantine/nprogress/styles.css';
@@ -13,7 +13,7 @@ import '@mantine/notifications/styles.css';
 import '@mantine/dropzone/styles.css';
 import '@mantine/tiptap/styles.css';
 
-setup();
+// setup();
 
 const theme = createTheme({
   components: {
