@@ -13,6 +13,7 @@ import FormSkeleton from '../../components/FormSkeleton';
 import useRefresh from '../../util/refresh';
 import CollectionInputsForm from '../../components/forms/CollectionInputsForm';
 import type { CollectionInput } from '../../../common/types/CollectionInputs';
+import LazyLoadedCollectionSetup from '../../components/forms/LazyLoadedCollectionSetup';
 
 interface EditCollectionPageProps {
   collection: Collection
@@ -22,27 +23,15 @@ interface EditCollectionPageProps {
 function EditCollectionPage({ collection, collectionInputs }:
   EditCollectionPageProps) {
   const [inputs, inputsHandlers] = useListState<CollectionInput>(collectionInputs);
-  const didSetup = useRef(false);
-  const [loading, setLoading] = useState(true);
-  
-  if (!didSetup.current) {
-    import('../../../common/setup').then(({ default: setup }) => {
-      setup();
-      setLoading(false);
-      didSetup.current = true;
-    });
-  }
 
   return (
     <Stack>
       <CollectionForm collection={collection} collectionInputs={collectionInputs} />
 
-      {loading ? (
-        <LoadingOverlay visible />
-      ) : (
+      <LazyLoadedCollectionSetup>
         <CollectionInputsForm collection={collection} inputs={inputs}
           inputsHandlers={inputsHandlers} />
-      )}
+      </LazyLoadedCollectionSetup>
     </Stack>
   );
 }
