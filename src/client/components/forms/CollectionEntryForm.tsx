@@ -108,7 +108,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
                   registryInput.deserializeSettings(input.inputConfig) : null;
                 let value;
                 if (data || values.current[input.fieldName]) {
-                  const inputData = data.data.filter((d) => d.inputId === input.id)[0]?.data;
+                  const inputData = data?.data.filter((d) => d.inputId === input.id)[0]?.data;
                   const valueToDeserialize = values.current[input.fieldName] || inputData;
                   value = valueToDeserialize ? registryInput.deserialize(valueToDeserialize) : null;
                 }
