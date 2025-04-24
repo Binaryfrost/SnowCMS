@@ -7,6 +7,7 @@ declare global {
   const __SNOWCMS_HOOKS_PLUGIN_CONFIG__: string;
   const __SNOWCMS_ROUTES_PLUGIN_CONFIG__: string;
   const __SNOWCMS_IS_PRODUCTION__: string;
+  const __SNOWCMS_CLIENT_PUBLIC_PATH__: string | undefined;
 
   namespace Express {
     interface Request {

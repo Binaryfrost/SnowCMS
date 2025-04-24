@@ -136,6 +136,13 @@ export async function start(config: NormalizedConfig) {
     });
   });
 
+  let preConnectUrl: string | undefined;
+  if (__SNOWCMS_CLIENT_PUBLIC_PATH__) {
+    const u = new URL(__SNOWCMS_CLIENT_PUBLIC_PATH__);
+    preConnectUrl = `${u.protocol}//${u.host}`;
+    console.log(`Using alternative public path ${__SNOWCMS_CLIENT_PUBLIC_PATH__}`);
+  }
+
   // Catch all GET requests that haven't already been handled and serve the CMS SPA
   app.get('*', async (req, res) => {
     const MANIFEST = await getManifest();
@@ -146,6 +153,7 @@ export async function start(config: NormalizedConfig) {
         <head>
           <title>SnowCMS</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          ${preConnectUrl ? `<link rel="preconnect" href="${preConnectUrl}" />` : ''}
         </head>
         <body>
           <div id="app"></div>

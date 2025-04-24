@@ -16,6 +16,9 @@ import { exists } from './util.js';
 const SERVER_DIST = (dir) => path.join(dir, 'dist', 'server');
 const CLIENT_DIST = (dir) => path.join(dir, 'dist', 'client');
 
+const CLIENT_PUBLIC_PATH = process.env.CLIENT_PUBLIC_PATH?.includes('://') &&
+  process.env.CLIENT_PUBLIC_PATH;
+
 /**
  * @param {string} userDir
  * @param {import('../common/plugins/plugins').PluginTypes} type
@@ -91,7 +94,8 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
       __SNOWCMS_INPUTS_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'inputs'),
       __SNOWCMS_HOOKS_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'hooks'),
       __SNOWCMS_ROUTES_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'routes'),
-      __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production'
+      __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production',
+      __SNOWCMS_CLIENT_PUBLIC_PATH__: CLIENT_PUBLIC_PATH && JSON.stringify(CLIENT_PUBLIC_PATH)
     })
   ]
 });
@@ -151,7 +155,7 @@ export async function getWebpackClientConfig(opts) {
     output: {
       ...baseConfig.output,
       path: CLIENT_DIST(opts.userDir),
-      publicPath: '/assets/',
+      publicPath: CLIENT_PUBLIC_PATH || '/assets/',
       filename: 'main.[contenthash].js'
     },
     plugins: [
