@@ -64,7 +64,8 @@ export default function CollectionEntryForm({ entryId }: Props) {
        * and may seem like the save button doesn't work.
        */
       notifications.show({
-        message: 'Unable to save Collection Entry. One or more inputs has an error.'
+        message: 'Unable to save Collection Entry. One or more inputs has an error.',
+        color: 'red'
       });
       return;
     }
