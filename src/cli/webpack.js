@@ -72,15 +72,6 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
   optimization: {
     splitChunks: {
       hidePathInfo: true,
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          enforce: true,
-          name: 'vendor',
-          filename: '[name].[contenthash].js',
-          reuseExistingChunk: true
-        }
-      },
       maxSize: 50000
     },
     minimizer: [
