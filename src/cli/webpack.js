@@ -75,7 +75,8 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
   optimization: {
     splitChunks: {
       hidePathInfo: true,
-      maxSize: 50000
+      minSize: 50000,
+      maxSize: 150000
     },
     minimizer: [
       new TerserPlugin(),
