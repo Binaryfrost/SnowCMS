@@ -140,7 +140,7 @@ export async function start(config: NormalizedConfig) {
   if (__SNOWCMS_CLIENT_PUBLIC_PATH__) {
     const u = new URL(__SNOWCMS_CLIENT_PUBLIC_PATH__);
     preConnectUrl = `${u.protocol}//${u.host}`;
-    console.log(`Using alternative public path ${__SNOWCMS_CLIENT_PUBLIC_PATH__}`);
+    console.log(`Using alternative asset public path ${__SNOWCMS_CLIENT_PUBLIC_PATH__}`);
   }
 
   // Catch all GET requests that haven't already been handled and serve the CMS SPA
