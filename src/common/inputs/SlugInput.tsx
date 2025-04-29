@@ -1,11 +1,13 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { Checkbox, Code, Input as MantineInput, NumberInput, Stack, TextInput } from '@mantine/core';
+import { ActionIcon, Checkbox, Code, Input as MantineInput, NumberInput, Stack, TextInput } from '@mantine/core';
 import { useField, useForm } from '@mantine/form';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
 import { serverInputFetch } from '../plugins/plugins';
 import { CollectionInput } from '../types/CollectionInputs';
+import { IconRefresh } from '@tabler/icons-react';
+import IconButton from '../../client/components/IconButton';
 
 interface SlugInputSettings {
   fieldName: string
@@ -77,26 +79,38 @@ const input: Input<string, SlugInputSettings> = {
     const dependentFieldValue = useRef('');
     const beforeValue = useRef(populatePlaceholders(props.settings?.before));
 
+    function updateSlug() {
+      if (!dependentFieldValue.current) return;
+      field.setValue(beforeValue.current + slug(dependentFieldValue.current, {
+        fallback: false
+      }));
+    }
+
     useImperativeHandle(ref, () => ({
       getValues: () => field.getValue(),
       hasError: async () => !!(await field.validate()),
       notifyFormUpdate: (values) => {
         if (!(fieldName in values)) return;
-        if (props.value) return;
 
         const value = values[fieldName];
         if (dependentFieldValue.current === value) return;
-
-        field.setValue(beforeValue.current + slug(value, {
-          fallback: false
-        }));
         dependentFieldValue.current = value;
+
+        if (props.value) return;
+        updateSlug();
       }
     }));
 
     return (
       <TextInput label={props.name} description={props.description} required={required}
-        maxLength={maxLength > 1 ? maxLength : null} {...field.getInputProps()} key={field.key} />
+        maxLength={maxLength > 1 ? maxLength : null} rightSection={props.value && (
+          <IconButton label="Update Slug">
+            <ActionIcon onClick={updateSlug}>
+              <IconRefresh />
+            </ActionIcon>
+          </IconButton>
+        )}
+        {...field.getInputProps()} key={field.key} />
     );
   }),
 
