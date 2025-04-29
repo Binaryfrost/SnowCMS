@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Button, Stack, Text } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
@@ -40,6 +40,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
   }
 
   function notifyChanges() {
+    console.log('notify');
     Object.entries(inputsRef.current).forEach(([, input]) => {
       if (input.notifyFormUpdate) {
         input.notifyFormUpdate(getValues());
@@ -100,7 +101,7 @@ export default function CollectionEntryForm({ entryId }: Props) {
             <Text>No Inputs exist for this Collection</Text>
           ) : (
             <>
-              {inputs.map((input) => {
+              {inputs.map((input, index) => {
                 const registryInput = InputRegistry.getInput(input.input);
                 if (!registryInput) return null;
 
@@ -128,6 +129,16 @@ export default function CollectionEntryForm({ entryId }: Props) {
                     } : null,
                   notifyChanges
                 };
+
+                /**
+                 * Notify Inputs about the current value so that any Input that requires
+                 * that data has access to it without requiring user interaction.
+                 */
+                if (index === inputs.length - 1) {
+                  setTimeout(() => {
+                    notifyChanges(); 
+                  });
+                }
 
                 return (
                   <Component {...props} />
