@@ -104,7 +104,7 @@ const input: Input<string, SlugInputSettings> = {
     return (
       <TextInput label={props.name} description={props.description} required={required}
         maxLength={maxLength > 1 ? maxLength : null} rightSection={props.value && (
-          <IconButton label="Update Slug">
+          <IconButton label="Update Slug" role="USER">
             <ActionIcon onClick={updateSlug}>
               <IconRefresh />
             </ActionIcon>
