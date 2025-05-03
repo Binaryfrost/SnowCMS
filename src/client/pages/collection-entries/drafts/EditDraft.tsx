@@ -8,7 +8,7 @@ export function Component() {
   const { draftId } = useParams();
 
   return (
-    <Page title="Drafts">
+    <Page title="Edit Draft">
       <Title>Edit Draft</Title>
 
       <Alert mb="sm">
