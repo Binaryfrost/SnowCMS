@@ -9,7 +9,6 @@ import ExpressError from '../../common/ExpressError';
 import { callHook } from '../plugins/hooks';
 import type { PaginatedResponse } from '../../common/types/PaginatedResponse';
 import { CollectionEntry, CollectionEntryDraft, CollectionEntryDraftSummary, CollectionEntryDraftWithData } from '../../common/types/CollectionEntry';
-import { data } from 'autoprefixer';
 
 const router = express.Router({ mergeParams: true });
 
