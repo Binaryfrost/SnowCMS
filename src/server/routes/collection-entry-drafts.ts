@@ -25,10 +25,13 @@ router.get('/', asyncRouteFix(async (req, res) => {
   const titleInput = inputs.filter((input) => input.id === collection.title)[0] || null;
 
   const query = db()<CollectionEntryDraft>('collection_entry_drafts')
-    .select('id', 'entryId', 'createdAt', 'updatedAt', 'data');
+    .select('id', 'entryId', 'createdAt', 'updatedAt', 'data')
+    .where({
+      collectionId
+    });
 
   if (entry) {
-    query.where({
+    query.andWhere({
       entryId: entry
     });
   }
@@ -54,7 +57,7 @@ router.get('/', asyncRouteFix(async (req, res) => {
     pages: p.pages,
     data: drafts.map(({ data, ...draft }) => ({
       ...draft,
-      title: data.title
+      title: data[titleInput.fieldName]
     }))
   };
 
@@ -91,6 +94,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
   const payload: CollectionEntryDraft = {
     id: uuid(),
     entryId: existingEntry || null,
+    collectionId,
     createdAt: timestamp,
     updatedAt: timestamp,
     data
@@ -153,7 +157,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
   }
 
   const existingDraft = await db()<CollectionEntryDraft>('collection_entry_drafts')
-    .select('id', 'entryId', 'createdAt')
+    .select('id', 'entryId', 'collectionId', 'createdAt')
     .where({
       id
     })

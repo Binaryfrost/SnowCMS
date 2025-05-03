@@ -26,6 +26,7 @@ export interface CollectionEntryWithRenderedData<T = Record<string, any>> extend
 export interface CollectionEntryDraft {
   id: string
   entryId?: string
+  collectionId: string
   createdAt: number
   updatedAt: number
   data: Record<string, string>

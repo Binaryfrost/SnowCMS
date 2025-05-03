@@ -82,9 +82,11 @@ export default async function init(knex: Knex) {
       table.string('id').primary();
       table.integer('createdAt');
       table.integer('updatedAt');
+      table.string('collectionId');
       table.string('entryId').nullable();
       table.json('data');
 
+      table.foreign('collectionId').references('collections.id');
       table.foreign('entryId').references('collection_entries.id');
     })
   }
