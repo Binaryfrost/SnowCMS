@@ -1,7 +1,7 @@
 import ExpressError from '../../common/ExpressError';
 import { loadPlugins } from '../../common/plugins/plugins';
 import type { Collection } from '../../common/types/Collection';
-import type { CollectionEntryWithData } from '../../common/types/CollectionEntry';
+import type { CollectionEntryDraft, CollectionEntryWithData } from '../../common/types/CollectionEntry';
 import type { CollectionInput } from '../../common/types/CollectionInputs';
 import type { Media, MediaWithUrls } from '../../common/types/Media';
 import type { Website } from '../../common/types/Website';
@@ -62,7 +62,8 @@ type AllBeforeAfterHooks =
   BeforeAfterHook<'Website', { website: Website; }> &
   BeforeAfterHook<'Collection', { collection: Collection; }> &
   BeforeAfterHook<'CollectionInput', { collectionInput: CollectionInput; }> &
-  BeforeAfterHook<'CollectionEntry', { collectionEntry: CollectionEntryWithData; }>;
+  BeforeAfterHook<'CollectionEntry', { collectionEntry: CollectionEntryWithData; }> & 
+  BeforeAfterHook<'CollectionEntryDraft', { collectionEntryDraft: CollectionEntryDraft; }>;
 
 // TODO: Move doc comments to docs site
 export interface Hooks extends AllBeforeAfterHooks {

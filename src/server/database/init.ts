@@ -77,6 +77,18 @@ export default async function init(knex: Knex) {
     await knex.schema.raw('CREATE INDEX collection_entry_inputs_data_prefix ON collection_entry_inputs (data(10));');
   }
 
+  if (!await knex.schema.hasTable('collection_entry_drafts')) {
+    await knex.schema.createTable('collection_entry_drafts', (table) => {
+      table.string('id').primary();
+      table.integer('createdAt');
+      table.integer('updatedAt');
+      table.string('entryId').nullable();
+      table.json('data');
+
+      table.foreign('entryId').references('collection_entries.id');
+    })
+  }
+
   if (!await knex.schema.hasTable('media')) {
     console.log('Creating media table');
     await knex.schema.createTable('media', (table) => {

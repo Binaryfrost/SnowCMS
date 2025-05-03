@@ -3,7 +3,7 @@ import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import handleAccessControl from '../handleAccessControl';
 import { exists, getCollection, getCollectionInputs, getWebsite } from '../database/util';
-import { CollectionEntry, CollectionEntryInputs, CollectionEntryWithData, CollectionEntryWithTitle } from '../../common/types/CollectionEntry';
+import { CollectionEntry, CollectionEntryDraft, CollectionEntryInputs, CollectionEntryWithData, CollectionEntryWithTitle } from '../../common/types/CollectionEntry';
 import { CollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
 import { asyncRouteFix, paginate, pagination } from '../util';
@@ -401,6 +401,12 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
 
   await db().transaction(async (trx) => {
     await trx<CollectionEntryInputs>('collection_entry_inputs')
+      .where({
+        entryId: id
+      })
+      .delete();
+
+    await trx<CollectionEntryDraft>('collection_entry_drafts')
       .where({
         entryId: id
       })

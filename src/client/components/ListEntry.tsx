@@ -5,12 +5,13 @@ import ShortUuid from './ShortUuid';
 import IconButton from './IconButton';
 import type { Role } from '../../common/types/User';
 import DeleteButton from './DeleteButton';
+import { ReactNode } from 'react';
 
 interface Props {
   name: string
   id: string
   type: string
-  additional?: string
+  additional?: ReactNode
   buttons: {
     delete: {
       modal: {
@@ -37,7 +38,11 @@ export default function ListEntry(props: Props) {
         <Box>
           <Text fw="bold" fz="lg">{props.name}</Text>
           <Text c="dimmed">ID: <ShortUuid uuid={props.id} /></Text>
-          {props.additional && <Text c="dimmed">{props.additional}</Text>}
+          {props.additional && (
+            typeof props.additional === 'string' ? (
+              <Text c="dimmed">{props.additional}</Text>
+            ) : props.additional
+          )}
         </Box>
         <Group>
           <DeleteButton type={props.type} role={props.buttons.delete.role} id={props.id}

@@ -9,20 +9,25 @@ interface Props {
   tooltipLabel: string
   iconButtonProps?: Partial<IconButtonProps>
   link?: string
+  additionalButtons?: ReactNode
 }
 
 export default function HeaderWithAddButton({ titleProps, actionIconProps,
-  tooltipLabel, iconButtonProps, link }: Props) {
+  tooltipLabel, iconButtonProps, link, additionalButtons }: Props) {
   return (
     <Group gap="lg" mb="xs">
       <Title {...titleProps} />
-      <IconButton label={tooltipLabel} {...iconButtonProps}>
-        {link ? (
-          <ActionIcon<any> {...actionIconProps} component={NavLink} to={link} />
-        ) : (
-          <ActionIcon {...actionIconProps} />
-        )}
-      </IconButton>
+      <Group gap="xs">
+        <IconButton label={tooltipLabel} {...iconButtonProps}>
+          {link ? (
+            <ActionIcon<any> {...actionIconProps} component={NavLink} to={link} />
+          ) : (
+            <ActionIcon {...actionIconProps} />
+          )}
+        </IconButton>
+
+        {additionalButtons}
+      </Group>
     </Group>
   );
 }

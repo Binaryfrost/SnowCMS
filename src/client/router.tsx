@@ -48,6 +48,12 @@ export const router = createBrowserRouter([{
     path: '/websites/:websiteId/collections/:collectionId/entries/:entryId',
     lazy: () => import('./pages/collection-entries/EditCollectionEntry')
   }, {
+    path: '/websites/:websiteId/collections/:collectionId/drafts',
+    lazy: () => import('./pages/collection-entries/drafts/Drafts')
+  }, {
+    path: '/websites/:websiteId/collections/:collectionId/drafts/:draftId',
+    lazy: () => import('./pages/collection-entries/drafts/EditDraft')
+  }, {
     path: '/websites/:websiteId/media',
     lazy: () => import('./pages/media/Media')
   }, {

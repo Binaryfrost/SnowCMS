@@ -18,6 +18,7 @@ import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
 import collectionInputsRouter from './routes/collection-inputs';
 import collectionEntriesRouter from './routes/collection-entries';
+import collectionEntryDraftsRouter from './routes/collection-entry-drafts';
 import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
@@ -115,6 +116,7 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites/:websiteId/collections', collectionRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/inputs', collectionInputsRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
+  app.use('/api/websites/:websiteId/collections/:collectionId/drafts', collectionEntryDraftsRouter);
   app.use('/api/websites/:websiteId/media', mediaRouter);
   app.use('/api/accounts', accountRouter);
   app.use('/api/login', await loginRouter(config.sso));

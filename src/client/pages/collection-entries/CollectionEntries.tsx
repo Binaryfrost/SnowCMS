@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Group, Stack, Text } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
+import { Link, useParams } from 'react-router-dom';
+import { ActionIcon, Group, Stack, Text } from '@mantine/core';
+import { IconDeviceFloppy, IconPlus } from '@tabler/icons-react';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import Page from '../../components/Page';
 import DataGetter from '../../components/DataGetter';
@@ -13,6 +13,7 @@ import SearchInput from '../../components/SearchInput';
 import { Collection } from '../../../common/types/Collection';
 import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
 import Pagination from '../../components/Pagination';
+import IconButton from '../../components/IconButton';
 
 export function Component() {
   const { websiteId, collectionId } = useParams();
@@ -37,7 +38,14 @@ export function Component() {
               }}
               iconButtonProps={{
                 role: 'USER'
-              }} />
+              }} additionalButtons={(
+                <IconButton label="Drafts">
+                  <ActionIcon component={Link}
+                    to={`/websites/${websiteId}/collections/${collectionId}/drafts`}>
+                    <IconDeviceFloppy />
+                  </ActionIcon>
+                </IconButton>
+              )} />
             <SearchInput setSearch={setSearch} />
           </Group>
 
