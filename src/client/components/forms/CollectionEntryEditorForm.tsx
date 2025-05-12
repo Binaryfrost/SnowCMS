@@ -125,7 +125,7 @@ export default function CollectionEntryEditorForm({ entryId, draftId, inputs, da
       } else if (!entryId && !draftId) {
         resp = await post(entriesApiRoot, formData);
       } else {
-        resp = await put(`${entriesApiRoot}/${entryId}`, formData);
+        resp = await patch(`${entriesApiRoot}/${entryId}`, formData);
       }
     }
 
