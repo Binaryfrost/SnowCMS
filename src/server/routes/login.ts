@@ -36,6 +36,16 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
     await redis().del(`session:${token}`);
   }
 
+  async function createSsoToken(sessionToken: string) {
+    const ssoToken = randomBytes(32).toString('base64url');
+    await redis().set(`sso:${ssoToken}`, sessionToken, { EX: 120 });
+    return ssoToken;
+  }
+
+  async function getSsoSessionToken(ssoToken: string) {
+    return await redis().getDel(`sso:${ssoToken}`);
+  }
+
   router.post('/', asyncRouteFix(async (req, res) => {
     if (sso?.forceSso) {
       throw new ExpressError('Local accounts are disabled');
@@ -218,7 +228,22 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
       token = await createSession(id, true);
     }
 
-    res.redirect(`/login#${token}`);
+    const ssoToken = await createSsoToken(token);
+
+    res.redirect(`/login#${ssoToken}`);
+  }));
+
+  router.post('/sso/token', asyncRouteFix(async (req, res) => {
+    const { ssoToken } = req.body;
+
+    const token = await getSsoSessionToken(ssoToken);
+    if (!token) {
+      throw new ExpressError('SSO token invalid or expired, please try logging in again', 401);
+    }
+
+    res.json({
+      token
+    });
   }));
 
   return router;

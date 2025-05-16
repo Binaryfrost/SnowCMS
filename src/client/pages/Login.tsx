@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActionFunctionArgs, Form, useActionData, useNavigate } from 'react-router-dom';
-import { Anchor, Box, Button, Divider, Flex, Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Anchor, Box, Button, Divider, Flex, Group, Loader, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { UseFormReturnType, useForm } from '@mantine/form';
 import { nprogress } from '@mantine/nprogress';
 import { ModalsProvider, openModal } from '@mantine/modals';
@@ -12,6 +12,7 @@ import FormSkeleton from '../components/FormSkeleton';
 import { formDataToObject, onSubmit } from '../util/form';
 import { HttpResponse, post } from '../util/api';
 import DarkModeToggle from '../components/DarkModeToggle';
+import Hidden from '../components/Hidden';
 
 interface LoginFormProps {
   config: LoginConfig
@@ -99,7 +100,7 @@ export function Component() {
     onValuesChange: () => setError(null)
   });
 
-  const token = location.hash.replace(/^#/, '');
+  const ssoToken = location.hash.replace(/^#/, '');
 
   function redirectAfterLogin() {
     const url = localStorage.getItem('redirect') || '/';
@@ -110,9 +111,16 @@ export function Component() {
   useEffect(() => {
     nprogress.complete();
 
-    if (token) {
-      localStorage.setItem('token', token);
-      redirectAfterLogin();
+    if (ssoToken) {
+      post('/api/login/sso/token', { ssoToken }, { noRedirectOn401: true }).then((resp) => {
+        if (resp.status !== 200) {
+          setError(resp.body.error || 'An error occurred');
+          return;
+        }
+
+        localStorage.setItem('token', resp.body.token);
+        redirectAfterLogin();
+      });
     } else if (localStorage.getItem('token')) {
       redirectAfterLogin();
     }
@@ -146,9 +154,23 @@ export function Component() {
                 <Logo noLink mx="auto" />
                 <Title ta="center">Login</Title>
 
-                {error && <Text c="red">{error}</Text>}
+                {error && (
+                  <Stack>
+                    <Text ta="center" c="red">{error}</Text>
+                    {ssoToken && (
+                      <Button component="a" href="/login">Retry</Button>
+                    )}
+                  </Stack>
+                )}
 
-                {!token && (
+                {ssoToken ? (
+                  <Hidden hidden={error}>
+                    <Group justify="center">
+                      <Loader />
+                      <Text size="lg">Logging you in...</Text>
+                    </Group>
+                  </Hidden>
+                ) : (
                   <DataGetter<LoginConfig> url="/api/login/config"
                     skeletonComponent={<FormSkeleton inputs={2} />}>
                     {(config) => (
