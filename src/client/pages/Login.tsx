@@ -126,7 +126,7 @@ export function Component() {
         setError(actionData.body.error || 'An error occurred');
       } else {
         localStorage.setItem('token', actionData.body.token);
-        navigate('/');
+        redirectAfterLogin();
       }
     }
   }, [actionData]);
