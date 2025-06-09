@@ -190,9 +190,15 @@ export async function start(config: NormalizedConfig) {
   // Express expects error handling middleware to have 4 arguments
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err, req, res, next) => {
-    res.status(err.status || 500).json({
+    const errorResp: Record<string, any> = {
       error: err.message || err.name
-    });
+    };
+
+    if (!__SNOWCMS_IS_PRODUCTION__ && err.stack) {
+      errorResp.stack = err.stack;
+    }
+
+    res.status(err.status || 500).json(errorResp);
   });
 
   app.listen(config.port, () => {
