@@ -1,11 +1,14 @@
-export interface CollectionInput {
-  id: string
-  collectionId:string
+export interface CollectionInputSettings {
   name: string
-  description: string
   fieldName: string
+  description: string
+  inputConfig: Record<string, any>
+}
+
+export interface CollectionInput extends CollectionInputSettings {
+  id: string
+  collectionId: string
   input: string
-  inputConfig: string
 }
 
 // The order is only needed server-side for sorting purposes

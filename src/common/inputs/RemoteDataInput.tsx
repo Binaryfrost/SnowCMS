@@ -1,8 +1,7 @@
-import { forwardRef, useImperativeHandle } from 'react';
 import { Box, Checkbox, Code, List, Text, TextInput } from '@mantine/core';
-import { useField, useForm } from '@mantine/form';
 import type { Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface RemoteDataSettings {
   url: string
@@ -16,46 +15,33 @@ const input: Input<string, RemoteDataSettings> = {
   serialize: (data) => data,
   deserialize: (data) => data,
 
-  renderInput: () => forwardRef((props, ref) => {
-    const field = useField({
-      initialValue: props.value || '',
-      validate: (value) => {
-        const { url, required } = props.settings;
-        if (required && !url && !value) return 'URL is required';
+  renderInput: ({
+    name, description, value, settings, onChange, registerValidator, unregisterValidator
+  }) => {
+    const { url, required } = settings;
+    const error = useInputValidator(
+      (v) => {
+        if (required && !url && !v) return 'URL is required';
         return null;
-      }
-    });
-    useImperativeHandle(ref, () => ({
-      getValues: () => field.getValue(),
-      hasError: async () => {
-        if (props.settings.url) return false;
-        return !!(await field.validate());
-      }
-    }));
+      },
+      registerValidator,
+      unregisterValidator
+    );
 
     return (
-      <TextInput label={props.name}
-        description={[props.description, props.settings?.url &&
-          `Leave blank to use default (${props.settings.url})`].filter(Boolean).join('. ')}
-        required={props.settings?.required} {...field.getInputProps()} key={field.key} />
+      <TextInput label={name}
+        description={[description, url &&
+          `Leave blank to use default (${url})`].filter(Boolean).join('. ')}
+        required={required} error={error} value={value}
+        onChange={(e) => onChange(e.target.value)} />
     );
-  }),
+  },
 
-  serializeSettings: JSON.stringify,
-  deserializeSettings: JSON.parse,
-
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        url: props.settings?.url || '',
-        required: props.settings?.required ?? false
-      }
-    });
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues()
-    }));
+  renderSettings: ({ settings, onChange }) => {
+    const [merged, setSetting] = useSettingsHandler({
+      url: settings?.url || '',
+      required: settings?.required ?? false
+    }, settings, onChange);
 
     return (
       <>
@@ -71,12 +57,12 @@ const input: Input<string, RemoteDataSettings> = {
         </Box>
         <TextInput label="URL" description={'URL to request when rendering this Input. ' +
           'If not set, a field will be shown in the Collection Entry form'}
-          {...form.getInputProps('url')} key={form.key('url')} />
-        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
-          key={form.key('required')} />
+          value={merged.url} onChange={(e) => setSetting('url', e.target.value)} />
+        <Checkbox label="Required" checked={merged.required}
+          onChange={(e) => setSetting('required', e.target.checked)} />
       </>
     );
-  }),
+  },
 
   validate: (stringifiedValue, deserialize, settings) => {
     if (settings.required && !stringifiedValue) {
@@ -84,12 +70,10 @@ const input: Input<string, RemoteDataSettings> = {
     }
   },
 
-  validateSettings: (serializedSettings, deserialize) => {
-    if (!serializedSettings) {
+  validateSettings: (settings) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     if (settings.url && typeof settings.url !== 'string') {
       throw new ExpressError('URL, if it exists, must be a string');

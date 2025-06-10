@@ -1,8 +1,7 @@
-import { forwardRef, useEffect, useImperativeHandle } from 'react';
 import { Checkbox, NumberInput, Stack, TextInput } from '@mantine/core';
-import { useField, useForm } from '@mantine/form';
 import { type Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface TextInputSettings {
   maxLength: number
@@ -16,68 +15,56 @@ const input: Input<string, TextInputSettings> = {
   serialize: (data) => data,
   deserialize: (data) => data,
 
-  renderInput: () => forwardRef((props, ref) => {
-    const { maxLength, required } = props.settings;
-    const field = useField({
-      mode: 'uncontrolled',
-      initialValue: props.value || '',
-      validateOnChange: true,
-      validate: (value) => {
-        if (required && !value) return `${props.name} is required`;
-        if (maxLength && maxLength !== 0 && value.length > maxLength) {
-          return `${props.name} has a maximum length of ${maxLength}`;
-        }
-        return null;
-      },
-      onValueChange: props.notifyChanges
-    });
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => field.getValue(),
-      hasError: async () => !!(await field.validate())
-    }));
+  renderInput: ({
+    name, description, settings, value, onChange, registerValidator, unregisterValidator
+  }) => {
+    const { maxLength, required } = settings;
+    const error = useInputValidator((v) => {
+      if (required && !v) return `${name} is required`;
+      if (maxLength && maxLength !== 0 && v.length > maxLength) {
+        return `${name} has a maximum length of ${maxLength}`;
+      }
+      return null;
+    }, registerValidator, unregisterValidator);
 
     return (
-      <TextInput label={props.name} description={props.description} required={required}
-        maxLength={maxLength > 1 ? maxLength : null} {...field.getInputProps()} />
+      <TextInput
+        label={name}
+        description={description}
+        required={required}
+        maxLength={maxLength > 1 ? maxLength : null}
+        error={error}
+        value={value}
+        onChange={(v) => onChange(v.target.value)} />
     );
-  }),
+  },
 
-  serializeSettings: (data) => JSON.stringify(data),
-  deserializeSettings: (data) => JSON.parse(data),
-
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        maxLength: props.settings?.maxLength || 0,
-        required: props.settings?.required ?? true
-      },
-      validateInputOnChange: true,
-      validate: (values) => ({
-        maxLength: values.maxLength < 0 ? 'Max length must be positive' : null
+  renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
+    const errors = useInputValidator<TextInputSettings>(
+      (v) => ({
+        maxLength: v.maxLength < 0 ? 'Max length must be positive' : null
       }),
-    });
+      registerValidator,
+      unregisterValidator
+    );
 
-    useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues(),
-      hasError: () => form.validate().hasErrors
-    }));
-
-    useEffect(() => {
-      form.validate();
-    }, []);
+    const [merged, changeSetting] = useSettingsHandler({
+      maxLength: settings?.maxLength || 0,
+      required: settings?.required ?? true
+    }, settings, onChange);
 
     return (
       <Stack>
         <NumberInput label="Max Length" allowDecimal={false}
           description="Set to 0 to disable length limit" required
-          {...form.getInputProps('maxLength')} key={form.key('maxLength')} />
-        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
-          key={form.key('required')} />
+          error={errors?.maxLength} value={merged.maxLength}
+          onChange={(v: number) => changeSetting('maxLength', v)} />
+        <Checkbox label="Required" error={errors?.required}
+          checked={merged.required}
+          onChange={(v) => changeSetting('required', v.target.checked)} />
       </Stack>
     );
-  }),
+  },
 
   validate: (stringifiedValue, deserialize, settings) => {
     if (settings.required && !stringifiedValue) {
@@ -91,12 +78,10 @@ const input: Input<string, TextInputSettings> = {
     }
   },
 
-  validateSettings: (serializedSettings, deserialize) => {
-    if (!serializedSettings) {
+  validateSettings: (settings) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     if (typeof settings.maxLength !== 'number') {
       throw new ExpressError('Max Length must be a number');

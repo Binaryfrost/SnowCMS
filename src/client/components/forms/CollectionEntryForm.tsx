@@ -1,15 +1,12 @@
 import { Link, useParams } from 'react-router-dom';
 import DataGetter from '../DataGetter';
 import { CollectionInput } from '../../../common/types/CollectionInputs';
-import { type Input, type InputRef } from '../../../common/InputRegistry';
 import FormSkeleton from '../FormSkeleton';
 import { CollectionEntryDraftSummary, CollectionEntryDraftWithData, CollectionEntryWithData } from '../../../common/types/CollectionEntry';
 import CollectionEntryEditorForm from './CollectionEntryEditorForm';
 import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
 import { Alert } from '@mantine/core';
 import { formatDate } from '../../util/data';
-
-type InputsRef = InputRef<any> & Pick<Input<any>, 'serialize'>;
 
 interface Props {
   entryId?: string

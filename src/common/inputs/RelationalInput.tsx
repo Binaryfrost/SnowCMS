@@ -1,7 +1,5 @@
-import { forwardRef, useImperativeHandle } from 'react';
 import { useParams } from 'react-router-dom';
 import { Checkbox, Select, Text } from '@mantine/core';
-import { useField, useForm } from '@mantine/form';
 import type { Input } from '../InputRegistry';
 import type { Collection } from '../types/Collection';
 import type { CollectionEntryWithTitle } from '../types/CollectionEntry';
@@ -10,6 +8,7 @@ import { shortenUuid } from '../../client/components/ShortUuid';
 import FormSkeleton from '../../client/components/FormSkeleton';
 import ExpressError from '../ExpressError';
 import { serverGetAllPagesFetch, serverInputFetch } from '../plugins/plugins';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
 /*
  * Setting field to select other collection. In Collection Entry, allow selecting specific entry
@@ -29,55 +28,48 @@ const input: Input<string, RelationalInputSettings> = {
   deserialize: (data) => data,
   serialize: (data) => data,
 
-  renderInput: () => forwardRef((props, ref) => {
+  renderInput: ({
+    name, description, value, settings, onChange, registerValidator, unregisterValidator
+  }) => {
     const { websiteId } = useParams();
-    const field = useField({
-      mode: 'uncontrolled',
-      initialValue: props.value || '',
-      validate: (value) => (props.settings.required && !value ? `${props.name} is required` : null),
-      validateOnChange: true
-    });
+    const error = useInputValidator(
+      (v) => (settings.required && !v ? `${name} is required` : null),
+      registerValidator,
+      unregisterValidator
+    );
 
-    useImperativeHandle(ref, () => ({
-      getValues: () => field.getValue(),
-      hasError: async () => !!(await field.validate())
-    }));
-
-    return props.settings.collectionId ? (
+    return settings.collectionId ? (
       <DataGetter.AllPages<CollectionEntryWithTitle>
         skeletonComponent={<FormSkeleton inputs={1} withButton={false} />}
-        url={`/api/websites/${websiteId}/collections/${props.settings.collectionId}/entries`}>
+        url={`/api/websites/${websiteId}/collections/${settings.collectionId}/entries`}>
         {(entries) => (
-          <Select label={props.name} description={props.description}
+          <Select label={name} description={description}
             data={entries.map((e) => ({
               value: e.id,
               label: `${e.title || 'Untitled Entry'} (${shortenUuid(e.id)})`
-            }))} required={props.settings?.required} {...field.getInputProps()} key={field.key} />
+            }))} required={settings.required} error={error}
+              value={value} onChange={onChange} />
         )}
       </DataGetter.AllPages>
     ) : (
       <Text c="red">No Collection selected</Text>
     );
-  }),
+  },
 
-  renderSettings: () => forwardRef((props, ref) => {
+  renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
     const { websiteId, collectionId } = useParams();
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        collectionId: props.settings?.collectionId || '',
-        required: props.settings?.required ?? false
-      },
-      validate: {
-        collectionId: (value) => (!value ? 'Collection is required' : null)
-      },
-      validateInputOnChange: true
-    });
+    const errors = useInputValidator(
+      (v) => ({
+        collectionId: (!v.collectionId ? 'Collection is required' : null)
+      }),
+      registerValidator,
+      unregisterValidator
+    );
 
-    useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues(),
-      hasError: () => form.validate().hasErrors
-    }));
+    const [merged, setSetting] = useSettingsHandler({
+      collectionId: settings?.collectionId || '',
+      required: settings?.required ?? false
+    }, settings, onChange);
 
     return (
       <DataGetter.AllPages<Collection> url={`/api/websites/${websiteId}/collections`}
@@ -90,17 +82,16 @@ const input: Input<string, RelationalInputSettings> = {
                 value: c.id,
                 label: `${c.name} (${shortenUuid(c.id)})`
               }))} searchable nothingFoundMessage="No collection found with that name"
-              {...form.getInputProps('collectionId')} key={form.key('collectionId')} />
-            <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
-              key={form.key('required')} />
+                error={errors?.collectionId} value={merged.collectionId}
+                onChange={(v) => setSetting('collectionId', v)} />
+
+            <Checkbox label="Required" checked={merged.required}
+              onChange={(e) => setSetting('required', e.target.checked)} />
           </>
         )}
       </DataGetter.AllPages>
     );
-  }),
-
-  deserializeSettings: (data) => JSON.parse(data),
-  serializeSettings: (data) => JSON.stringify(data),
+  },
 
   validate: async (stringifiedValue, deserialize, settings, req) => {
     if (settings.required && !stringifiedValue) {
@@ -120,12 +111,10 @@ const input: Input<string, RelationalInputSettings> = {
     }
   },
 
-  validateSettings: async (serializedSettings, deserialize, req) => {
-    if (!serializedSettings) {
+  validateSettings: async (settings, req) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     if (!settings.collectionId) {
       throw new ExpressError('Collection ID is required');

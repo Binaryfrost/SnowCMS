@@ -1,8 +1,9 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Button, Checkbox, Group, Input as MantineInput, Paper, Stack, TagsInput, Text } from '@mantine/core';
+import {
+  Box, Button, Checkbox, Group, Input as MantineInput, Paper, Stack, TagsInput, Text
+} from '@mantine/core';
 import { modals } from '@mantine/modals';
-import { useForm } from '@mantine/form';
 import { IconPhoto, IconPhotoOff } from '@tabler/icons-react';
 import { type Input } from '../InputRegistry';
 import type { MediaWithUrls } from '../types/Media';
@@ -12,6 +13,7 @@ import { get } from '../../client/util/api';
 import { mimeTypeMatch } from '../util';
 import ExpressError from '../ExpressError';
 import { serverInputFetch } from '../plugins/plugins';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface MediaInputSettings {
   mimeTypes: string[]
@@ -27,29 +29,28 @@ const input: Input<string, MediaInputSettings> = {
   serialize: (data) => data,
   deserialize: (data) => data,
 
-  renderInput: () => forwardRef((props, ref) => {
+  renderInput: ({
+    name, description, value, settings, onChange, registerValidator, unregisterValidator
+  }) => {
     const { websiteId } = useParams();
-    const [selectedImageId, setSelectedImageId] = useState(props.value);
     const [media, setMedia] = useState<MediaWithUrls>(null);
-    const [error, setError] = useState(null);
+    const [mediaError, setMediaError] = useState(null);
 
-    useImperativeHandle(ref, () => ({
-      getValues: () => selectedImageId || '',
-      hasError: () => {
-        const hasError = props.settings?.required && !selectedImageId;
-        if (hasError) {
-          setError(`${props.name} is required`);
+    const error = useInputValidator(
+      (v) => {
+        if (settings.required && !v) {
+          return `${name} is required`;
         }
-
-        return hasError;
-      }
-    }));
+      },
+      registerValidator,
+      unregisterValidator
+    );
 
     useEffect(() => {
-      if (selectedImageId) {
-        get<MediaWithUrls>(`/api/websites/${websiteId}/media/${props.value}`).then((resp) => {
+      if (value) {
+        get<MediaWithUrls>(`/api/websites/${websiteId}/media/${value}`).then((resp) => {
           if (resp.status !== 200) {
-            setError(resp.body.error || 'An error occurred');
+            setMediaError(resp.body.error || 'An error occurred');
             return;
           }
 
@@ -58,18 +59,20 @@ const input: Input<string, MediaInputSettings> = {
       }
     }, []);
 
+    const err = error || mediaError;
+
     return (
       <Box>
-        <MantineInput.Label required={props.settings?.required}>{props.name}</MantineInput.Label>
-        {props.description && (
-          <MantineInput.Description>{props.description}</MantineInput.Description>
+        <MantineInput.Label required={settings.required}>{name}</MantineInput.Label>
+        {description && (
+          <MantineInput.Description>{description}</MantineInput.Description>
         )}
         <Paper bg="var(--mantine-color-default)" withBorder px="sm" py="xs">
-          {selectedImageId && !media && !error ? (
+          {value && !media && !err ? (
             <FilePreview.Skeleton skeletonNum={1} />
           ) : (
             <>
-              {error && <Text c="red">{error}</Text>}
+              {err && <Text c="red">{err}</Text>}
               {media && (
                 <Paper w="fit-content" withBorder mb="sm">
                   <Stack gap={0}>
@@ -83,11 +86,11 @@ const input: Input<string, MediaInputSettings> = {
               <Group>
                 <Button leftSection={<IconPhoto />} onClick={() => showSelectMediaModal({
                   websiteId,
-                  mimeTypes: props.settings.mimeTypes,
+                  mimeTypes: settings.mimeTypes,
                   select: (file) => {
-                    setError(null);
+                    setMediaError(null);
                     setMedia(file);
-                    setSelectedImageId(file.id);
+                    onChange(file.id);
                     modals.close(SELECT_MEDIA_MODAL_ID);
                   }
                 })}>
@@ -96,7 +99,7 @@ const input: Input<string, MediaInputSettings> = {
                 {media && (
                   <Button leftSection={<IconPhotoOff />} onClick={() => {
                     setMedia(null);
-                    setSelectedImageId(null);
+                    onChange(null);
                   }} color="orange">
                     Remove Selected Image
                   </Button>
@@ -107,40 +110,36 @@ const input: Input<string, MediaInputSettings> = {
         </Paper>
       </Box>
     );
-  }),
+  },
 
-  serializeSettings: (data) => JSON.stringify(data),
-  deserializeSettings: (data) => JSON.parse(data),
+  renderSettings: ({
+    settings, onChange, registerValidator, unregisterValidator
+  }) => {
+    const [merged, setSetting] = useSettingsHandler({
+      mimeTypes: settings?.mimeTypes || [],
+      required: settings?.required ?? true
+    }, settings, onChange);
 
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        mimeTypes: props.settings?.mimeTypes || [],
-        required: props.settings?.required ?? true
-      },
-      validate: {
-        mimeTypes: (values) => (!values.every((v) => v.match(MIME_REGEX)) ?
-          'One or more mime types are invalid' : null)
-      },
-      validateInputOnChange: true
-    });
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues(),
-      hasError: () => form.validate().hasErrors
-    }));
+    const errors = useInputValidator(
+      (v) => ({
+        mimeTypes: !v.mimeTypes.every((v) => v.match(MIME_REGEX)) ?
+          'One or more mime types are invalid' : null
+      }),
+      registerValidator,
+      unregisterValidator
+    );
 
     return (
       <Stack>
         <TagsInput label="Mime Types" data={['image/*', 'image/png', 'image/jpeg']}
-          description="Limit file selections by mime type" {...form.getInputProps('mimeTypes')}
-          key={form.key('mimeTypes')} splitChars={[',', ' ']} />
-        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
-          key={form.key('required')} />
+          description="Limit file selections by mime type" splitChars={[',', ' ']}
+          value={merged.mimeTypes} onChange={(v) => setSetting('mimeTypes', v)}
+          error={errors?.mimeTypes} />
+        <Checkbox label="Required" checked={merged.required}
+          onChange={(e) => setSetting('required', e.target.checked)} />
       </Stack>
     );
-  }),
+  },
 
   validate: async (stringifiedValue, deserialize, settings, req) => {
     if (settings.required && !stringifiedValue) {
@@ -165,12 +164,10 @@ const input: Input<string, MediaInputSettings> = {
     }
   },
 
-  validateSettings: (serializedSettings, deserialize) => {
-    if (!serializedSettings) {
+  validateSettings: (settings) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     if (settings.mimeTypes && !Array.isArray(settings.mimeTypes)) {
       throw new ExpressError('Mime Types must be an array');

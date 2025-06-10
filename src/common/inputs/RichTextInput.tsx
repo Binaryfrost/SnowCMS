@@ -1,10 +1,8 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Checkbox, Input as MantineInput, NumberInput, Stack, Text } from '@mantine/core';
-import { useForm } from '@mantine/form';
 import { RichTextEditor, Link } from '@mantine/tiptap';
 import { modals } from '@mantine/modals';
-import { Editor, JSONContent, mergeAttributes, useEditor } from '@tiptap/react';
+import { JSONContent, mergeAttributes, useEditor } from '@tiptap/react';
 import Highlight from '@tiptap/extension-highlight';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -40,6 +38,7 @@ import { showVideoModal } from './RichTextInput/VideoModal';
 import ExpressError from '../ExpressError';
 import { showAlertModal } from './RichTextInput/AlertModal';
 import Alert, { AlertProps } from './RichTextInput/Alert';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface RichTextInputSettings {
   maxLength: number
@@ -95,55 +94,40 @@ const input: Input<JSONContent, RichTextInputSettings> = {
   serialize: (data) => JSON.stringify(data),
   deserialize: (data) => JSON.parse(data),
 
-  renderInput: () => forwardRef((props, ref) => {
+  renderInput: ({
+    name, description, value, settings, onChange, registerValidator, unregisterValidator
+  }) => {
     const { websiteId } = useParams();
-    const [error, setError] = useState(null);
-
-    function validate(e: Editor) {
-      const { length } = e.getText();
-
-      if (props.settings.required && length === 0) {
-        return `${props.name} is required`;
-      }
-
-      if (props.settings.maxLength > 0 && length > props.settings.maxLength) {
-        return `Max length is ${props.settings.maxLength}`;
-      }
-
-      return null;
-    }
-
-    function inputValidation(e: Editor) {
-      const validateError = validate(e);
-
-      if (validateError) {
-        setError(validateError);
-        return validateError;
-      }
-
-      if (error) {
-        setError(null);
-      }
-
-      return null;
-    }
 
     const editor = useEditor({
       extensions,
-      content: props.value || '',
-      onUpdate: (update) => inputValidation(update.editor)
+      content: value || '',
+      onUpdate: (update) => onChange(update.editor.getJSON())
     });
 
-    useImperativeHandle(ref, () => ({
-      getValues: () => editor.getJSON(),
-      hasError: () => !!inputValidation(editor)
-    }));
+    const error = useInputValidator(
+      (v) => {
+        const { length } = editor.getText();
+
+        if (settings.required && length === 0) {
+          return `${name} is required`;
+        }
+  
+        if (settings.maxLength > 0 && length > settings.maxLength) {
+          return `Max length is ${settings.maxLength}`;
+        }
+  
+        return null;
+      },
+      registerValidator,
+      unregisterValidator
+    );
 
     return (
       <Box>
-        <MantineInput.Label required={props.settings.required}>{props.name}</MantineInput.Label>
-        {props.description && (
-          <MantineInput.Description>{props.description}</MantineInput.Description>
+        <MantineInput.Label required={settings.required}>{name}</MantineInput.Label>
+        {description && (
+          <MantineInput.Description>{description}</MantineInput.Description>
         )}
 
         <RichTextEditor editor={editor} bd={error && '1px solid var(--mantine-color-error)'}>
@@ -189,7 +173,6 @@ const input: Input<JSONContent, RichTextInputSettings> = {
               <RichTextEditor.Superscript />
               <RichTextEditor.Control onClick={() => {
                 const alertAttrs = editor.getAttributes('alert');
-                console.log(alertAttrs);
 
                 showAlertModal({
                   current: alertAttrs as AlertProps,
@@ -401,43 +384,32 @@ const input: Input<JSONContent, RichTextInputSettings> = {
         {error && <MantineInput.Error>{error}</MantineInput.Error>}
       </Box>
     );
-  }),
+  },
 
-  serializeSettings: (data) => JSON.stringify(data),
-  deserializeSettings: (data) => JSON.parse(data),
+  renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
+    const [merged, setSetting] = useSettingsHandler({
+      maxLength: settings?.maxLength || 0,
+      required: settings?.required ?? true
+    }, settings, onChange);
 
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        maxLength: props.settings?.maxLength || 0,
-        required: props.settings?.required ?? true
-      },
-      validateInputOnChange: true,
-      validate: (values) => ({
-        maxLength: values.maxLength < 0 ? 'Max length must be positive' : null
+    const errors = useInputValidator(
+      (v) => ({
+        maxLength: v.maxLength < 0 ? 'Max length must be positive' : null
       }),
-    });
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues(),
-      hasError: () => form.validate().hasErrors
-    }));
-
-    useEffect(() => {
-      form.validate();
-    }, []);
+      registerValidator,
+      unregisterValidator
+    );
 
     return (
       <Stack>
         <NumberInput label="Max Length" allowDecimal={false}
-          description="Set to 0 to disable length limit" required
-          {...form.getInputProps('maxLength')} key={form.key('maxLength')} />
-        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
-          key={form.key('required')} />
+          description="Set to 0 to disable length limit" required error={errors?.maxLength}
+          value={merged.maxLength} onChange={(v: number) => setSetting('maxLength', v)} />
+        <Checkbox label="Required" checked={merged.required}
+          onChange={(e) => setSetting('required', e.target.checked)} />
       </Stack>
     );
-  }),
+  },
 
   /*
    * It would be great to check the max length here, but it doesn't look
@@ -457,12 +429,10 @@ const input: Input<JSONContent, RichTextInputSettings> = {
     }
   },
 
-  validateSettings: (serializedSettings, deserialize) => {
-    if (!serializedSettings) {
+  validateSettings: (settings) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     if (typeof settings.maxLength !== 'number') {
       throw new ExpressError('Max Length must be a number');

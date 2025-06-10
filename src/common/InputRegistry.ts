@@ -1,35 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { type Request } from 'express';
-import type { ForwardRefExoticComponent, RefAttributes, FunctionComponent } from 'react';
+import type { FunctionComponent } from 'react';
 import type { Website } from './types/Website';
 import type { Collection } from './types/Collection';
 
-export interface InputRef<T> {
-  // It's possible for the Input to not return a value (e.g. notices/alerts)
-  /**
-   * Return the value of this Input
-   */
-  getValues?: () => T
-  /**
-   * Returns whether there are any errors in this Input.
-   * This only prevents the Collection Entry form from
-   * being submitted, it does not show the error message.
-   * You are required to write code to render the error.
-   */
-  hasError?: () => boolean | Promise<boolean>
-
-  /**
-   * Called when other Inputs are updated. Keep in mind that
-   * not all Inputs notify other Inputs of changes.
-   */
-  notifyFormUpdate?: (values: Record<string, any>) => void
-}
+export type ValidatorFunction<T> = (value: T) => boolean
 
 export interface InputProps<T, S> {
   /**
    * The Input's value
    */
   value: T
+  /**
+   * The values of all Inputs, keyed by their field name
+   */
+  values: Record<string, any>
   /**
    * The Input's settings
    */
@@ -46,11 +31,17 @@ export interface InputProps<T, S> {
    * The description set in the Collection settings
    */
   description?: string
-  /**
-   * Called to notify other Inputs of changes to this one
-   */
-  notifyChanges: () => void
+
+  onChange: (value: T) => void
+  registerValidator: (fn: ValidatorFunction<T>) => void
+  unregisterValidator: () => void
 }
+
+export type ValidateFunctionErrorObject<T> = { [x in keyof Partial<T>]: string | null }
+export type ValidateFunction<T, R> = (value: T) => R
+export type SetErrorFunction<R> = (error: R) => void
+export type RegisterValidatorFunction<T> = InputProps<T, any>['registerValidator']
+export type UnregisterValidatorFunction = InputProps<any, any>['unregisterValidator']
 
 type RenderHtmlType<T> = string | T | Object;
 
@@ -86,14 +77,11 @@ interface BaseInput<T, S> {
   deserialize: (data: string) => T
 
   /**
-   * Called client-side to render input in CMS; remember to call useImperativeHandle
-   * with InputRef object if the Input has a value
+   * Called client-side to render input in CMS.
    *
    * The Collection Input name and description will be passed as props.
    */
-  renderInput: () =>
-    ForwardRefExoticComponent<InputProps<T, S> & RefAttributes<InputRef<T>>> |
-    FunctionComponent<InputProps<T, S>> | undefined
+  renderInput: FunctionComponent<InputProps<T, S>>
 
   /**
    * Called client-side to determine whether to show in input library
@@ -122,39 +110,27 @@ interface BaseInput<T, S> {
 
 interface SettingsProps<S> {
   settings?: S
+  onChange: (value: S) => void
+  registerValidator: (fn: (value: S) => boolean) => void
+  unregisterValidator: () => void
 }
 
 interface InputWithSettings<T, S> extends BaseInput<T, S> {
   /**
    * Called client-side to render settings in Collection settings
    */
-  renderSettings: () =>
-    ForwardRefExoticComponent<SettingsProps<S> & RefAttributes<InputRef<S>>>
-
-  /**
-   * Serializes settings to a string
-   */
-  serializeSettings: (data: S) => string
-
-  /**
-   * Deserializes settings from a string
-   */
-  deserializeSettings: (data: string) => S
+  renderSettings: FunctionComponent<SettingsProps<S>>
 
   /**
    * Called server-side to ensure that the input value is valid.
    * You should throw an error if it is invalid.
    */
-  validateSettings?: (serializedSettings: string,
-    deserialize: InputWithSettings<T, S>['deserializeSettings'],
-    req: Request) => void | Promise<void>
+  validateSettings?: (settings: S | null, req: Request) => void | Promise<void>
 }
 
-// This ensures that if one of these is defined, the other one has to be as well
+// This ensures that if one of these are defined, the other one has to be as well
 interface InputWithoutSettings<T, S> extends BaseInput<T, S> {
   renderSettings?: never
-  serializeSettings?: never
-  deserializeSettings?: never
   validateSettings?: never
 }
 

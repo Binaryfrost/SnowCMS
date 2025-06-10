@@ -13,13 +13,12 @@ import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router({ mergeParams: true });
 
-async function renderInput(input: string, data: string, settings: string, req: Request) {
+async function renderInput(input: string, data: string, settings: Record<string, any>, req: Request) {
   const registryInput = InputRegistry.getInput(input);
   if (registryInput) {
     return registryInput.renderHtml(
       registryInput.deserialize(data),
-      settings && 'deserializeSettings' in registryInput ?
-        registryInput.deserializeSettings(settings) : null,
+      settings || {},
       req
     );
   }
@@ -28,12 +27,12 @@ async function renderInput(input: string, data: string, settings: string, req: R
 }
 
 async function checkInputValueValidity(input: string, data: string,
-  settings: string, req: Request) {
+  settings: Record<string, any>, req: Request) {
   const registryInput = InputRegistry.getInput(input);
   return registryInput?.validate?.(
     data,
     registryInput.deserialize,
-    settings ? registryInput.deserializeSettings?.(settings) : null,
+    settings || {},
     req
   );
 }

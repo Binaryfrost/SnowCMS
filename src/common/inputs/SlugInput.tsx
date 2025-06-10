@@ -1,6 +1,7 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { ActionIcon, Checkbox, Code, Input as MantineInput, NumberInput, Stack, TextInput } from '@mantine/core';
-import { useField, useForm } from '@mantine/form';
+import { useRef } from 'react';
+import {
+  ActionIcon, Checkbox, Code, Input as MantineInput, NumberInput, Stack, TextInput
+} from '@mantine/core';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
@@ -8,6 +9,8 @@ import { serverInputFetch } from '../plugins/plugins';
 import { CollectionInput } from '../types/CollectionInputs';
 import { IconRefresh } from '@tabler/icons-react';
 import IconButton from '../../client/components/IconButton';
+import { useInputValidator, useSettingsHandler } from './hooks';
+import { useLocation } from 'react-router-dom';
 
 interface SlugInputSettings {
   fieldName: string
@@ -55,103 +58,88 @@ const input: Input<string, SlugInputSettings> = {
   serialize: (data) => data,
   deserialize: (data) => data,
 
-  renderInput: () => forwardRef((props, ref) => {
-    const { maxLength, required, fieldName } = props.settings;
-    const field = useField({
-      mode: 'uncontrolled',
-      initialValue: props.value || '',
-      validateOnChange: true,
-      validate: (value) => {
-        if (required && !value) return `${props.name} is required`;
+  renderInput: ({
+    name, description, value, values, settings, onChange, registerValidator, unregisterValidator
+  }) => {
+    const { maxLength, required, fieldName } = settings;
+    const error = useInputValidator(
+      (v) => {
+        if (required && !v) return `${name} is required`;
         if (maxLength && maxLength !== 0 && value.length > maxLength) {
-          return `${props.name} has a maximum length of ${maxLength}`;
+          return `${name} has a maximum length of ${maxLength}`;
         }
 
         if (value.match(/\s/)) {
-          return `${props.name} may not include spaces. It is recommended to use hyphens instead.`;
+          return `${name} may not include spaces. It is recommended to use hyphens instead.`;
         }
 
         return null;
       },
-      onValueChange: props.notifyChanges
-    });
+      registerValidator,
+      unregisterValidator
+    );
 
-    const dependentFieldValue = useRef('');
-    const beforeValue = useRef(populatePlaceholders(props.settings?.before));
+    const previousValue = useRef('');
+    const prependedValue = useRef(populatePlaceholders(settings.before));
+    const isNewEntry = useLocation().pathname.endsWith('/create');
 
     function updateSlug() {
-      if (!dependentFieldValue.current) return;
-      field.setValue(beforeValue.current + slug(dependentFieldValue.current, {
+      const dependentFieldValue = values[settings.fieldName];
+      if (!dependentFieldValue) return;
+
+      const slugValue = prependedValue.current + slug(dependentFieldValue, {
         fallback: false
-      }));
+      });
+
+      if (previousValue.current === slugValue) return;
+      onChange(slugValue);
+      previousValue.current = slugValue;
     }
 
-    useImperativeHandle(ref, () => ({
-      getValues: () => field.getValue(),
-      hasError: async () => !!(await field.validate()),
-      notifyFormUpdate: (values) => {
-        if (!(fieldName in values)) return;
-
-        const value = values[fieldName];
-        if (dependentFieldValue.current === value) return;
-        dependentFieldValue.current = value;
-
-        if (props.value) return;
-        updateSlug();
-      }
-    }));
+    if (isNewEntry) updateSlug();
 
     return (
-      <TextInput label={props.name} description={props.description} required={required}
-        maxLength={maxLength > 1 ? maxLength : null} rightSection={props.value && (
+      <TextInput label={name} description={description} required={required}
+        maxLength={maxLength > 1 ? maxLength : null} rightSection={!isNewEntry && (
           <IconButton label="Update Slug" role="USER">
             <ActionIcon onClick={updateSlug}>
               <IconRefresh />
             </ActionIcon>
           </IconButton>
-        )}
-        {...field.getInputProps()} key={field.key} />
+        )} error={error}
+        value={value} onChange={(e) => onChange(e.target.value)} />
     );
-  }),
+  },
 
-  serializeSettings: (data) => JSON.stringify(data),
-  deserializeSettings: (data) => JSON.parse(data),
+  renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
+    const [merged, setSetting] = useSettingsHandler({
+      fieldName: settings?.fieldName || '',
+      maxLength: settings?.maxLength || 0,
+      required: settings?.required ?? true,
+      before: settings?.before || ''
+    }, settings, onChange);
 
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        fieldName: props.settings?.fieldName || '',
-        maxLength: props.settings?.maxLength || 0,
-        required: props.settings?.required ?? true,
-        before: props.settings?.before || ''
-      },
-      validateInputOnChange: true,
-      validate: (values) => ({
-        fieldName: !values.fieldName ? 'Field name is required' : null,
-        maxLength: values.maxLength < 0 ? 'Max length must be positive' : null
+    const errors = useInputValidator(
+      (v) => ({
+        fieldName: !v.fieldName ? 'Field name is required' : null,
+        maxLength: v.maxLength < 0 ? 'Max length must be positive' : null
       }),
-    });
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues(),
-      hasError: () => form.validate().hasErrors
-    }));
-
-    useEffect(() => {
-      form.validate();
-    }, []);
+      registerValidator,
+      unregisterValidator
+    );
 
     return (
       <Stack>
         <TextInput label="Field Name"
           description="The field name of the input the slug will be generated from" required
-          {...form.getInputProps('fieldName')} key={form.key('fieldName')} />
+          error={errors?.fieldName} value={merged.fieldName}
+          onChange={(e) => setSetting('fieldName', e.target.value)} />
         <NumberInput label="Max Length" allowDecimal={false}
           description="Set to 0 to disable length limit" required
-          {...form.getInputProps('maxLength')} key={form.key('maxLength')} />
-        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
-          key={form.key('required')} />
+          error={errors?.maxLength} value={merged.maxLength}
+          onChange={(v: number) => setSetting('maxLength', v)} />
+        <Checkbox label="Required" checked={merged.required}
+        onChange={(e) => setSetting('required', e.target.checked)} />
         <TextInput label="Before"
           description={(
             <MantineInput.Label>
@@ -164,10 +152,10 @@ const input: Input<string, SlugInputSettings> = {
               (all returned in UTC).
             </MantineInput.Label>
           )}
-          {...form.getInputProps('before')} key={form.key('before')} />
+          value={merged.before} onChange={(e) => setSetting('before', e.target.value)} />
       </Stack>
     );
-  }),
+  },
 
   validate: (serializedValue, deserialize, settings) => {
     if (settings.required && !serializedValue) {
@@ -181,12 +169,10 @@ const input: Input<string, SlugInputSettings> = {
     }
   },
 
-  validateSettings: async (serializedSettings, deserialize, req) => {
-    if (!serializedSettings) {
+  validateSettings: async (settings, req) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     if (!settings.fieldName) {
       throw new ExpressError('Field Name is required');

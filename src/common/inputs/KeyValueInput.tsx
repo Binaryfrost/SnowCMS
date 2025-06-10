@@ -1,19 +1,14 @@
-import { forwardRef, memo, useCallback, useImperativeHandle, useState } from 'react';
-import { useForm } from '@mantine/form';
+import { memo, useEffect } from 'react';
 import { Checkbox, NumberInput, NumberInputProps, TextInput } from '@mantine/core';
-import { useListState } from '@mantine/hooks';
-import { v4 as uuid } from 'uuid';
 import { Input } from '../InputRegistry';
 import FlexGrow from '../../client/components/FlexGrow';
-import InputArray, { InputArrayBaseValue, UpdateInputArrayWithoutHandler, updateInputArray } from './common/InputArray';
+import InputArray from './common/InputArray';
 import ExpressError from '../ExpressError';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
-type Value = Record<string, string>
-
-interface TempValue extends InputArrayBaseValue {
-  key: string
-  value: string
-}
+// TODO: Write migration to remove legacy value
+type LegacyValue = Record<string, string>
+type Value = [string, string][]
 
 interface KeyValueInputSettings {
   maxInputs?: number
@@ -22,116 +17,113 @@ interface KeyValueInputSettings {
   required?: boolean
 }
 
-const input: Input<Value, KeyValueInputSettings> = {
+function convertToArray(v: LegacyValue | Value): Value {
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  return Object.entries(v);
+}
+
+function LengthInput({ ...p }: NumberInputProps) {
+  const lengthLimitDescription = 'Set to 0 to disable length limit';
+  return <NumberInput description={lengthLimitDescription} required
+    allowNegative={false} allowDecimal={false} {...p} />
+}
+
+const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
   id: 'key-value',
   name: 'Key Value',
 
   deserialize: JSON.parse,
   serialize: JSON.stringify,
 
-  renderInput: () => forwardRef((props, ref) => {
-    const convertToTempInput = (value: Value) => {
-      if (!props.value) return [];
-      return Object.entries(value).map(([k, v]) => ({
-        key: k,
-        value: v,
-        id: uuid()
-      }));
+  renderInput: ({
+    name, description, value, settings, onChange, registerValidator, unregisterValidator
+  }) => {
+    const internalState = convertToArray(value);
+
+    const error = useInputValidator(
+      (v) => {
+        const is = convertToArray(v);
+
+        if (settings.required && is.length === 0) {
+          return `${input.name} is required`;
+        }
+
+        if (is.some(([key, value]) => !key || !value)) {
+          return 'Some inputs have an empty key or value';
+        }
+      },
+      registerValidator,
+      unregisterValidator
+    );
+
+    function updateInputValue() {
+      onChange(internalState);
+    }
+
+    const KEY_VALUE_POSITIONS = {
+      'key': 0,
+      'value': 1
     };
 
-    const [inputs, handlers] = useListState<TempValue>(convertToTempInput(props.value));
-    const [error, setError] = useState(null);
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => inputs.reduce((a, c) => ({
-        ...a,
-        [c.key]: c.value
-      }), {}),
-      hasError: () => {
-        setError(null);
-
-        if (props.settings?.required && inputs.length === 0) {
-          setError(`${input.name} is required`);
-          return true;
-        }
-
-        if (inputs.some((e) => !e.key || !e.value)) {
-          setError('Some inputs have an empty key or value');
-          return true;
-        }
-
-        return false;
-      }
-    }));
-
-    const update = useCallback((...params: UpdateInputArrayWithoutHandler) => {
-      updateInputArray(handlers, ...params);
-    }, []);
+    function update(index: number, input: keyof typeof KEY_VALUE_POSITIONS, value: string) {
+      if (index > internalState.length - 1) return;
+      internalState[index][KEY_VALUE_POSITIONS[input]] = value;
+      updateInputValue();
+    }
 
     return (
-      <InputArray name={props.name} description={props.description} error={error}
-        required={props.settings?.required} inputs={inputs} handlers={handlers}
-        maxInputs={props.settings?.maxInputs} addInput={() => handlers.append({
-          id: uuid(),
-          key: '',
-          value: ''
-        })}>
-        {(i) => (
+      <InputArray name={name} description={description} error={error}
+        required={settings.required} inputs={internalState} maxInputs={settings.maxInputs}
+        addInput={() => {
+          internalState.push(['', '']);
+          updateInputValue();
+        }} removeInput={(index) => {
+          internalState.splice(index, 1);
+          updateInputValue();
+        }}>
+        {([key, value], index) => (
           <>
             <FlexGrow>
-              <TextInput label="Key" value={i.key}
-                maxLength={props.settings?.maxKeyLength || undefined}
-                onChange={(e) => update(i.id, 'key', e.target.value)} />
+              <TextInput label="Key" value={key}
+                maxLength={settings.maxKeyLength || undefined}
+                onChange={(e) => update(index, 'key', e.target.value)} />
             </FlexGrow>
 
             <FlexGrow>
-              <TextInput label="Value" value={i.value}
-                maxLength={props.settings?.maxValueLength || undefined}
-                onChange={(e) => update(i.id, 'value', e.target.value)} />
+              <TextInput label="Value" value={value}
+                maxLength={settings.maxValueLength || undefined}
+                onChange={(e) => update(index, 'value', e.target.value)} />
             </FlexGrow>
           </>
         )}
       </InputArray>
     );
-  }),
+  },
 
-  deserializeSettings: JSON.parse,
-  serializeSettings: JSON.stringify,
-
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        maxInputs: props.settings?.maxInputs || 0,
-        maxKeyLength: props.settings?.maxKeyLength || 0,
-        maxValueLength: props.settings?.maxValueLength || 0,
-        required: props.settings?.required ?? false
-      }
-    });
-
-    useImperativeHandle(ref, () => ({
-      getValues: form.getValues
-    }));
-
-    const lengthLimitDescription = 'Set to 0 to disable length limit';
-    const LengthInput = memo(({ ...p }: NumberInputProps) => (
-      <NumberInput description={lengthLimitDescription} required
-        allowNegative={false} allowDecimal={false} {...p} />
-    ));
+  renderSettings: ({
+    settings, onChange
+  }) => {
+    const [merged, setSetting] = useSettingsHandler({
+      maxInputs: settings?.maxInputs || 0,
+      maxKeyLength: settings?.maxKeyLength || 0,
+      maxValueLength: settings?.maxValueLength || 0,
+      required: settings?.required ?? false
+    }, settings, onChange);
 
     return (
       <>
-        <LengthInput label="Max Inputs" {...form.getInputProps('maxInputs')}
-          key={form.key('maxInputs')} />
-        <LengthInput label="Max Key Length" {...form.getInputProps('maxKeyLength')}
-          key={form.key('maxKeyLength')} />
-        <LengthInput label="Max Value Length" {...form.getInputProps('maxValueLength')}
-          key={form.key('maxValueLength')} />
-        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })}
-          key={form.key('required')} />
+        <LengthInput label="Max Inputs" value={merged.maxInputs}
+          onChange={(v: number) => setSetting('maxInputs', v)} />
+        <LengthInput label="Max Key Length" value={merged.maxKeyLength}
+          onChange={(v: number) => setSetting('maxKeyLength', v)} />
+        <LengthInput label="Max Value Length" value={merged.maxValueLength}
+          onChange={(v: number) => setSetting('maxValueLength', v)} />
+        <Checkbox label="Required" checked={merged.required}
+          onChange={(e) => setSetting('required', e.target.checked)} />
       </>
     );
-  }),
+  },
 
   validate: (stringifiedValue, deserialize, settings) => {
     if (!stringifiedValue) {
@@ -143,7 +135,7 @@ const input: Input<Value, KeyValueInputSettings> = {
       throw new Error('Key Value Input must be an object');
     }
 
-    const kvEntries = Object.entries(value);
+    const kvEntries = convertToArray(value);
 
     if (settings.required && kvEntries.length === 0) {
       throw new Error('Required Key Value Input does not have a value');
@@ -163,12 +155,10 @@ const input: Input<Value, KeyValueInputSettings> = {
     }
   },
 
-  validateSettings: (serializedSettings, deserialize) => {
-    if (!serializedSettings) {
+  validateSettings: (settings) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     const fieldsToValidate = ['maxInputs', 'maxKeyLength', 'maxValueLength'];
     fieldsToValidate.forEach((field) => {
@@ -186,7 +176,14 @@ const input: Input<Value, KeyValueInputSettings> = {
     }
   },
 
-  renderHtml: (value) => value
+  renderHtml: (value) => {
+    const v = convertToArray(value);
+
+    return v.reduce((a, [k, v]) => ({
+      ...a,
+      [k]: v
+    }), {});
+  }
 };
 
 export default input;

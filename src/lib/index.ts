@@ -2,3 +2,4 @@ export { defineConfig, defineInputPluginConfig, defineInputPlugin } from '../con
 export { type Plugin, serverInputFetch } from '../common/plugins/plugins';
 export { type Input } from '../common/InputRegistry';
 export { default as ExpressError } from '../common/ExpressError';
+export { useInputValidator, useSettingsHandler } from '../common/inputs/hooks';

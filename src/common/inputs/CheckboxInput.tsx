@@ -1,4 +1,3 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
 import { Checkbox } from '@mantine/core';
 import { Input } from '../InputRegistry';
 
@@ -9,18 +8,12 @@ const input: Input<boolean> = {
   deserialize: (data) => data === 'true',
   serialize: (data) => data.toString(),
 
-  renderInput: () => forwardRef((props, ref) => {
-    const [checked, setChecked] = useState(props.value || false);
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => checked
-    }));
-
+  renderInput: ({ name, description, value, onChange }) => {
     return (
-      <Checkbox label={props.name} description={props.description} checked={checked}
-        onChange={(e) => setChecked(e.currentTarget.checked)} />
+      <Checkbox label={name} description={description} checked={value}
+        onChange={(e) => onChange(e.currentTarget.checked)} />
     );
-  }),
+  },
 
   renderHtml: (value) => value
 };

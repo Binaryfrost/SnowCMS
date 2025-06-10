@@ -1,8 +1,7 @@
-import { forwardRef, useEffect, useImperativeHandle } from 'react';
 import { Alert, Stack, TextInput } from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { type InputProps, type Input } from '../InputRegistry';
+import { type Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface AlertInputSettings {
   color: string
@@ -17,61 +16,51 @@ const input: Input<null, AlertInputSettings> = {
   serialize: () => '',
   deserialize: () => null,
 
-  renderInput: () => function Component(props: InputProps<null, AlertInputSettings>) {
-    const { content, ...settings } = props.settings;
+  renderInput: ({ settings }) => {
+    const { content, ...props } = settings;
 
     return (
-      <Alert {...settings}>
+      <Alert {...props}>
         {content}
       </Alert>
     );
   },
 
-  serializeSettings: (data) => JSON.stringify(data),
-  deserializeSettings: (data) => JSON.parse(data),
+  renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
+    const errors = useInputValidator<AlertInputSettings>(
+      (v) => ({
+        color: !v.color ? 'Color is required' : null,
+        content: !v.content ? 'Content is required' : null
+      }),
+      registerValidator,
+      unregisterValidator
+    );
 
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      mode: 'uncontrolled',
-      initialValues: {
-        color: props.settings?.color || '',
-        title: props.settings?.title || '',
-        content: props.settings?.content || ''
-      },
-      validateInputOnChange: true,
-      validate: (values) => ({
-        color: !values.color ? 'Color is required' : null,
-        content: !values.content ? 'Content is required' : null
-      })
-    });
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => form.getValues(),
-      hasError: () => form.validate().hasErrors
-    }));
-
-    useEffect(() => {
-      form.validate();
-    }, []);
+    const [merged, changeSetting] = useSettingsHandler({
+      color: settings?.color || '',
+      title: settings?.title || '',
+      content: settings?.content || ''
+    }, settings, onChange);
 
     return (
       <Stack>
-        <TextInput label="Color" required {...form.getInputProps('color')}
-          key={form.key('color')} />
-        <TextInput label="Title" {...form.getInputProps('title')}
-          key={form.key('title')} />
-        <TextInput label="Content" required {...form.getInputProps('content')}
-          key={form.key('content')} />
+        <TextInput label="Color" required value={merged.color}
+          onChange={(v) => changeSetting('color', v.target.value)}
+          error={errors?.color} />
+        <TextInput label="Title" value={merged.title}
+          onChange={(v) => changeSetting('title', v.target.value)}
+          error={errors?.title} />
+        <TextInput label="Content" required value={merged.content}
+          onChange={(v) => changeSetting('content', v.target.value)}
+          error={errors?.content} />
       </Stack>
     );
-  }),
+  },
 
-  validateSettings: (serializedSettings, deserialize) => {
-    if (!serializedSettings) {
+  validateSettings: (settings) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     const fieldsToValidate = ['color', 'title', 'content'];
     const optionalFields = ['title'];

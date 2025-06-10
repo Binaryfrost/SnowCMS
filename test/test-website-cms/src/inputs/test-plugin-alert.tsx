@@ -14,7 +14,7 @@ export default defineInputPlugin({
       serialize: () => '',
       deserialize: () => null,
 
-      renderInput: () => function Component() {
+      renderInput: () => {
         return (
           <Alert>Test Plugin Alert</Alert>
         );

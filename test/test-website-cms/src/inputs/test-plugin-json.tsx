@@ -15,18 +15,14 @@ export default defineInputPlugin<string>({
       serialize: (data) => data,
       deserialize: (data) => data,
 
-      renderInput: () => forwardRef((props, ref) => {
-        const valueRef = useRef<string>(props.value || '');
-
-        useImperativeHandle(ref, () => ({
-          getValues: () => valueRef.current
-        }));
-
+      renderInput: ({
+        name, description, value, onChange
+      }) => {
         return (
-          <JsonInput label={props.name} description={props.description}
-            defaultValue={props.value} onChange={(e) => valueRef.current = e} />
+          <JsonInput label={name} description={description}
+            value={value} onChange={(e) => onChange(e)} />
         );
-      }),
+      },
 
       isAllowed: (website, collection) => (
         (

@@ -25,7 +25,7 @@ router.get('/', asyncRouteFix(async (req, res) => {
   res.json(await getCollectionInputs(collectionId));
 }));
 
-async function checkIfInputAllowed(input: string, inputConfig: string, req: Request) {
+async function checkIfInputAllowed(input: string, inputConfig: Record<string, any>, req: Request) {
   const { websiteId, collectionId } = req.params;
 
   const registryInput = InputRegistry.getInput(input);
@@ -40,9 +40,7 @@ async function checkIfInputAllowed(input: string, inputConfig: string, req: Requ
     throw new ExpressError('Website or collection does not have permission to use Input', 403);
   }
 
-  if ('deserializeSettings' in registryInput) {
-    await registryInput.validateSettings?.(inputConfig, registryInput.deserializeSettings, req);
-  }
+  await registryInput.validateSettings?.(inputConfig, req);
 }
 
 router.post('/', asyncRouteFix(async (req, res) => {
@@ -93,6 +91,8 @@ router.post('/', asyncRouteFix(async (req, res) => {
   await db<DatabaseCollectionInput>()
     .insert({
       ...collectionInput,
+      // @ts-ignore Knex doesn't handle inserting JSON objects into JSON fields fields well
+      inputConfig: JSON.stringify(collectionInput.inputConfig),
       order: lastRecordOrder + 1
     })
     .into('collection_inputs');
@@ -145,7 +145,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
       description,
       fieldName,
       input,
-      inputConfig
+      inputConfig: JSON.stringify(inputConfig)
     })
     .where({
       id

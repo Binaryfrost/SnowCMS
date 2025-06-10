@@ -1,9 +1,10 @@
-import { useRef } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 import { Button, Group, Stack, TextInput } from '@mantine/core';
-import { useForm } from '@mantine/form';
 import { type UseListStateHandlers } from '@mantine/hooks';
-import InputRegistry, { type InputRef } from '../../../common/InputRegistry';
-import type { CollectionInput } from '../../../common/types/CollectionInputs';
+import InputRegistry, {
+  ValidateFunctionErrorObject, ValidatorFunction
+} from '../../../common/InputRegistry';
+import type { CollectionInput, CollectionInputSettings } from '../../../common/types/CollectionInputs';
 
 interface Props {
   collectionInput: CollectionInput
@@ -13,61 +14,80 @@ interface Props {
 
 export default function CollectionInputSettingsForm({ collectionInput, close, update }: Props) {
   const settingsInput = InputRegistry.getInput(collectionInput.input);
-  const settingsRef = useRef<InputRef<any>>(null);
-  const InputSettings = settingsInput.renderSettings ? settingsInput.renderSettings() : null;
-
-  const form = useForm({
-    mode: 'uncontrolled',
-    initialValues: {
-      name: collectionInput.name || '',
-      fieldName: collectionInput.fieldName || '',
-      description: collectionInput.description || '',
-      settings: collectionInput.inputConfig || ''
-    },
-    validateInputOnChange: true,
-    validate: (values) => ({
-      name: !values.name ? 'Name is required' : null,
-      fieldName: !values.fieldName ? 'Field name is required' : null
-    })
+  const [errors, setErrors] = useState<ValidateFunctionErrorObject<CollectionInput>>({});
+  const [settings, setSettings] = useState<CollectionInputSettings>({
+    name: collectionInput.name || '',
+    fieldName: collectionInput.fieldName || '',
+    description: collectionInput.description || '',
+    inputConfig: collectionInput.inputConfig || {}
   });
+  const validator = useRef<ValidatorFunction<any>>();
+
+  const InputSettings = settingsInput.renderSettings;
+
+  function validate() {
+    const errors: ValidateFunctionErrorObject<CollectionInputSettings> = {
+      name: !settings.name ? 'Name is required' : null,
+      fieldName: !settings.fieldName ? 'Field name is required' : null
+    }
+    return errors;
+  }
 
   async function save() {
-    let settingsHasError = false;
-    if (InputSettings && settingsRef.current) {
-      const getSettingsFn = settingsRef.current.getValues;
-      const hasErrorFn = settingsRef.current.hasError;
+    const errors = validate();
+    setErrors(errors);
+    const commonSettingsHasError = Object.values(errors).some(Boolean);
 
-      if (getSettingsFn) {
-        form.setFieldValue('settings', settingsInput.serializeSettings(getSettingsFn()));
-      }
-
-      settingsHasError = hasErrorFn ? await hasErrorFn() : false;
+    let inputSettingsHasError = false;
+    if (settings.inputConfig) {
+      inputSettingsHasError = validator.current?.(settings.inputConfig);
     }
 
-    if (!form.validate().hasErrors && !settingsHasError) {
-      const formValues = form.getValues();
-      update((input) => ({
-        ...input,
-        name: formValues.name,
-        fieldName: formValues.fieldName,
-        description: formValues.description,
-        inputConfig: formValues.settings
-      }));
-    }
+    if (commonSettingsHasError || inputSettingsHasError) return;
+
+    const { name, fieldName, description, inputConfig } = settings;
+    
+    update((input) => ({
+      ...input,
+      name,
+      fieldName,
+      description,
+      inputConfig
+    }));
+  }
+  
+  function onChange(setting: keyof CollectionInputSettings, value: any) {
+    setSettings((settings) => ({
+      ...settings,
+      [setting]: value
+    }));
+  }
+
+  function onChangeInput(setting: keyof CollectionInputSettings, e: ChangeEvent<HTMLInputElement>) {
+    onChange(setting, e.target.value)
+  }
+
+  function onChangeConfig(value: Record<string, any>) {
+    onChange('inputConfig', value || {});
   }
 
   return (
     <>
       <Stack gap="sm">
-        <TextInput label="Name" required {...form.getInputProps('name')} key={form.key('name')} />
-        <TextInput label="Field Name" required description="Used as the key in the API response"
-          {...form.getInputProps('fieldName')} key={form.key('fieldName')} />
-        <TextInput label="Description" {...form.getInputProps('description')}
-          key={form.key('description')} />
+        <TextInput label="Name" required error={errors.name}
+          value={settings.name} onChange={(e) => onChangeInput('name', e)} />
+        <TextInput label="Field Name" required error={errors.fieldName}
+          description="Used as the key in the API response"
+          value={settings.fieldName} onChange={(e) => onChangeInput('fieldName', e)} />
+        <TextInput label="Description" error={errors.description}
+          value={settings.description} onChange={(e) => onChangeInput('description', e)} />
         {InputSettings && (
-          <InputSettings settings={form.getValues().settings ?
-            settingsInput.deserializeSettings(form.getValues().settings) : null}
-            ref={settingsRef} />
+          <InputSettings
+            settings={settings.inputConfig || {}}
+            onChange={onChangeConfig}
+            registerValidator={(fn) => validator.current = fn}
+            unregisterValidator={() => validator.current = null}
+          />
         )}
       </Stack>
 

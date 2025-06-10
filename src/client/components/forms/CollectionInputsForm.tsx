@@ -59,11 +59,6 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
         return;
       }
 
-      inputsHandlers.applyWhere(
-        (item) => item.id === id,
-        cb
-      );
-
       if (isTemporaryInput(id)) {
         const resp = await post(apiRoot, cbData);
         handleFormResponseNotification(resp);
@@ -71,8 +66,8 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
         if (resp.status === 200) {
           inputsHandlers.applyWhere(
             (item) => item.id === id,
-            (item) => ({
-              ...item,
+            (item, index) => ({
+              ...cb(item, index),
               id: resp.body.id,
             })
           );
@@ -85,6 +80,11 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
 
         if (resp.status === 200) {
           closeSettingsModal();
+
+          inputsHandlers.applyWhere(
+            (item) => item.id === id,
+            cb
+          );
         }
       }
 
@@ -129,7 +129,7 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
               description: '',
               fieldName: '',
               input: input.id,
-              inputConfig: ''
+              inputConfig: {}
             });
 
             modals.close(ADD_INPUT_MODAL_ID);

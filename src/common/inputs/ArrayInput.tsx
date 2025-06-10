@@ -1,22 +1,17 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Checkbox, NumberInput, Select, Text } from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { useListState } from '@mantine/hooks';
-import { v4 as uuid } from 'uuid';
-import InputRegistry, { InputRef, type Input } from '../InputRegistry';
-import InputArray, { InputArrayBaseValue, UpdateInputArrayWithoutHandler, updateInputArray } from './common/InputArray';
+import { v7 as uuid } from 'uuid';
+import InputRegistry, { RegisterValidatorFunction, ValidatorFunction, type Input } from '../InputRegistry';
+import InputArray from './common/InputArray';
 import FlexGrow from '../../client/components/FlexGrow';
 import ExpressError from '../ExpressError';
+import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface ArrayInputSettings {
   input: string
   maxInputs: number,
   required: boolean
-  inputConfig: any
-}
-
-interface TempValue extends InputArrayBaseValue {
-  value: any
+  inputConfig: Record<string, any>
 }
 
 function getInput(id: string) {
@@ -26,160 +21,148 @@ function getInput(id: string) {
 
 const INPUT_ID = 'array';
 
-const input: Input<any[], ArrayInputSettings> = {
+type Value = [string, any][]
+
+const input: Input<Value, ArrayInputSettings> = {
   id: INPUT_ID,
   name: 'Array of Inputs',
 
-  serialize: JSON.stringify,
-  deserialize: JSON.parse,
+  serialize: (value) => JSON.stringify(value ? value.map(([, v]) => v) : []),
+  deserialize: (value) => {
+    if (!value) return [];
+    const parsed: any[] = JSON.parse(value);
+    return parsed.map((v) => [uuid(), v]);
+  },
 
-  renderInput: () => forwardRef((props, ref) => {
-    const selectedInput = getInput(props.settings?.input);
-    const RenderedInput = selectedInput ? selectedInput.renderInput() : null;
-    const inputConfig = selectedInput && props.settings?.inputConfig ?
-      selectedInput.deserializeSettings(props.settings?.inputConfig) : null;
+  renderInput: ({
+    name,
+    fieldName,
+    description,
+    value,
+    values,
+    settings,
+    onChange,
+    registerValidator,
+    unregisterValidator
+  }) => {
+    const validators = useRef<RegisterValidatorFunction<any>[]>([]);
 
-    const convertToTempInput = (value: any[]) => {
-      if (!value) return [];
-      return value.map((v) => ({
-        id: uuid(),
-        value: selectedInput ? selectedInput.deserialize(v) : null
-      }));
-    };
+    const error = useInputValidator(
+      (v) => {
+        const childrenHaveErrors = validators.current
+          .map((fn, i) => fn(v[i][1]))
+          .some(Boolean);
 
-    const [inputs, handlers] = useListState<TempValue>(convertToTempInput(props.value));
-    const inputsRef = useRef<{ id: string, ref: InputRef<any>}[]>([]);
-    const [error, setError] = useState(null);
+        if (childrenHaveErrors) return 'One or more inputs have errors';
 
-    useImperativeHandle(ref, () => ({
-      getValues: () => inputsRef.current.map((i) => {
-        const { getValues } = i.ref;
-        return getValues ? selectedInput.serialize(getValues()) : null;
-      }),
-      hasError: () => {
-        const inputError = inputsRef.current.some((i) => {
-          const { hasError } = i.ref;
-          return hasError ? hasError() : null;
-        });
+        return settings.required &&
+          (!v || v.length === 0) ? `${name} is required` : null;
+      },
+      registerValidator,
+      unregisterValidator
+    );
 
-        if (inputError) return true;
+    const selectedInput = getInput(settings.input);
+    const RenderedInput = selectedInput?.renderInput;
+    const inputConfig = selectedInput ? settings.inputConfig : {};
+    const internalValue: Value = selectedInput ? (value || [])
+        .map(([id, value]) => [id, selectedInput.deserialize(value)]) : [];
 
-        if (props.settings?.required && inputs.length === 0) {
-          setError(`${props.name} is required`);
-          return true;
-        }
+    function updateValue() {
+      onChange(
+        internalValue
+        .map(([id, value]) => [id, selectedInput.serialize(value)])
+      );
+    }
 
-        return false;
-      }
-    }));
-
-    const update = useCallback((...params: UpdateInputArrayWithoutHandler) => {
-      updateInputArray(handlers, ...params);
-    }, []);
-
-    const syncState = useCallback(() => {
-      inputsRef.current.forEach((i) => {
-        /*
-         * This function is called after an input is added or removed, so it's possible for the
-         * ref array to be slightly outdated when this code runs.
-         */
-        if (i.ref) {
-          const { getValues } = i.ref;
-          if (getValues) {
-            update(i.id, 'value', getValues());
-          }
-        }
-      });
-    }, []);
-
-    return selectedInput && typeof RenderedInput === 'object' && (
-      <InputArray name={props.name} description={props.description} error={error}
-        required={props.settings?.required} inputs={inputs} handlers={handlers}
-        maxInputs={props.settings?.maxInputs} addInput={() => {
-          syncState();
-          handlers.append({
-            id: uuid(),
-            value: null
-          });
-        }} inputRemoved={(_, index) => {
-          syncState();
-          // Run on next tick so the state has time to update first
-          setTimeout(() => {
-            inputsRef.current.splice(index, 1);
-          });
+    return RenderedInput && (
+      <InputArray name={name} description={description} error={error}
+        required={settings.required} inputs={internalValue || []}
+        maxInputs={settings.maxInputs} addInput={() => {
+          internalValue.push([uuid(), null]);
+          updateValue();
+        }} removeInput={(index) => {
+          validators.current.splice(index, 1);
+          internalValue.splice(index, 1);
+          updateValue();
         }}>
         {(i, index) => (
           <FlexGrow>
-            <RenderedInput name={`${props.name} (${index + 1} of ${inputs.length})`} value={i.value}
-              settings={inputConfig} notifyChanges={props.notifyChanges}
-              fieldName={null} ref={(r: InputRef<any>) => inputsRef.current[index] = {
-                id: i.id,
-                ref: r
-              }} />
+            <RenderedInput key={i[0]}
+              name={`${name} (${index + 1} of ${internalValue.length})`}
+              value={i[1]}
+              values={values}
+              settings={inputConfig}
+              fieldName={fieldName}
+              onChange={(v) => {
+                internalValue[index][1] = v;
+                updateValue();
+              }}
+              registerValidator={(fn) => validators.current[index] = fn}
+              unregisterValidator={() => validators.current.splice(index, 1)}
+               />
           </FlexGrow>
         )}
       </InputArray>
     );
-  }),
+  },
 
-  serializeSettings: JSON.stringify,
-  deserializeSettings: JSON.parse,
+  renderSettings: ({
+    settings, onChange, registerValidator, unregisterValidator
+  }) => {
+    const validator = useRef<ValidatorFunction<any>>(null);
 
-  renderSettings: () => forwardRef((props, ref) => {
-    const form = useForm({
-      // This intentionally uses controlled mode to ensure that the InputSettings component updates
-      mode: 'controlled',
-      initialValues: {
-        input: props.settings?.input || '',
-        maxInputs: props.settings?.maxInputs || 0,
-        required: props.settings?.required ?? false
-      },
-      validate: {
-        input: (value) => (!value ? 'Input is required' : null)
-      },
-      validateInputOnChange: true,
-    });
-    const settingsRef = useRef<InputRef<any>>(null);
+    const [merged, setSetting] = useSettingsHandler({
+      input: settings?.input || '',
+      maxInputs: settings?.maxInputs || 0,
+      required: settings?.required ?? false,
+      inputConfig: {}
+    }, settings, onChange);
+
+    const errors = useInputValidator(
+      (v) => ({
+        input: !v.input ? 'Input is required' : null,
+        inputConfig: validator.current?.(v.inputConfig) ?
+          'Input settings has an error' : null
+      }),
+      registerValidator,
+      unregisterValidator
+    );
+
     const inputs = InputRegistry.getAllInputs();
-    const selectedInput = inputs[form.getValues().input];
-    const InputSettings = selectedInput && selectedInput.renderSettings ?
-      selectedInput.renderSettings() : null;
-
-    useImperativeHandle(ref, () => ({
-      getValues: () => ({
-        ...form.getValues(),
-        inputConfig: settingsRef.current?.getValues ?
-          selectedInput.serializeSettings(settingsRef.current.getValues()) : null
-      })
-    }));
+    const selectedInput = inputs[settings.input];
+    const InputSettings = selectedInput?.renderSettings;
 
     return (
       <>
         <Select label="Input" required searchable nothingFoundMessage="No Input found"
           data={Object.values(inputs)
             .filter((i) => i.id !== INPUT_ID)
-            // Only allow Inputs that return a ref (accept a value)
-            .filter((i) => typeof i.renderInput() === 'object')
             .map((i) => ({
               label: `${i.name} (${i.id})`,
               value: i.id
-            }))} {...form.getInputProps('input')} />
+            }))} error={errors?.input} value={merged.input}
+            onChange={(v) => setSetting('input', v)} />
 
         <NumberInput label="Max Inputs" required description="Set to 0 to disable limit"
-          {...form.getInputProps('maxInputs')} allowDecimal={false} allowNegative={false} />
-        <Checkbox label="Required" {...form.getInputProps('required', { type: 'checkbox' })} />
+          allowDecimal={false} allowNegative={false} value={merged.maxInputs}
+          onChange={(v: number) => setSetting('maxInputs', v)} />
+
+        <Checkbox label="Required" checked={merged.required}
+          onChange={(e) => setSetting('required', e.target.checked)} />
 
         {InputSettings && (
           <>
             <Text fz="md" fw="bold">Input Settings</Text>
-            <InputSettings settings={props.settings?.inputConfig ?
-              selectedInput.deserializeSettings(props.settings.inputConfig) : null}
-              ref={settingsRef} />
+            <InputSettings settings={merged.inputConfig}
+              onChange={(v) => setSetting('inputConfig', v)}
+              registerValidator={(fn) => validator.current = fn}
+              unregisterValidator={() => validator.current = null} />
           </>
         )}
       </>
     );
-  }),
+  },
 
   validate: (stringifiedValue, deserialize, settings) => {
     if (!stringifiedValue) {
@@ -201,12 +184,10 @@ const input: Input<any[], ArrayInputSettings> = {
     }
   },
 
-  validateSettings: async (serializedSettings, deserialize, req) => {
-    if (!serializedSettings) {
+  validateSettings: async (settings, req) => {
+    if (!settings) {
       throw new ExpressError('Settings are required');
     }
-
-    const settings = deserialize(serializedSettings);
 
     if (!settings.input) {
       throw new ExpressError('Input is required');
@@ -216,14 +197,14 @@ const input: Input<any[], ArrayInputSettings> = {
       throw new ExpressError('Input must be a string');
     }
 
+    if (settings.input === INPUT_ID) {
+      throw new ExpressError('Input cannot be another Array Input');
+    }
+
     const selectedInput = getInput(settings.input);
 
     if (!selectedInput) {
       throw new ExpressError('Input does not exist');
-    }
-
-    if (typeof selectedInput.renderInput() !== 'object') {
-      throw new ExpressError('Input must accept a value');
     }
 
     if (typeof settings.maxInputs !== 'number') {
@@ -238,11 +219,9 @@ const input: Input<any[], ArrayInputSettings> = {
       throw new ExpressError('Required must be a boolean');
     }
 
-    if ('deserializeSettings' in selectedInput) {
-      await selectedInput.validateSettings?.(
-        settings.inputConfig, selectedInput.deserializeSettings, req
-      );
-    }
+    await selectedInput.validateSettings?.(
+      settings.inputConfig, req
+    );
   },
 
   renderHtml: (value, settings, req) => {
@@ -250,11 +229,10 @@ const input: Input<any[], ArrayInputSettings> = {
 
     const selectedInput = getInput(settings?.input);
     if (!input) return null;
-    const inputConfig = selectedInput.deserializeSettings && settings?.inputConfig ?
-      selectedInput.deserializeSettings(settings?.inputConfig) : null;
+    const inputConfig = settings?.inputConfig;
 
     const values = value.map((v) => selectedInput.renderHtml(
-      selectedInput.deserialize(v), inputConfig, req));
+      selectedInput.deserialize(v[1]), inputConfig, req));
 
     return Promise.all(values);
   }

@@ -3,12 +3,12 @@ import { Button, Grid, Stack, Text } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { CollectionInput } from '../../../common/types/CollectionInputs';
-import InputRegistry, { type Input, type InputRef } from '../../../common/InputRegistry';
+import InputRegistry, {
+  InputProps, RegisterValidatorFunction, type Input
+} from '../../../common/InputRegistry';
 import { HttpResponse, del, patch, post, put } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 import { UserContext } from '../../context/UserContext';
-
-type InputsRef = InputRef<any> & Pick<Input<any>, 'serialize'>;
 
 interface Props {
   entryId?: string
@@ -23,64 +23,76 @@ interface Props {
 export default function CollectionEntryEditorForm({ entryId, draftId, inputs, data }: Props) {
   const { websiteId, collectionId } = useParams();
   const navigate = useNavigate();
-  const inputsRef = useRef<Record<string, InputsRef>>({});
-  const [submitting, setSubmitting] = useState(false);
   const { user } = useContext(UserContext);
-  const values = useRef<Record<string, any>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [values, setInputValues] = useState<Record<string, any>>(() => {
+    if (!data) return {};
+    return data.reduce((a, c) => ({
+      ...a,
+      [c.inputId]: deserialize(c.inputId, c.data)
+    }), {});
+  });
+  const validators = useRef<Record<string, RegisterValidatorFunction<any>>>({});
 
-  function getValues(serialize: boolean = true) {
-    return Object.entries(inputsRef.current).reduce((a, [fieldName, input]) => {
-      if (input.getValues) {
-        const formValues = input.getValues();
-        return {
-          ...a,
-          [fieldName]: serialize ? input.serialize(formValues) : formValues
-        };
-      }
-
-      return a;
-    }, {});
+  function hasErrors() {
+    return Object.entries(validators.current)
+      .map(([id, fn]) => fn(values[id]))
+      .some(Boolean);
   }
 
-  function notifyChanges() {
-    Object.entries(inputsRef.current).forEach(([, input]) => {
-      if (input.notifyFormUpdate) {
-        input.notifyFormUpdate(getValues());
-      }
-    });
+  function updateValue(id: string, value: any) {
+    setInputValues((values) => ({
+      ...values,
+      [id]: value
+    }));
   }
 
+  function getInputFieldName(id: string): string {
+    const fieldName = inputs.find((input) => input.id === id)?.fieldName;
+    if (!fieldName) throw new Error(`Collection Input with ID ${id} does not exist`);
+    return fieldName;
+  }
 
-  async function getFormData(validate: boolean = true) {
-    const formData = getValues();
-    let hasError = false;
-    values.current = formData;
+  function getRegistryInput<T = any, S = any>(id: string): Input<T, S> {
+    const registryId = inputs.find((input) => input.id === id)?.input;
+    if (!registryId) throw new Error(`Collection Input with ID ${id} does not exist`);
 
-    if (validate) {
-      for await (const [, input] of Object.entries(inputsRef.current)) {
-        if (input.hasError && await input.hasError()) {
-          hasError = true;
-        }
-      }
+    const input = InputRegistry.getInput(registryId);
+    if (!registryId) throw new Error(`Registry Input with ID ${id} does not exist`);
 
-      if (hasError) {
-        /*
-        * On long Entries, it often isn't immediately obvious that there is an error
-        * and may seem like the save button doesn't work.
-        */
-        notifications.show({
-          message: 'Unable to save Collection Entry. One or more inputs has an error.',
-          color: 'red'
-        });
-        return;
-      }
+    return input;
+  }
+
+  function serialize(id: string, value: any): string {
+    return getRegistryInput(id).serialize(value);
+  }
+
+  function deserialize<T = any>(id: string, value: string): T {
+    return getRegistryInput<T>(id).deserialize(value);
+  }
+
+  function getFormData(validate: boolean = true): Record<string, string> {
+    if (validate && hasErrors()) {
+      /*
+      * On long Entries, it often isn't immediately obvious that there is an error
+      * and may seem like the save button doesn't work.
+      */
+      notifications.show({
+        message: 'Unable to save Collection Entry. One or more inputs has an error.',
+        color: 'red'
+      });
+      return;
     }
 
-    return formData;
+    return Object.entries(values)
+      .reduce((a, [id, value]) => ({
+        ...a,
+        [getInputFieldName(id)]: serialize(id, value)
+      }), {})
   }
 
   async function save(draft: boolean = false) {
-    const formData = await getFormData(!draft);
+    const formData = getFormData(!draft);
     if (!formData) return;
 
     const baseApiRoot = `/api/websites/${websiteId}/collections/${collectionId}`;
@@ -142,47 +154,27 @@ export default function CollectionEntryEditorForm({ entryId, draftId, inputs, da
         <Text>No Inputs exist for this Collection</Text>
       ) : (
         <>
-          {inputs.map((input, index) => {
+          {inputs.map((input) => {
             const registryInput = InputRegistry.getInput(input.input);
             if (!registryInput) return null;
 
-            const Component = registryInput.renderInput();
-            const settings = registryInput.deserializeSettings && input.inputConfig ?
-              registryInput.deserializeSettings(input.inputConfig) : null;
-            let value;
-            if (data || values.current[input.fieldName]) {
-              const inputData = data?.filter((d) => d.inputId === input.id)[0]?.data;
-              const valueToDeserialize = values.current[input.fieldName] || inputData;
-              value = valueToDeserialize ? registryInput.deserialize(valueToDeserialize) : null;
-            }
+            const Component = registryInput.renderInput;
+            const settings = input.inputConfig || {};
 
-            const props = {
-              key: input.fieldName,
+            const props: InputProps<any, any> = {
               name: input.name,
               fieldName: input.fieldName,
               description: input.description,
               settings,
-              value,
-              ref: typeof Component !== 'function' ?
-                (ref) => inputsRef.current[input.fieldName] = {
-                  ...ref,
-                  serialize: registryInput.serialize
-                } : null,
-              notifyChanges
+              value: values[input.id],
+              values: getFormData(false),
+              onChange: (value) => updateValue(input.id, value),
+              registerValidator: (fn) => validators.current[input.id] = fn,
+              unregisterValidator: () => delete validators.current[input.id]
             };
 
-            /**
-             * Notify Inputs about the current value so that any Input that requires
-             * that data has access to it without requiring user interaction.
-             */
-            if (index === inputs.length - 1) {
-              setTimeout(() => {
-                notifyChanges(); 
-              });
-            }
-
             return (
-              <Component {...props} />
+              <Component key={input.fieldName} {...props} />
             );
           })}
 
