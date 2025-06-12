@@ -109,7 +109,7 @@ interface BaseInput<T, S> {
 }
 
 interface SettingsProps<S> {
-  settings?: S
+  settings: S
   onChange: (value: S) => void
   registerValidator: (fn: (value: S) => boolean) => void
   unregisterValidator: () => void
