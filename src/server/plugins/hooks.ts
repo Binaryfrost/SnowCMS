@@ -106,6 +106,9 @@ export async function callHook<T extends keyof Hooks>(name: T, data: Parameters<
   }
 }
 
+const httpHookFetchError = (website: Website) =>
+  `Failed to send POST request to website ${website.id}`;
+
 export async function callHttpHook(website: Website, collection: Collection,
   reason: BeforeWebsiteHookCalledHook['reason']) {
   if (!website.hook || !collection.callHook) return;
@@ -121,13 +124,16 @@ export async function callHttpHook(website: Website, collection: Collection,
 
   if (cancelled) return;
 
-  const resp = await fetch(website.hook, {
-    method: 'POST'
-  });
+  try {
+    const resp = await fetch(website.hook, {
+      method: 'POST'
+    });
 
-  if (resp.status >= 400) {
-    console.log(`Failed to send POST request to website ${website.id}. ` +
-      `Response status: ${resp.status}`);
+    if (resp.status >= 400) {
+      console.error(`${httpHookFetchError(website)}. Response status: ${resp.status}`);
+    }
+  } catch (e) {
+    console.error(`${httpHookFetchError(website)}. Error: ${e}`);
   }
 }
 
