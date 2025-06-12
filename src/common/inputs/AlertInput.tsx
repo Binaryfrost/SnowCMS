@@ -26,6 +26,12 @@ const input: Input<null, AlertInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    color: '',
+    title: '',
+    content: ''
+  },
+
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
     const errors = useInputValidator<AlertInputSettings>(
       (v) => ({
@@ -36,21 +42,17 @@ const input: Input<null, AlertInputSettings> = {
       unregisterValidator
     );
 
-    const [merged, changeSetting] = useSettingsHandler({
-      color: settings?.color || '',
-      title: settings?.title || '',
-      content: settings?.content || ''
-    }, settings, onChange);
+    const changeSetting = useSettingsHandler(settings, onChange);
 
     return (
       <Stack>
-        <TextInput label="Color" required value={merged.color}
+        <TextInput label="Color" required value={settings.color}
           onChange={(v) => changeSetting('color', v.target.value)}
           error={errors?.color} />
-        <TextInput label="Title" value={merged.title}
+        <TextInput label="Title" value={settings.title}
           onChange={(v) => changeSetting('title', v.target.value)}
           error={errors?.title} />
-        <TextInput label="Content" required value={merged.content}
+        <TextInput label="Content" required value={settings.content}
           onChange={(v) => changeSetting('content', v.target.value)}
           error={errors?.content} />
       </Stack>

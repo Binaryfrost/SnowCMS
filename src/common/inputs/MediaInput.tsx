@@ -112,13 +112,15 @@ const input: Input<string, MediaInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    mimeTypes: [],
+    required: true
+  },
+
   renderSettings: ({
     settings, onChange, registerValidator, unregisterValidator
   }) => {
-    const [merged, setSetting] = useSettingsHandler({
-      mimeTypes: settings?.mimeTypes || [],
-      required: settings?.required ?? true
-    }, settings, onChange);
+    const setSetting = useSettingsHandler(settings, onChange);
 
     const errors = useInputValidator(
       (v) => ({
@@ -133,9 +135,9 @@ const input: Input<string, MediaInputSettings> = {
       <Stack>
         <TagsInput label="Mime Types" data={['image/*', 'image/png', 'image/jpeg']}
           description="Limit file selections by mime type" splitChars={[',', ' ']}
-          value={merged.mimeTypes} onChange={(v) => setSetting('mimeTypes', v)}
+          value={settings.mimeTypes} onChange={(v) => setSetting('mimeTypes', v)}
           error={errors?.mimeTypes} />
-        <Checkbox label="Required" checked={merged.required}
+        <Checkbox label="Required" checked={settings.required}
           onChange={(e) => setSetting('required', e.target.checked)} />
       </Stack>
     );

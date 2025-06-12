@@ -37,11 +37,13 @@ const input: Input<string, RemoteDataSettings> = {
     );
   },
 
+  defaultSettings: {
+    url: '',
+    required: false
+  },
+
   renderSettings: ({ settings, onChange }) => {
-    const [merged, setSetting] = useSettingsHandler({
-      url: settings?.url || '',
-      required: settings?.required ?? false
-    }, settings, onChange);
+    const setSetting = useSettingsHandler(settings, onChange);
 
     return (
       <>
@@ -57,8 +59,8 @@ const input: Input<string, RemoteDataSettings> = {
         </Box>
         <TextInput label="URL" description={'URL to request when rendering this Input. ' +
           'If not set, a field will be shown in the Collection Entry form'}
-          value={merged.url} onChange={(e) => setSetting('url', e.target.value)} />
-        <Checkbox label="Required" checked={merged.required}
+          value={settings.url} onChange={(e) => setSetting('url', e.target.value)} />
+        <Checkbox label="Required" checked={settings.required}
           onChange={(e) => setSetting('required', e.target.checked)} />
       </>
     );

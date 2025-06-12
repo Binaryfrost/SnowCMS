@@ -24,6 +24,10 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
   const validator = useRef<ValidatorFunction<any>>();
 
   const InputSettings = settingsInput.renderSettings;
+  const mergedInputConfig = {
+    ...settingsInput.defaultSettings,
+    ...settings.inputConfig
+  };
 
   function validate() {
     const errors: ValidateFunctionErrorObject<CollectionInputSettings> = {
@@ -83,7 +87,7 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
           value={settings.description} onChange={(e) => onChangeInput('description', e)} />
         {InputSettings && (
           <InputSettings
-            settings={settings.inputConfig || {}}
+            settings={mergedInputConfig}
             onChange={onChangeConfig}
             registerValidator={(fn) => validator.current = fn}
             unregisterValidator={() => validator.current = null}

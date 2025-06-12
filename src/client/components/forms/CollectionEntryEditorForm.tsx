@@ -159,7 +159,10 @@ export default function CollectionEntryEditorForm({ entryId, draftId, inputs, da
             if (!registryInput) return null;
 
             const Component = registryInput.renderInput;
-            const settings = input.inputConfig || {};
+            const settings = {
+              ...registryInput.defaultSettings,
+              ...(input.inputConfig || {})
+            };
 
             const props: InputProps<any, any> = {
               name: input.name,

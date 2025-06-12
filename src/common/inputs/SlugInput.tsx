@@ -111,13 +111,15 @@ const input: Input<string, SlugInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    fieldName: '',
+    maxLength: 0,
+    required: true,
+    before: ''
+  },
+
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
-    const [merged, setSetting] = useSettingsHandler({
-      fieldName: settings?.fieldName || '',
-      maxLength: settings?.maxLength || 0,
-      required: settings?.required ?? true,
-      before: settings?.before || ''
-    }, settings, onChange);
+    const setSetting = useSettingsHandler(settings, onChange);
 
     const errors = useInputValidator(
       (v) => ({
@@ -132,13 +134,13 @@ const input: Input<string, SlugInputSettings> = {
       <Stack>
         <TextInput label="Field Name"
           description="The field name of the input the slug will be generated from" required
-          error={errors?.fieldName} value={merged.fieldName}
+          error={errors?.fieldName} value={settings.fieldName}
           onChange={(e) => setSetting('fieldName', e.target.value)} />
         <NumberInput label="Max Length" allowDecimal={false}
           description="Set to 0 to disable length limit" required
-          error={errors?.maxLength} value={merged.maxLength}
+          error={errors?.maxLength} value={settings.maxLength}
           onChange={(v: number) => setSetting('maxLength', v)} />
-        <Checkbox label="Required" checked={merged.required}
+        <Checkbox label="Required" checked={settings.required}
         onChange={(e) => setSetting('required', e.target.checked)} />
         <TextInput label="Before"
           description={(
@@ -152,7 +154,7 @@ const input: Input<string, SlugInputSettings> = {
               (all returned in UTC).
             </MantineInput.Label>
           )}
-          value={merged.before} onChange={(e) => setSetting('before', e.target.value)} />
+          value={settings.before} onChange={(e) => setSetting('before', e.target.value)} />
       </Stack>
     );
   },

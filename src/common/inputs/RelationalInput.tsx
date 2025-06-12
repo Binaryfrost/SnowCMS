@@ -56,6 +56,11 @@ const input: Input<string, RelationalInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    collectionId: '',
+    required: false
+  },
+
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
     const { websiteId, collectionId } = useParams();
     const errors = useInputValidator(
@@ -66,10 +71,7 @@ const input: Input<string, RelationalInputSettings> = {
       unregisterValidator
     );
 
-    const [merged, setSetting] = useSettingsHandler({
-      collectionId: settings?.collectionId || '',
-      required: settings?.required ?? false
-    }, settings, onChange);
+    const setSetting = useSettingsHandler(settings, onChange);
 
     return (
       <DataGetter.AllPages<Collection> url={`/api/websites/${websiteId}/collections`}
@@ -82,10 +84,10 @@ const input: Input<string, RelationalInputSettings> = {
                 value: c.id,
                 label: `${c.name} (${shortenUuid(c.id)})`
               }))} searchable nothingFoundMessage="No collection found with that name"
-                error={errors?.collectionId} value={merged.collectionId}
+                error={errors?.collectionId} value={settings.collectionId}
                 onChange={(v) => setSetting('collectionId', v)} />
 
-            <Checkbox label="Required" checked={merged.required}
+            <Checkbox label="Required" checked={settings.required}
               onChange={(e) => setSetting('required', e.target.checked)} />
           </>
         )}

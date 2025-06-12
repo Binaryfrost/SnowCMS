@@ -19,6 +19,13 @@ function getInput(id: string) {
   return registryInputs[id];
 }
 
+function mergeChildSettings(input: Input<any, any>, inputConfig: Record<string, any>) {
+  return {
+    ...input.defaultSettings,
+    ...(inputConfig || {})
+  };
+}
+
 const INPUT_ID = 'array';
 
 type Value = [string, any][]
@@ -64,7 +71,6 @@ const input: Input<Value, ArrayInputSettings> = {
 
     const selectedInput = getInput(settings.input);
     const RenderedInput = selectedInput?.renderInput;
-    const inputConfig = selectedInput ? settings.inputConfig : {};
     const internalValue: Value = selectedInput ? (value || [])
         .map(([id, value]) => [id, selectedInput.deserialize(value)]) : [];
 
@@ -92,7 +98,7 @@ const input: Input<Value, ArrayInputSettings> = {
               name={`${name} (${index + 1} of ${internalValue.length})`}
               value={i[1]}
               values={values}
-              settings={inputConfig}
+              settings={mergeChildSettings(input, settings.inputConfig)}
               fieldName={fieldName}
               onChange={(v) => {
                 internalValue[index][1] = v;
@@ -107,17 +113,19 @@ const input: Input<Value, ArrayInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    input: '',
+    maxInputs: 0,
+    required: false,
+    inputConfig: {}
+  },
+
   renderSettings: ({
     settings, onChange, registerValidator, unregisterValidator
   }) => {
     const validator = useRef<ValidatorFunction<any>>(null);
 
-    const [merged, setSetting] = useSettingsHandler({
-      input: settings?.input || '',
-      maxInputs: settings?.maxInputs || 0,
-      required: settings?.required ?? false,
-      inputConfig: {}
-    }, settings, onChange);
+    const setSetting = useSettingsHandler(settings, onChange);
 
     const errors = useInputValidator(
       (v) => ({
@@ -141,20 +149,20 @@ const input: Input<Value, ArrayInputSettings> = {
             .map((i) => ({
               label: `${i.name} (${i.id})`,
               value: i.id
-            }))} error={errors?.input} value={merged.input}
+            }))} error={errors?.input} value={settings.input}
             onChange={(v) => setSetting('input', v)} />
 
         <NumberInput label="Max Inputs" required description="Set to 0 to disable limit"
-          allowDecimal={false} allowNegative={false} value={merged.maxInputs}
+          allowDecimal={false} allowNegative={false} value={settings.maxInputs}
           onChange={(v: number) => setSetting('maxInputs', v)} />
 
-        <Checkbox label="Required" checked={merged.required}
+        <Checkbox label="Required" checked={settings.required}
           onChange={(e) => setSetting('required', e.target.checked)} />
 
         {InputSettings && (
           <>
             <Text fz="md" fw="bold">Input Settings</Text>
-            <InputSettings settings={merged.inputConfig}
+            <InputSettings settings={mergeChildSettings(input, settings.inputConfig)}
               onChange={(v) => setSetting('inputConfig', v)}
               registerValidator={(fn) => validator.current = fn}
               unregisterValidator={() => validator.current = null} />

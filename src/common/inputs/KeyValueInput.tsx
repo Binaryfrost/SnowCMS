@@ -101,25 +101,27 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    maxInputs: 0,
+    maxKeyLength: 0,
+    maxValueLength: 0,
+    required: false
+  },
+
   renderSettings: ({
     settings, onChange
   }) => {
-    const [merged, setSetting] = useSettingsHandler({
-      maxInputs: settings?.maxInputs || 0,
-      maxKeyLength: settings?.maxKeyLength || 0,
-      maxValueLength: settings?.maxValueLength || 0,
-      required: settings?.required ?? false
-    }, settings, onChange);
+    const setSetting = useSettingsHandler(settings, onChange);
 
     return (
       <>
-        <LengthInput label="Max Inputs" value={merged.maxInputs}
+        <LengthInput label="Max Inputs" value={settings.maxInputs}
           onChange={(v: number) => setSetting('maxInputs', v)} />
-        <LengthInput label="Max Key Length" value={merged.maxKeyLength}
+        <LengthInput label="Max Key Length" value={settings.maxKeyLength}
           onChange={(v: number) => setSetting('maxKeyLength', v)} />
-        <LengthInput label="Max Value Length" value={merged.maxValueLength}
+        <LengthInput label="Max Value Length" value={settings.maxValueLength}
           onChange={(v: number) => setSetting('maxValueLength', v)} />
-        <Checkbox label="Required" checked={merged.required}
+        <Checkbox label="Required" checked={settings.required}
           onChange={(e) => setSetting('required', e.target.checked)} />
       </>
     );

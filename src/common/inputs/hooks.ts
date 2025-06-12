@@ -55,27 +55,17 @@ export function useInputValidator<T>(
  * A hook that handles settings changes and merges
  * the initial and current settings.
  * 
- * Returns the merged settings and a change function.
+ * Returns a helper function to change individual settings.
  */
 export function useSettingsHandler<T>(
-  initial: T,
-  current: T,
+  settings: T,
   onChange: (v: T) => void):
-  [T, <K extends keyof T>(setting: K, value: T[K]) => void] {
+  <K extends keyof T>(setting: K, value: T[K]) => void {
 
-  useEffect(() => {
-    onChange(initial);
-  }, []);
-
-  return [{
-    ...(current || {}),
-    ...initial
-  },
-    (setting, value) => {
+  return (setting, value) => {
     onChange({
-      ...current,
+      ...settings,
       [setting]: value
     });
-  }]
+  }
 }
-

@@ -386,11 +386,13 @@ const input: Input<JSONContent, RichTextInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    maxLength: 0,
+    required: true
+  },
+
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
-    const [merged, setSetting] = useSettingsHandler({
-      maxLength: settings?.maxLength || 0,
-      required: settings?.required ?? true
-    }, settings, onChange);
+    const setSetting = useSettingsHandler(settings, onChange);
 
     const errors = useInputValidator(
       (v) => ({
@@ -404,8 +406,8 @@ const input: Input<JSONContent, RichTextInputSettings> = {
       <Stack>
         <NumberInput label="Max Length" allowDecimal={false}
           description="Set to 0 to disable length limit" required error={errors?.maxLength}
-          value={merged.maxLength} onChange={(v: number) => setSetting('maxLength', v)} />
-        <Checkbox label="Required" checked={merged.required}
+          value={settings.maxLength} onChange={(v: number) => setSetting('maxLength', v)} />
+        <Checkbox label="Required" checked={settings.required}
           onChange={(e) => setSetting('required', e.target.checked)} />
       </Stack>
     );

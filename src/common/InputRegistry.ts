@@ -117,6 +117,14 @@ interface SettingsProps<S> {
 
 interface InputWithSettings<T, S> extends BaseInput<T, S> {
   /**
+   * The default settings that will be merged with the configured settings.
+   * This ensures that all settings are available, even before any are
+   * configured and that new settings can be added at any time without
+   * breaking existing Collection Inputs.
+   */
+  defaultSettings: S
+
+  /**
    * Called client-side to render settings in Collection settings
    */
   renderSettings: FunctionComponent<SettingsProps<S>>
@@ -130,6 +138,7 @@ interface InputWithSettings<T, S> extends BaseInput<T, S> {
 
 // This ensures that if one of these are defined, the other one has to be as well
 interface InputWithoutSettings<T, S> extends BaseInput<T, S> {
+  defaultSettings?: never
   renderSettings?: never
   validateSettings?: never
 }

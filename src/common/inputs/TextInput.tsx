@@ -39,6 +39,11 @@ const input: Input<string, TextInputSettings> = {
     );
   },
 
+  defaultSettings: {
+    maxLength: 0,
+    required: true
+  },
+
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
     const errors = useInputValidator<TextInputSettings>(
       (v) => ({
@@ -48,19 +53,16 @@ const input: Input<string, TextInputSettings> = {
       unregisterValidator
     );
 
-    const [merged, changeSetting] = useSettingsHandler({
-      maxLength: settings?.maxLength || 0,
-      required: settings?.required ?? true
-    }, settings, onChange);
+    const changeSetting = useSettingsHandler(settings, onChange);
 
     return (
       <Stack>
         <NumberInput label="Max Length" allowDecimal={false}
           description="Set to 0 to disable length limit" required
-          error={errors?.maxLength} value={merged.maxLength}
+          error={errors?.maxLength} value={settings.maxLength}
           onChange={(v: number) => changeSetting('maxLength', v)} />
         <Checkbox label="Required" error={errors?.required}
-          checked={merged.required}
+          checked={settings.required}
           onChange={(v) => changeSetting('required', v.target.checked)} />
       </Stack>
     );
