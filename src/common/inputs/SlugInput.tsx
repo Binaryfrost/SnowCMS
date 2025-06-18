@@ -65,11 +65,11 @@ const input: Input<string, SlugInputSettings> = {
     const error = useInputValidator(
       (v) => {
         if (required && !v) return `${name} is required`;
-        if (maxLength && maxLength !== 0 && value.length > maxLength) {
+        if (maxLength && maxLength !== 0 && v?.length > maxLength) {
           return `${name} has a maximum length of ${maxLength}`;
         }
 
-        if (value.match(/\s/)) {
+        if (v?.match(/\s/)) {
           return `${name} may not include spaces. It is recommended to use hyphens instead.`;
         }
 

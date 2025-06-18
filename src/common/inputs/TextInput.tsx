@@ -21,7 +21,7 @@ const input: Input<string, TextInputSettings> = {
     const { maxLength, required } = settings;
     const error = useInputValidator((v) => {
       if (required && !v) return `${name} is required`;
-      if (maxLength && maxLength !== 0 && v.length > maxLength) {
+      if (maxLength && maxLength !== 0 && v?.length > maxLength) {
         return `${name} has a maximum length of ${maxLength}`;
       }
       return null;
