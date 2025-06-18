@@ -34,7 +34,7 @@ const input: Input<string, TextInputSettings> = {
         required={required}
         maxLength={maxLength > 1 ? maxLength : null}
         error={error}
-        value={value}
+        value={value || ''}
         onChange={(v) => onChange(v.target.value)} />
     );
   },

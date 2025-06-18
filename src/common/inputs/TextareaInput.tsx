@@ -26,7 +26,7 @@ const input: typeof TextInput = {
 
     return (
       <Textarea label={name} description={description} required={required}
-        maxLength={maxLength > 1 ? maxLength : null} value={value}
+        maxLength={maxLength > 1 ? maxLength : null} value={value || ''}
         onChange={(e) => onChange(e.target.value)} error={error} />
     );
   }

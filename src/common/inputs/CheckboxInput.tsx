@@ -10,7 +10,7 @@ const input: Input<boolean> = {
 
   renderInput: ({ name, description, value, onChange }) => {
     return (
-      <Checkbox label={name} description={description} checked={value}
+      <Checkbox label={name} description={description} checked={value || false}
         onChange={(e) => onChange(e.currentTarget.checked)} />
     );
   },

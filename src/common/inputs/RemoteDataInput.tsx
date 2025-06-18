@@ -32,7 +32,7 @@ const input: Input<string, RemoteDataSettings> = {
       <TextInput label={name}
         description={[description, url &&
           `Leave blank to use default (${url})`].filter(Boolean).join('. ')}
-        required={required} error={error} value={value}
+        required={required} error={error} value={value || ''}
         onChange={(e) => onChange(e.target.value)} />
     );
   },

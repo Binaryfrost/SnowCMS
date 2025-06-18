@@ -96,7 +96,10 @@ const input: Input<string, SlugInputSettings> = {
       previousValue.current = slugValue;
     }
 
-    if (isNewEntry) updateSlug();
+    // Update the slug on the next tick instead of on render
+    setTimeout(() => {
+      if (isNewEntry) updateSlug();
+    });
 
     return (
       <TextInput label={name} description={description} required={required}
@@ -107,7 +110,7 @@ const input: Input<string, SlugInputSettings> = {
             </ActionIcon>
           </IconButton>
         )} error={error}
-        value={value} onChange={(e) => onChange(e.target.value)} />
+        value={value || ''} onChange={(e) => onChange(e.target.value)} />
     );
   },
 
