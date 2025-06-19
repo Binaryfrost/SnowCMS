@@ -215,6 +215,8 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
 
       token = await createSession(user.id, true);
     } else {
+      if (sso.defaultRole === null) throw new ExpressError('That user does not exist', 401);
+
       const id = uuid();
       await db()<DatabaseUser>('users')
         .insert({

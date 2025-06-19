@@ -28,9 +28,10 @@ interface Config {
     /**
      * If no account exists in SnowCMS with the user's email,
      * a new one will be created with this role.
+     * If set to null, a new user will not be created.
      * @default USER
      */
-    defaultRole?: Role
+    defaultRole?: Role | null
   }
   media: {
     /**
