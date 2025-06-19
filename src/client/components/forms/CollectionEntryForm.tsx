@@ -7,6 +7,7 @@ import CollectionEntryEditorForm from './CollectionEntryEditorForm';
 import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
 import { Alert } from '@mantine/core';
 import { formatDate } from '../../util/data';
+import { Collection } from '../../../common/types/Collection';
 
 interface Props {
   entryId?: string
@@ -17,9 +18,15 @@ export default function CollectionEntryForm({ entryId, draftId }: Props) {
   const { websiteId, collectionId } = useParams();
 
   return (
-    <DataGetter.Multiple<[CollectionInput[], CollectionEntryWithData | CollectionEntryDraftWithData, PaginatedResponse<CollectionEntryDraftSummary>]>
+    <DataGetter.Multiple<[
+      Collection,
+      CollectionInput[],
+      CollectionEntryWithData | CollectionEntryDraftWithData,
+      PaginatedResponse<CollectionEntryDraftSummary>
+    ]>
       skeletonComponent={<FormSkeleton />}
       urls={[
+        `/api/websites/${websiteId}/collections/${collectionId}`,
         `/api/websites/${websiteId}/collections/${collectionId}/inputs`,
         draftId || entryId ?
           `/api/websites/${websiteId}/collections/${collectionId}/` +
@@ -27,7 +34,7 @@ export default function CollectionEntryForm({ entryId, draftId }: Props) {
         !draftId && entryId ?
           `/api/websites/${websiteId}/collections/${collectionId}/drafts?entry=${entryId}` : null
       ].filter(Boolean)}>
-      {({ data: [inputs, data, drafts] }) => {
+      {({ data: [collection, inputs, data, drafts] }) => {
         const draftEntryId = draftId ? (data as CollectionEntryDraftWithData).entryId : null;
 
         return (
@@ -43,7 +50,7 @@ export default function CollectionEntryForm({ entryId, draftId }: Props) {
               </Alert>
             )}
             <CollectionEntryEditorForm entryId={draftEntryId || entryId} draftId={draftId}
-              inputs={inputs} data={data?.data} />
+              inputs={inputs} data={data?.data} backdatingEnabled={collection.backdatingEnabled} />
           </>
         )
       }}

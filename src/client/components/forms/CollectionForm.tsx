@@ -19,6 +19,7 @@ export default function CollectionForm({ collection, collectionInputs }: Props) 
     initialValues: {
       name: collection?.name || '',
       callHook: collection?.callHook || false,
+      backdatingEnabled: collection?.backdatingEnabled || false,
       title: collection?.title || '',
       slug: collection?.slug || ''
     }
@@ -41,6 +42,10 @@ export default function CollectionForm({ collection, collectionInputs }: Props) 
         <Checkbox label="Call HTTP Hook" name="callHook"
           description="Whether to send a POST request to the website's HTTP hook"
           {...form.getInputProps('callHook', { type: 'checkbox' })} key={form.key('callHook')} />
+
+        <Checkbox label="Enable Backdating" name="backdatingEnabled"
+          {...form.getInputProps('backdatingEnabled', { type: 'checkbox' })}
+          key={form.key('backdatingEnabled')} />
 
         {collection && (
           <>
@@ -73,6 +78,7 @@ export default function CollectionForm({ collection, collectionInputs }: Props) 
 export function prepareData(data: Record<string, any>) {
   return {
     ...data,
-    callHook: data.callHook === 'on'
+    callHook: data.callHook === 'on',
+    backdatingEnabled: data.backdatingEnabled === 'on'
   };
 }

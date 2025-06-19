@@ -49,10 +49,14 @@ export function decrypt(encrypted: string, secret: string, iv: string) {
   return decipher.update(encrypted, 'base64', 'utf8') + decipher.final('utf8');
 }
 
-function parseNumber(num: string, def: number) {
+export function isNumber(num: string) {
+  return num.match(/^[0-9]+$/);
+}
+
+export function parseNumber(num: string, def: number) {
   if (!num) return def;
 
-  if (!num.match(/^[0-9]+$/)) {
+  if (!isNumber(num)) {
     throw new ExpressError('Value is not a number');
   }
 

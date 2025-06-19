@@ -29,7 +29,7 @@ export async function getWebsite(id: string) {
 
 export async function getCollection(id: string) {
   return db()<Collection>('collections')
-    .select('id', 'websiteId', 'name', 'callHook', 'title', 'slug')
+    .select('id', 'websiteId', 'name', 'callHook', 'title', 'slug', 'backdatingEnabled')
     .where({
       id
     })

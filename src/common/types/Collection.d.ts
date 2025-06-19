@@ -5,4 +5,5 @@ export interface Collection {
   callHook: boolean
   title: string
   slug?: string
+  backdatingEnabled: boolean
 }

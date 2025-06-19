@@ -14,7 +14,8 @@ const router = express.Router({ mergeParams: true });
 function handleBooleanConversion(collection: Collection): Collection {
   return {
     ...collection,
-    callHook: !!collection.callHook
+    callHook: !!collection.callHook,
+    backdatingEnabled: !!collection.backdatingEnabled
   };
 }
 
@@ -71,7 +72,8 @@ router.post('/', asyncRouteFix(async (req, res) => {
     name,
     callHook: ch || false,
     title: null,
-    slug: null
+    slug: null,
+    backdatingEnabled: false
   };
 
   await callHook('beforeCollectionCreateHook', {
@@ -96,7 +98,7 @@ router.get('/:id', asyncRouteFix(async (req, res) => {
   handleAccessControl(req.user, 'VIEWER', websiteId);
 
   const collection = await db()<Collection>('collections')
-    .select('id', 'websiteId', 'name', 'callHook', 'title', 'slug')
+    .select('id', 'websiteId', 'name', 'callHook', 'title', 'slug', 'backdatingEnabled')
     .where({
       id
     })
@@ -114,7 +116,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
 
   handleAccessControl(req.user, 'SUPERUSER', websiteId);
 
-  const { name, callHook: ch, title, slug } = req.body;
+  const { name, callHook: ch, title, slug, backdatingEnabled } = req.body;
   if (!name || !title) {
     throw new ExpressError('Name and title are required', 404);
   }
@@ -129,7 +131,8 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     name,
     callHook: ch || false,
     title,
-    slug
+    slug,
+    backdatingEnabled: backdatingEnabled || false
   });
 
   await callHook('beforeCollectionModifyHook', {
@@ -144,7 +147,8 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
       name,
       callHook: collection.callHook,
       title,
-      slug: slug || null
+      slug: slug || null,
+      backdatingEnabled: collection.backdatingEnabled
     });
 
   res.json({
@@ -204,7 +208,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
   }
 
   const collection = await db()<Collection>('collections')
-    .select('id', 'name', 'websiteId', 'callHook', 'title', 'slug')
+    .select('id', 'name', 'websiteId', 'callHook', 'title', 'slug', 'backdatingEnabled')
     .where({
       id
     })

@@ -27,6 +27,7 @@ export default async function init(knex: Knex) {
       table.boolean('callHook').defaultTo(true);
       table.string('title');
       table.string('slug');
+      table.boolean('backdatingEnabled').defaultTo(false);
 
       table.foreign('websiteId').references('websites.id');
       table.foreign('title').references('collection_inputs.id');

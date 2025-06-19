@@ -6,7 +6,7 @@ import { exists, getCollection, getCollectionInputs, getWebsite } from '../datab
 import { CollectionEntry, CollectionEntryDraft, CollectionEntryInputs, CollectionEntryWithData, CollectionEntryWithTitle } from '../../common/types/CollectionEntry';
 import { CollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
-import { asyncRouteFix, paginate, pagination } from '../util';
+import { asyncRouteFix, isNumber, paginate, pagination, parseNumber } from '../util';
 import ExpressError from '../../common/ExpressError';
 import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../plugins/hooks';
 import { PaginatedResponse } from '../../common/types/PaginatedResponse';
@@ -93,7 +93,7 @@ router.get('/', asyncRouteFix(async (req, res) => {
   const entries = await paginate(
     query(true),
     p,
-    'collection_entries.id'
+    'collection_entries.createdAt'
   );
 
   const response: PaginatedResponse<CollectionEntryWithTitle> = {
@@ -209,7 +209,7 @@ router.get('/slug/*', asyncRouteFix(async (req, res) => {
 
 async function prepareData(data: Record<string, string>, collectionId: string,
   entryId: string, req: Request): Promise<CollectionEntryWithData> {
-  const { slug } = await getCollection(collectionId);
+  const { slug, backdatingEnabled } = await getCollection(collectionId);
 
   const collectionInputs: Record<string, CollectionInput> =
     (await getCollectionInputs(collectionId)).reduce((a, c) => ({
@@ -268,10 +268,22 @@ async function prepareData(data: Record<string, string>, collectionId: string,
     })
     .first();
 
+    const { createdAt: backdatedCreatedAt } = req.query;
+
+    if (!existingEntry && backdatedCreatedAt) {
+      if (!backdatingEnabled) throw new ExpressError('Backdating is not enabled for this Collection');
+      if (!isNumber(backdatedCreatedAt as string)) throw new ExpressError('Timestamp must be a number');
+  
+      const backdatedTime = parseInt(backdatedCreatedAt as string, 10);
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (backdatedTime >= currentTime) throw new ExpressError('Backdated timestamp cannot be in the future');
+    }
+
   return {
     id: entryId,
     collectionId,
-    createdAt: existingEntry?.createdAt || Math.round(Date.now() / 1000),
+    createdAt: existingEntry?.createdAt ||
+      parseNumber(backdatedCreatedAt as string, Math.round(Date.now() / 1000)),
     updatedAt: Math.round(Date.now() / 1000),
     data: updatesWithId
   };

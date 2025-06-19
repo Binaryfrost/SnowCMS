@@ -1,5 +1,5 @@
-import { useContext, useEffect, useRef, useState } from 'react';
-import { Button, Grid, Stack, Text } from '@mantine/core';
+import { useContext, useRef, useState } from 'react';
+import { Button, Grid, Modal, Stack, Text } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { CollectionInput } from '../../../common/types/CollectionInputs';
@@ -9,10 +9,16 @@ import InputRegistry, {
 import { HttpResponse, del, patch, post, put } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 import { UserContext } from '../../context/UserContext';
+import { IconCalendarMinus } from '@tabler/icons-react';
+import IconButton from '../IconButton';
+import { formatDate } from '../../util/data';
+import { useDisclosure } from '@mantine/hooks';
+import { DateTimePicker } from '@mantine/dates';
 
 interface Props {
   entryId?: string
   draftId?: string
+  backdatingEnabled: boolean
   inputs: CollectionInput[]
   data?: {
     inputId: string
@@ -20,7 +26,14 @@ interface Props {
   }[]
 }
 
-export default function CollectionEntryEditorForm({ entryId, draftId, inputs, data }: Props) {
+function addBackdatedTimestamp(url: string, date: Date) {
+  if (!date) return url;
+  return `${url}?createdAt=${Math.floor(date.getTime() / 1000)}`;
+}
+
+export default function CollectionEntryEditorForm({
+  entryId, draftId, backdatingEnabled, inputs, data
+}: Props) {
   const { websiteId, collectionId } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
@@ -32,6 +45,9 @@ export default function CollectionEntryEditorForm({ entryId, draftId, inputs, da
       [c.inputId]: deserialize(c.inputId, c.data)
     }), {});
   });
+  const [opened, { open, close }] = useDisclosure();
+  const [backdatedTime, setBackdatedTime] = useState<Date | null>(null);
+
   const validators = useRef<Record<string, RegisterValidatorFunction<any>>>({});
 
   function hasErrors() {
@@ -121,7 +137,7 @@ export default function CollectionEntryEditorForm({ entryId, draftId, inputs, da
       }
     } else {
       if (draftId && !entryId) {
-        resp = await post(entriesApiRoot, formData);
+        resp = await post(addBackdatedTimestamp(entriesApiRoot, backdatedTime), formData);
 
         if (resp.status === 200) {
           const delResp = await del(`${draftsApiRoot}/${draftId}`);
@@ -135,7 +151,7 @@ export default function CollectionEntryEditorForm({ entryId, draftId, inputs, da
           handleFormResponseNotification(delResp);
         }
       } else if (!entryId && !draftId) {
-        resp = await post(entriesApiRoot, formData);
+        resp = await post(addBackdatedTimestamp(entriesApiRoot, backdatedTime), formData);
       } else {
         resp = await patch(`${entriesApiRoot}/${entryId}`, formData);
       }
@@ -181,12 +197,35 @@ export default function CollectionEntryEditorForm({ entryId, draftId, inputs, da
             );
           })}
 
+          {backdatedTime && (
+            <Text c="dimmed" fz="sm">
+              This Collection Entry will be backdated to {formatDate(backdatedTime)}.
+            </Text>
+          )}
+
+          <Modal title="Backdate Post" opened={opened} onClose={close}>
+            <DateTimePicker label="Date and Time" value={backdatedTime}
+              onChange={setBackdatedTime} clearable minDate={new Date(0)} maxDate={new Date()} />
+          </Modal>
+
           <Grid>
             <Grid.Col span={{ base: 12, lg: 6 }}>
-              <Button onClick={() => save(false)} loading={submitting} fullWidth
-                disabled={user.role === 'VIEWER'}>
-                  {draftId ? 'Publish draft' : 'Save'}
-                </Button>
+              <Button.Group>
+                <Button onClick={() => save(false)} loading={submitting} fullWidth
+                  disabled={user.role === 'VIEWER'}>
+                    {draftId ? 'Publish draft' : 'Save'}
+                  </Button>
+
+                  {!entryId && backdatingEnabled && (
+                    <Button style={{
+                      borderLeft: '1px solid var(--mantine-color-default-border)'
+                    }} onClick={open}>
+                      <IconButton label="Backdate Collection Entry">
+                        <IconCalendarMinus />
+                      </IconButton>
+                    </Button>
+                  )}
+                </Button.Group>
             </Grid.Col>
             <Grid.Col span={{ base: 12, lg: 6 }}>
               <Button onClick={() => save(true)} loading={submitting} fullWidth variant="light"
