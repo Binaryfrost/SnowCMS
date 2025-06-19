@@ -32,6 +32,11 @@ interface Config {
      * @default USER
      */
     defaultRole?: Role | null
+    /**
+     * Text shown on the SSO login button.
+     * @default 'Log in with SSO'
+     */
+    buttonText?: string
   }
   media: {
     /**

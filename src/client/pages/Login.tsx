@@ -64,7 +64,7 @@ function LoginForm({ config, form, submitting } : LoginFormProps) {
       {config.sso.enabled && (
         <>
           <Divider label="or" />
-          <Button color="violet" loading={submitting} onClick={ssoRedirect}>Log in with SSO</Button>
+          <Button color="violet" loading={submitting} onClick={ssoRedirect}>{config.sso.text}</Button>
         </>
       )}
     </>

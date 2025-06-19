@@ -17,6 +17,7 @@ export default defineConfig({
     clientSecret: process.env.SSO_CLIENT_SECRET,
     issuer: process.env.SSO_ISSUER,
     callbackUrl: process.env.SSO_CALLBACK_URL,
+    buttonText: 'Employee SSO Login'
   } : undefined,
   media: {
     // Maximum size of one file

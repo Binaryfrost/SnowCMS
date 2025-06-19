@@ -46,6 +46,7 @@ export interface ApiKeyWithWebsites extends ApiKey {
 export interface LoginConfig {
   sso?: {
     enabled: boolean
-    forced: boolean
+    forced: boolean,
+    text: string
   }
 }

@@ -79,7 +79,8 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
     const loginConfig: LoginConfig = {
       sso: {
         enabled: !!sso,
-        forced: sso?.forceSso || false
+        forced: sso?.forceSso || false,
+        text: sso?.buttonText || 'Log in with SSO'
       }
     };
 
