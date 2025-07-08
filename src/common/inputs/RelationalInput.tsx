@@ -114,10 +114,6 @@ const input: Input<string, RelationalInputSettings> = {
   },
 
   validateSettings: async (settings, req) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     if (!settings.collectionId) {
       throw new ExpressError('Collection ID is required');
     }

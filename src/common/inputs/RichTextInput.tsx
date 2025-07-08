@@ -432,10 +432,6 @@ const input: Input<JSONContent, RichTextInputSettings> = {
   },
 
   validateSettings: (settings) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     if (typeof settings.maxLength !== 'number') {
       throw new ExpressError('Max Length must be a number');
     }

@@ -133,7 +133,7 @@ interface InputWithSettings<T, S> extends BaseInput<T, S> {
    * Called server-side to ensure that the input value is valid.
    * You should throw an error if it is invalid.
    */
-  validateSettings?: (settings: S | null, req: Request) => void | Promise<void>
+  validateSettings?: (settings: S, req: Request) => void | Promise<void>
 }
 
 // This ensures that if one of these are defined, the other one has to be as well

@@ -158,10 +158,6 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
   },
 
   validateSettings: (settings) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     const fieldsToValidate = ['maxInputs', 'maxKeyLength', 'maxValueLength'];
     fieldsToValidate.forEach((field) => {
       if (typeof settings[field] !== 'number') {

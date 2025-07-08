@@ -60,10 +60,6 @@ const input: Input<null, AlertInputSettings> = {
   },
 
   validateSettings: (settings) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     const fieldsToValidate = ['color', 'title', 'content'];
     const optionalFields = ['title'];
     fieldsToValidate.forEach((field) => {

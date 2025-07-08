@@ -175,10 +175,6 @@ const input: Input<string, SlugInputSettings> = {
   },
 
   validateSettings: async (settings, req) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     if (!settings.fieldName) {
       throw new ExpressError('Field Name is required');
     }

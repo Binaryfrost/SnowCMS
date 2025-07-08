@@ -73,10 +73,6 @@ const input: Input<string, RemoteDataSettings> = {
   },
 
   validateSettings: (settings) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     if (settings.url && typeof settings.url !== 'string') {
       throw new ExpressError('URL, if it exists, must be a string');
     }

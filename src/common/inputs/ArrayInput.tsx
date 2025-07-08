@@ -193,10 +193,6 @@ const input: Input<Value, ArrayInputSettings> = {
   },
 
   validateSettings: async (settings, req) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     if (!settings.input) {
       throw new ExpressError('Input is required');
     }

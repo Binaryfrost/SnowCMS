@@ -25,7 +25,9 @@ router.get('/', asyncRouteFix(async (req, res) => {
   res.json(await getCollectionInputs(collectionId));
 }));
 
-async function checkIfInputAllowed(input: string, inputConfig: Record<string, any>, req: Request) {
+async function getMergedSettingsIfInputAllowed(
+  input: string, inputConfig: Record<string, any>, req: Request
+) {
   const { websiteId, collectionId } = req.params;
 
   const registryInput = InputRegistry.getInput(input);
@@ -40,7 +42,14 @@ async function checkIfInputAllowed(input: string, inputConfig: Record<string, an
     throw new ExpressError('Website or collection does not have permission to use Input', 403);
   }
 
-  await registryInput.validateSettings?.(inputConfig, req);
+  const merged = {
+    ...(registryInput.defaultSettings || {}),
+    ...inputConfig
+  };
+
+  await registryInput.validateSettings?.(merged, req);
+
+  return merged;
 }
 
 router.post('/', asyncRouteFix(async (req, res) => {
@@ -71,7 +80,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Name, field name, and input required');
   }
 
-  await checkIfInputAllowed(input, inputConfig, req);
+  const merged = await getMergedSettingsIfInputAllowed(input, inputConfig, req);
 
   const id = uuid();
   const collectionInput: CollectionInput = {
@@ -81,7 +90,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     description,
     fieldName,
     input,
-    inputConfig
+    inputConfig: merged
   };
 
   await callHook('beforeCollectionInputCreateHook', {
@@ -122,7 +131,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Name, field name, and input required');
   }
 
-  await checkIfInputAllowed(input, inputConfig, req);
+  const merged = await getMergedSettingsIfInputAllowed(input, inputConfig, req);
 
   const collectionInput: CollectionInput = {
     id,
@@ -131,7 +140,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     description,
     fieldName,
     input,
-    inputConfig
+    inputConfig: merged
   };
 
   await callHook('beforeCollectionInputModifyHook', {

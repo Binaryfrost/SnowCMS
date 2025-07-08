@@ -167,10 +167,6 @@ const input: Input<string, MediaInputSettings> = {
   },
 
   validateSettings: (settings) => {
-    if (!settings) {
-      throw new ExpressError('Settings are required');
-    }
-
     if (settings.mimeTypes && !Array.isArray(settings.mimeTypes)) {
       throw new ExpressError('Mime Types must be an array');
     }
