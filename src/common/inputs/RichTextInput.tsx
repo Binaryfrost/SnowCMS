@@ -81,7 +81,8 @@ const extensions = [
   Youtube.configure({
     HTMLAttributes: {
       loading: 'lazy'
-    }
+    },
+    nocookie: true
   }),
   Video,
   Alert
