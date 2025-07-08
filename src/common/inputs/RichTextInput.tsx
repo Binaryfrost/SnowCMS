@@ -248,6 +248,17 @@ const input: Input<JSONContent, RichTextInputSettings> = {
                     editor.commands.setImage({
                       src: file.url
                     });
+                  } else if (file.fileType.startsWith('video/')) {
+                    showVideoModal({
+                      url: file.url,
+                      close(video) {
+                        if (!video) return;
+                        editor.commands.insertContent({
+                          type: 'video',
+                          attrs: video
+                        });
+                      }
+                    });
                   } else {
                     editor.commands.insertContent({
                       type: 'text',

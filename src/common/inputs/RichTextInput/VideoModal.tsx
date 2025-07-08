@@ -1,17 +1,19 @@
-import { Button, Checkbox, Group, NumberInput, Stack, TextInput } from '@mantine/core';
+import { Alert, Button, Checkbox, Group, NumberInput, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
 import type { VideoProps } from './Video';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 interface Props {
+  url?: string
   close: (video?: VideoProps) => void
 }
 
-function VideoModal({ close }: Props) {
+function VideoModal({ url, close }: Props) {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      src: '',
+      src: url || '',
       height: null,
       width: null,
       autoplay: false,
@@ -26,6 +28,11 @@ function VideoModal({ close }: Props) {
 
   return (
     <Stack>
+      <Alert icon={<IconAlertCircle />} color="yellow">
+        Avoid using this video embed option for large files. Instead, use the YouTube
+        embed option as YouTube automatically optimizes playback for different devices,
+        internet speeds, and screen sizes.
+      </Alert>
       <TextInput label="URL" required {...form.getInputProps('src')} key={form.key('src')} />
       <Group>
         <NumberInput label="Height" {...form.getInputProps('height')}
@@ -55,11 +62,11 @@ function VideoModal({ close }: Props) {
 }
 
 const MODAL_ID = 'video_modal';
-export function showVideoModal({ close }: Props) {
+export function showVideoModal({ url, close }: Props) {
   modals.open({
     title: 'Insert Video',
     modalId: MODAL_ID,
-    children: <VideoModal close={(video) => {
+    children: <VideoModal url={url} close={(video) => {
       modals.close(MODAL_ID);
       close(video);
     }} />
