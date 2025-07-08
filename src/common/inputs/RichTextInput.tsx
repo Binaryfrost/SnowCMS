@@ -15,7 +15,6 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
-import Youtube from '@tiptap/extension-youtube';
 import { generateHTML } from '@tiptap/html';
 import { all, createLowlight } from 'lowlight';
 // @ts-ignore
@@ -31,6 +30,7 @@ import { showChangeIdModal } from './RichTextInput/ChangeIdModal';
 import { showChangeLinkRelModal } from './RichTextInput/ChangeLinkRelModal';
 import Heading from './RichTextInput/Heading';
 import Video from './RichTextInput/Video';
+import Youtube from './RichTextInput/Youtube';
 
 import './RichTextInput/RichTextInput.css';
 import { showYoutubeModal } from './RichTextInput/YoutubeModal';
