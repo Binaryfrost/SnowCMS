@@ -250,7 +250,7 @@ const input: Input<JSONContent, RichTextInputSettings> = {
                     });
                   } else if (file.fileType.startsWith('video/')) {
                     showVideoModal({
-                      url: file.url,
+                      src: file.url,
                       close(video) {
                         if (!video) return;
                         editor.commands.insertContent({
@@ -290,15 +290,18 @@ const input: Input<JSONContent, RichTextInputSettings> = {
                 <IconBrandYoutube stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
 
-              <RichTextEditor.Control onClick={() => showVideoModal({
-                close(video) {
-                  if (!video) return;
-                  editor.commands.insertContent({
-                    type: 'video',
-                    attrs: video
-                  });
-                }
-              })} title="Insert Video" aria-label="Insert Video">
+              <RichTextEditor.Control onClick={() => {
+                showVideoModal({
+                  ...editor.getAttributes('video'),
+                  close(video) {
+                    if (!video) return;
+                    editor.commands.insertContent({
+                      type: 'video',
+                      attrs: video
+                    });
+                  }
+                })
+              }} title="Insert Video" aria-label="Insert Video">
                 <IconVideo stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
             </RichTextEditor.ControlsGroup>

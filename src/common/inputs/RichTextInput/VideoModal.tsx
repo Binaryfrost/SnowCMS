@@ -5,20 +5,25 @@ import type { VideoProps } from './Video';
 import { IconAlertCircle } from '@tabler/icons-react';
 
 interface Props {
-  url?: string
+  src?: string
+  height?: number
+  width?: number
+  autoplay?: boolean
+  controls?: boolean
+  loop?: boolean
   close: (video?: VideoProps) => void
 }
 
-function VideoModal({ url, close }: Props) {
+function VideoModal({ src, height, width, autoplay, controls, loop, close }: Props) {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      src: url || '',
-      height: null,
-      width: null,
-      autoplay: false,
-      controls: true,
-      loop: false
+      src: src || '',
+      height: height || null,
+      width: width || null,
+      autoplay: autoplay ?? false,
+      controls: controls ?? true,
+      loop: loop ?? false
     },
     validate: {
       src: (value) => (!value ? 'URL is required' : null)
@@ -62,11 +67,11 @@ function VideoModal({ url, close }: Props) {
 }
 
 const MODAL_ID = 'video_modal';
-export function showVideoModal({ url, close }: Props) {
+export function showVideoModal({ close, ...props }: Props) {
   modals.open({
     title: 'Insert Video',
     modalId: MODAL_ID,
-    children: <VideoModal url={url} close={(video) => {
+    children: <VideoModal {...props} close={(video) => {
       modals.close(MODAL_ID);
       close(video);
     }} />
