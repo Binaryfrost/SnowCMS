@@ -8,19 +8,19 @@ interface Video {
   width: number
 }
 
-interface Props {
+interface Props extends Partial<Video> {
   close: (video?: Video) => void
 }
 
 const YOUTUBE_DOMAINS = ['youtube.com', 'youtube-nocookie.com', 'youtu.be'];
 
-function YoutubeModal({ close }: Props) {
+function YoutubeModal({ close, src, height, width }: Props) {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      src: '',
-      height: 480,
-      width: 640
+      src: src,
+      height: height || 480,
+      width: width || 640
     },
     validate: {
       src: (value) => {
@@ -56,11 +56,11 @@ function YoutubeModal({ close }: Props) {
 }
 
 const MODAL_ID = 'youtube_modal';
-export function showYoutubeModal({ close }: Props) {
+export function showYoutubeModal({ close, ...props }: Props) {
   modals.open({
     title: 'Insert YouTube Video',
     modalId: MODAL_ID,
-    children: <YoutubeModal close={(video) => {
+    children: <YoutubeModal {...props} close={(video) => {
       modals.close(MODAL_ID);
       close(video);
     }} />

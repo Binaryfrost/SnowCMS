@@ -277,16 +277,19 @@ const input: Input<JSONContent, RichTextInputSettings> = {
                 <IconPhoto stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
 
-              <RichTextEditor.Control onClick={() => showYoutubeModal({
-                close(video) {
-                  if (!video) return;
-                  editor.commands.setYoutubeVideo({
-                    src: video.src,
-                    height: video.height,
-                    width: video.width
-                  });
-                }
-              })} title="Insert YouTube Video" aria-label="Insert YouTube Video">
+              <RichTextEditor.Control onClick={() => {
+                showYoutubeModal({
+                  ...editor.getAttributes('youtube'),
+                  close(video) {
+                    if (!video) return;
+                    editor.commands.setYoutubeVideo({
+                      src: video.src,
+                      height: video.height,
+                      width: video.width
+                    });
+                  }
+                });
+              }} title="Insert YouTube Video" aria-label="Insert YouTube Video">
                 <IconBrandYoutube stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
 
@@ -300,7 +303,7 @@ const input: Input<JSONContent, RichTextInputSettings> = {
                       attrs: video
                     });
                   }
-                })
+                });
               }} title="Insert Video" aria-label="Insert Video">
                 <IconVideo stroke={1.5} size="1rem" />
               </RichTextEditor.Control>
