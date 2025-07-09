@@ -3,7 +3,7 @@ import { v7 as uuid } from 'uuid';
 import { db } from '../database/db';
 import handleAccessControl from '../handleAccessControl';
 import { exists, getCollection, getCollectionInputs, getWebsite } from '../database/util';
-import { CollectionEntry, CollectionEntryDraft, CollectionEntryInputs, CollectionEntryWithData, CollectionEntryWithTitle } from '../../common/types/CollectionEntry';
+import { CollectionEntry, CollectionEntryDraft, CollectionEntryInputs, CollectionEntryWithData, CollectionEntryWithMetadata } from '../../common/types/CollectionEntry';
 import { CollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry from '../../common/InputRegistry';
 import { asyncRouteFix, isNumber, paginate, pagination, parseNumber } from '../util';
@@ -96,7 +96,7 @@ router.get('/', asyncRouteFix(async (req, res) => {
     'collection_entries.createdAt'
   );
 
-  const response: PaginatedResponse<CollectionEntryWithTitle> = {
+  const response: PaginatedResponse<CollectionEntryWithMetadata> = {
     data: entries,
     page: p.page,
     pages: p.pages

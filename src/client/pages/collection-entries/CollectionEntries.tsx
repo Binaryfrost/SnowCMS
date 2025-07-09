@@ -5,7 +5,7 @@ import { IconDeviceFloppy, IconPlus } from '@tabler/icons-react';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import Page from '../../components/Page';
 import DataGetter from '../../components/DataGetter';
-import { CollectionEntryWithTitle } from '../../../common/types/CollectionEntry';
+import { CollectionEntryWithMetadata } from '../../../common/types/CollectionEntry';
 import ListEntry from '../../components/ListEntry';
 import { formatDate } from '../../util/data';
 import useRefresh from '../../util/refresh';
@@ -49,7 +49,7 @@ export function Component() {
             <SearchInput setSearch={setSearch} />
           </Group>
 
-          <DataGetter<PaginatedResponse<CollectionEntryWithTitle>> key={collectionId} paginate
+          <DataGetter<PaginatedResponse<CollectionEntryWithMetadata>> key={collectionId} paginate
             url={`/api/websites/${websiteId}/collections/${collectionId}/entries`} sort="desc"
             search={search}>
             {({ data: entries, setPage }) => (

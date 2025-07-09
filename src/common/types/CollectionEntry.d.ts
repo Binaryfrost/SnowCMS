@@ -5,8 +5,14 @@ export interface CollectionEntry {
   updatedAt: number
 }
 
+/** @deprecated */
 export interface CollectionEntryWithTitle extends CollectionEntry {
   title?: string
+}
+
+export interface CollectionEntryWithMetadata extends CollectionEntry {
+  title?: string
+  slug?: string
 }
 
 export interface CollectionEntryInputs {
