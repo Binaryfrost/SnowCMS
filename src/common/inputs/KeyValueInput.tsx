@@ -103,31 +103,31 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
 
   validate: (stringifiedValue, deserialize, settings) => {
     if (!stringifiedValue) {
-      throw new Error('Empty value for Key Value Input');
+      throw new ExpressError('Empty value for Key Value Input');
     }
 
     const value = deserialize(stringifiedValue);
     if (typeof value !== 'object') {
-      throw new Error('Key Value Input must be an object');
+      throw new ExpressError('Key Value Input must be an object');
     }
 
     const kvEntries = convertToArray(value);
 
     if (settings.required && kvEntries.length === 0) {
-      throw new Error('Required Key Value Input does not have a value');
+      throw new ExpressError('Required Key Value Input does not have a value');
     }
 
     if (settings.maxInputs > 0 && kvEntries.length > settings.maxInputs) {
-      throw new Error('Key Value Input has more inputs than allowed');
+      throw new ExpressError('Key Value Input has more inputs than allowed');
     }
 
     if (settings.maxKeyLength > 0 && kvEntries.some(([k]) => k.length > settings.maxKeyLength)) {
-      throw new Error('At least one key of Key Value Input is longer than allowed');
+      throw new ExpressError('At least one key of Key Value Input is longer than allowed');
     }
 
     if (settings.maxValueLength > 0 &&
       kvEntries.some(([, v]) => v.length > settings.maxValueLength)) {
-      throw new Error('At least one value of Key Value Input is longer than allowed');
+      throw new ExpressError('At least one value of Key Value Input is longer than allowed');
     }
   },
 
