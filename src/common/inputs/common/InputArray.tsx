@@ -3,7 +3,7 @@ import { ActionIcon, Box, Group, Input, Paper, Stack, Text } from '@mantine/core
 import { IconMinus, IconPlus } from '@tabler/icons-react';
 import IconButton from '../../../client/components/IconButton';
 
-interface Props<T> {
+export interface InputArrayProps<T> {
   name: string
   description?: string
   maxInputs?: number
@@ -15,7 +15,7 @@ interface Props<T> {
   error?: string
 }
 
-export default function InputArray<T>(props: Props<T>) {
+export default function InputArray<T>(props: InputArrayProps<T>) {
   return (
     <Box>
       <Group>

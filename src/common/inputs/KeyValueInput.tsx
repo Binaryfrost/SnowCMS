@@ -1,10 +1,8 @@
-import { memo, useEffect } from 'react';
-import { Checkbox, NumberInput, NumberInputProps, TextInput } from '@mantine/core';
+import { Checkbox, NumberInput, NumberInputProps } from '@mantine/core';
 import { Input } from '../InputRegistry';
-import FlexGrow from '../../client/components/FlexGrow';
-import InputArray from './common/InputArray';
 import ExpressError from '../ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
+import KeyValueInputArray from './common/KeyValueInputArray';
 
 // TODO: Write migration to remove legacy value
 type LegacyValue = Record<string, string>
@@ -57,48 +55,24 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
       unregisterValidator
     );
 
-    function updateInputValue() {
-      onChange(internalState);
-    }
-
-    const KEY_VALUE_POSITIONS = {
-      'key': 0,
-      'value': 1
-    };
-
-    function update(index: number, input: keyof typeof KEY_VALUE_POSITIONS, value: string) {
-      if (index > internalState.length - 1) return;
-      internalState[index][KEY_VALUE_POSITIONS[input]] = value;
-      updateInputValue();
-    }
-
     return (
-      <InputArray name={name} description={description} error={error}
-        required={settings.required} inputs={internalState} maxInputs={settings.maxInputs}
-        addInput={() => {
-          internalState.push(['', '']);
-          updateInputValue();
-        }} removeInput={(index) => {
-          internalState.splice(index, 1);
-          updateInputValue();
-        }}>
-        {([key, value], index) => (
-          <>
-            <FlexGrow>
-              <TextInput label="Key" value={key}
-                maxLength={settings.maxKeyLength || undefined}
-                onChange={(e) => update(index, 'key', e.target.value)} />
-            </FlexGrow>
-
-            <FlexGrow>
-              <TextInput label="Value" value={value}
-                maxLength={settings.maxValueLength || undefined}
-                onChange={(e) => update(index, 'value', e.target.value)} />
-            </FlexGrow>
-          </>
-        )}
-      </InputArray>
-    );
+      <KeyValueInputArray
+        name={name}
+        description={description}
+        error={error}
+        required={settings.required}
+        maxInputs={settings.maxInputs}
+        maxKeyLength={settings.maxKeyLength}
+        maxValueLength={settings.maxValueLength}
+        value={internalState}
+        onChange={(v) => {
+          if (typeof v === 'function') {
+            onChange(v(internalState));
+          } else {
+            onChange(v);
+          }
+        }} />
+    )
   },
 
   defaultSettings: {
