@@ -11,7 +11,7 @@ import ConditionalFlexDirection from './ConditionalFlexDirection';
 
 export type SelectMediaProps = Omit<MediaGalleryProps, 'refresh'>
 
-export default function SelectMedia({ websiteId, mimeTypes = [], select }: SelectMediaProps) {
+export default function SelectMedia({ websiteId, mimeTypes, select }: SelectMediaProps) {
   /*
     We need a way to force the DataGetter to fetch the updated image list.
     Refreshing the page works fine for the media page but not for modals.
@@ -42,7 +42,8 @@ export default function SelectMedia({ websiteId, mimeTypes = [], select }: Selec
       </ConditionalFlexDirection>
 
       {config && (
-        <MediaUploadForm websiteId={websiteId} {...config} opened={opened} close={() => {
+        <MediaUploadForm websiteId={websiteId} {...config}
+          opened={opened} mimeTypes={mimeTypes} close={() => {
           close();
           forceUpdate();
         }} />

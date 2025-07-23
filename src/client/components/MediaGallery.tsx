@@ -15,7 +15,7 @@ export interface MediaGalleryProps {
   select?: (file: MediaWithUrls) => void
 }
 
-export default function MediaGallery({ websiteId, search, mimeTypes = [],
+export default function MediaGallery({ websiteId, search, mimeTypes,
   refresh, select }: MediaGalleryProps) {
   const isMobile = useIsMobile();
 

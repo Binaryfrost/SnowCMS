@@ -11,6 +11,7 @@ import { BLOCKED_MIME_TYPES } from '../../../common/blocked-mime-types';
 export interface MediaUploadFormProps extends MediaConfig {
   websiteId: string
   opened: boolean
+  mimeTypes?: string[]
   close: () => void
 }
 
@@ -28,7 +29,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
       <Stack>
         {error && <Text c="red">{error}</Text>}
         <Dropzone
-          multiple={false} loading={uploading}
+          multiple={false} loading={uploading} accept={props.mimeTypes}
           onDrop={async (files) => {
             try {
               const file = files[0];
