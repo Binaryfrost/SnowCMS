@@ -1,4 +1,4 @@
-import { Alert, Stack, TextInput } from '@mantine/core';
+import { Alert, Stack, TextInput, Textarea } from '@mantine/core';
 import { type Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
@@ -52,9 +52,9 @@ const input: Input<null, AlertInputSettings> = {
         <TextInput label="Title" value={settings.title}
           onChange={(v) => changeSetting('title', v.target.value)}
           error={errors?.title} />
-        <TextInput label="Content" required value={settings.content}
+        <Textarea label="Content" required value={settings.content}
           onChange={(v) => changeSetting('content', v.target.value)}
-          error={errors?.content} />
+          error={errors?.content} autosize />
       </Stack>
     );
   },
