@@ -59,7 +59,12 @@ const input: Input<string, SelectInputSettings> = {
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
     const errors = useInputValidator((v) => {
       return {
-        options: !v.options || v.options.length === 0 ? 'At least one option must be set' : null
+        options: (() => {
+          if (!v.options || v.options.length === 0) return 'At least one option must be set';
+          if (v.options?.some(([key, value]) => !key?.trim() || !value?.trim())) {
+            return 'A key or value was left empty';
+          }
+        })()
       }
     }, registerValidator, unregisterValidator);
     const setSetting = useSettingsHandler(settings, onChange);
@@ -69,6 +74,7 @@ const input: Input<string, SelectInputSettings> = {
         <KeyValueInputArray
           name={'Options'}
           value={settings.options}
+          labels={['Value', 'Label']}
           onChange={((v) => {
             if (typeof v === 'function') {
               setSetting('options', v(settings.options));
