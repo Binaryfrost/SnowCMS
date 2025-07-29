@@ -41,8 +41,8 @@ export default function CollectionEntryForm({ entryId, draftId }: Props) {
           <>
             {drafts && drafts.data.length !== 0 && (
               <Alert mb="sm">
-                A draft for this Collection Entry was created at
-                {formatDate(new Date(drafts.data[0].createdAt * 1000))}.
+                A draft for this Collection Entry was created 
+                at {formatDate(new Date(drafts.data[0].createdAt * 1000))}.
                 Would you like to <Link
                   to={`/websites/${websiteId}/collections/${collectionId}/drafts/${drafts.data[0].id}`}>
                   edit that one instead
