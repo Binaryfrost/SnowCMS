@@ -7,35 +7,41 @@ import { bytesToReadableUnits, generateThumbnail } from '../../util/media';
 import { post, s3Upload } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 import { BLOCKED_MIME_TYPES } from '../../../common/blocked-mime-types';
+import MediaStorageUsage from '../MediaStorageUsage';
 
-export interface MediaUploadFormProps extends MediaConfig {
+export interface MediaUploadFormProps {
   websiteId: string
+  config: MediaConfig
   opened: boolean
   mimeTypes?: string[]
   close: () => void
 }
 
-export default function MediaUploadForm(props: MediaUploadFormProps) {
+export default function MediaUploadForm({
+  websiteId, config, opened, mimeTypes, close
+}: MediaUploadFormProps) {
+  const [usedStorage, setUsedStorage] = useState(config.usedStorage);
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const uploadedData = useRef(0);
 
   return (
-    <Modal opened={props.opened} title="Upload Media" zIndex={300}
-      closeOnClickOutside={!uploading} closeOnEscape={!uploadedData} withCloseButton={!uploading}
-      onClose={() => {
-        props.close();
-      }}>
+    <Modal opened={opened} title="Upload Media" zIndex={300}
+      closeOnClickOutside={!uploading} closeOnEscape={!uploading} withCloseButton={!uploading}
+      onClose={close}>
       <Stack>
+        <MediaStorageUsage config={{
+          ...config,
+          usedStorage
+        }} />
         {error && <Text c="red">{error}</Text>}
         <Dropzone
-          multiple={false} loading={uploading} accept={props.mimeTypes}
+          multiple={false} loading={uploading} accept={mimeTypes}
           onDrop={async (files) => {
             try {
               const file = files[0];
               const fileType = file.type || 'application/octet-stream';
 
-              if (props.usedStorage + uploadedData.current + file.size > props.maxStorage) {
+              if (usedStorage + file.size > config.maxStorage) {
                 throw new Error('Unable to upload file without exceeding allocated storage');
               }
 
@@ -65,7 +71,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
               };
 
               const resp = await post<FileUploadResponse>(
-                `/api/websites/${props.websiteId}/media/upload`, metadata
+                `/api/websites/${websiteId}/media/upload`, metadata
               );
 
               if (resp.status !== 200) {
@@ -98,11 +104,11 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
                 hmac: resp.body.hmac
               };
               const confirmResp = await post(
-                `/api/websites/${props.websiteId}/media/upload/confirm`, confirmData
+                `/api/websites/${websiteId}/media/upload/confirm`, confirmData
               );
 
               if (confirmResp.status === 200) {
-                uploadedData.current += file.size;
+                setUsedStorage((v) => v + file.size);
               }
 
               handleFormResponseNotification(confirmResp);
@@ -112,7 +118,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
               setUploading(false);
             }
           }}
-          onReject={(files) => setError(files[0].errors[0].message)} maxSize={props.maxSize}>
+          onReject={(files) => setError(files[0].errors[0].message)} maxSize={config.maxSize}>
           <Stack align="center" style={{ pointerEvents: 'none' }}>
             <Box>
               <Dropzone.Accept>
@@ -137,7 +143,7 @@ export default function MediaUploadForm(props: MediaUploadFormProps) {
                 Drag file here or click to select a file
               </Text>
               <Text size="sm" c="dimmed">
-                Maximum size: {bytesToReadableUnits(props.maxSize)}
+                Maximum size: {bytesToReadableUnits(config.maxSize)}
               </Text>
             </Stack>
           </Stack>

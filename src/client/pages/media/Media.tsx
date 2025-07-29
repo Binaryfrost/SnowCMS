@@ -14,6 +14,7 @@ import MediaGallery from '../../components/MediaGallery';
 import MediaUploadForm from '../../components/forms/MediaUploadForm';
 import useRefresh from '../../util/refresh';
 import SearchInput from '../../components/SearchInput';
+import MediaStorageUsage from '../../components/MediaStorageUsage';
 
 export async function getMediaConfig(websiteId: string): Promise<MediaConfig> {
   const resp = await get<MediaConfig>(`/api/websites/${websiteId}/media/config`);
@@ -63,32 +64,12 @@ export function Component() {
       </Group>
 
       <Stack gap="sm">
-        {!config ? (
-          <GenericSkeleton skeletonNum={1} skeletonProps={{
-            h: 32
-          }} />
-        ) : (
-          <Box>
-            <Progress value={storagePercentage} color={storagePercentage >= warnPercentage && 'red'} />
-            <Group justify="space-between" gap={0}>
-              <Text c="dimmed">
-                <Tooltip label={`${config.usedStorage.toLocaleString()} bytes`}>
-                  <Text inherit inline component="span">
-                    Used: {bytesToReadableUnits(config.usedStorage)}
-                  </Text>
-                </Tooltip>
-                {storagePercentage >= warnPercentage && ` (More than ${warnPercentage}% used)`}
-              </Text>
-              <Text c="dimmed">Maximum: {bytesToReadableUnits(config.maxStorage)}</Text>
-            </Group>
-          </Box>
-        )}
-
+        <MediaStorageUsage config={config} />
         <MediaGallery websiteId={websiteId} refresh={refresh} search={search} />
       </Stack>
 
       {config && (
-        <MediaUploadForm websiteId={websiteId} {...config} opened={opened} close={() => {
+        <MediaUploadForm websiteId={websiteId} config={config} opened={opened} close={() => {
           close();
           setTimeout(() => {
             refresh();

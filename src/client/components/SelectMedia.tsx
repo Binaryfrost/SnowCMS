@@ -42,7 +42,7 @@ export default function SelectMedia({ websiteId, mimeTypes, select }: SelectMedi
       </ConditionalFlexDirection>
 
       {config && (
-        <MediaUploadForm websiteId={websiteId} {...config}
+        <MediaUploadForm websiteId={websiteId} config={config}
           opened={opened} mimeTypes={mimeTypes} close={() => {
           close();
           forceUpdate();
