@@ -5,7 +5,7 @@ import handleAccessControl from '../handleAccessControl';
 import { exists, getCollection, getCollectionInputs, getWebsite } from '../database/util';
 import { CollectionEntry, CollectionEntryDraft, CollectionEntryInputs, CollectionEntryWithData, CollectionEntryWithMetadata } from '../../common/types/CollectionEntry';
 import { CollectionInput } from '../../common/types/CollectionInputs';
-import InputRegistry from '../../common/InputRegistry';
+import InputRegistry, { type Input } from '../../common/InputRegistry';
 import { asyncRouteFix, isNumber, paginate, pagination, parseNumber } from '../util';
 import ExpressError from '../../common/ExpressError';
 import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../plugins/hooks';
@@ -13,12 +13,22 @@ import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router({ mergeParams: true });
 
+function mergeSettings(input: string | Input<any>, settings: Record<string, any>) {
+  const registryInput = typeof input === 'object' ? input : InputRegistry.getInput(input);
+  if (!registryInput) return {};
+
+  return {
+    ...registryInput.defaultSettings,
+    ...settings
+  };
+}
+
 async function renderInput(input: string, data: string, settings: Record<string, any>, req: Request) {
   const registryInput = InputRegistry.getInput(input);
   if (registryInput) {
     return registryInput.renderHtml(
       registryInput.deserialize(data),
-      settings || {},
+      mergeSettings(registryInput, settings),
       req
     );
   }
@@ -32,8 +42,9 @@ async function checkInputValueValidity(input: string, data: string,
   return registryInput?.validate?.(
     data,
     registryInput.deserialize,
-    settings || {},
-    req
+    mergeSettings(registryInput, settings),
+    req,
+    false
   );
 }
 
