@@ -43,8 +43,7 @@ async function checkInputValueValidity(input: string, data: string,
     data,
     registryInput.deserialize,
     mergeSettings(registryInput, settings),
-    req,
-    false
+    req
   );
 }
 
