@@ -172,7 +172,7 @@ const input: Input<Value, ArrayInputSettings> = {
     );
   },
 
-  validate: (stringifiedValue, deserialize, settings) => {
+  validate: async (stringifiedValue, deserialize, settings, req) => {
     if (!stringifiedValue) {
       throw new Error('Empty value for Array Input');
     }
@@ -190,6 +190,20 @@ const input: Input<Value, ArrayInputSettings> = {
     if (settings.maxInputs > 0 && value.length > settings.maxInputs) {
       throw new Error('Array Input has more inputs than allowed');
     }
+
+    const selectedInput = getInput(settings.input);
+
+    await Promise.all(value.map(([, v]) => {
+      return selectedInput.validate?.(
+        v,
+        selectedInput.deserialize,
+        {
+          ...selectedInput.defaultSettings,
+          ...settings.inputConfig
+        },
+        req
+      );
+    }));
   },
 
   validateSettings: async (settings, req) => {
