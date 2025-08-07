@@ -98,7 +98,7 @@ const input: Input<Value, ArrayInputSettings> = {
               name={`${name} (${index + 1} of ${internalValue.length})`}
               value={i[1]}
               values={values}
-              settings={mergeChildSettings(input, settings.inputConfig)}
+              settings={mergeChildSettings(selectedInput, settings.inputConfig)}
               fieldName={fieldName}
               onChange={(v) => {
                 internalValue[index][1] = v;
@@ -162,7 +162,7 @@ const input: Input<Value, ArrayInputSettings> = {
         {InputSettings && (
           <>
             <Text fz="md" fw="bold">Input Settings</Text>
-            <InputSettings settings={mergeChildSettings(input, settings.inputConfig)}
+            <InputSettings settings={mergeChildSettings(selectedInput, settings.inputConfig)}
               onChange={(v) => setSetting('inputConfig', v)}
               registerValidator={(fn) => validator.current = fn}
               unregisterValidator={() => validator.current = null} />
