@@ -94,9 +94,7 @@ const input: Input<string, SelectInputSettings> = {
     );
   },
 
-  renderHtml: () => {
-    return null;
-  }
+  renderHtml: (value) => value
 };
 
 export default input;
