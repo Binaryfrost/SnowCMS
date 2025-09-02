@@ -33,6 +33,7 @@ const input: Input<string, SelectInputSettings> = {
           label,
           value
         }))}
+        required={settings.required}
         error={error}
         onChange={onChange}
         allowDeselect={false}
