@@ -11,8 +11,7 @@ export default defineInputPlugin({
       name: 'Test Plugin Alert',
       description: 'An plugin-added alert with non-configurable content',
 
-      serialize: () => '',
-      deserialize: () => null,
+      isVisualOnly: true,
 
       renderInput: () => {
         return (

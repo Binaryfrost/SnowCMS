@@ -9,9 +9,9 @@ const input: typeof TextInput = {
   name: 'Text Area',
 
   renderInput: ({
-    name, description, value, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
-    const { maxLength, required } = settings;
+    const { maxLength } = settings;
     const error = useInputValidator(
       (v) => {
         if (required && !v) return `${name} is required`;

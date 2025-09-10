@@ -3,6 +3,7 @@ import { type Request } from 'express';
 import type { FunctionComponent } from 'react';
 import type { Website } from './types/Website';
 import type { Collection } from './types/Collection';
+import { Falsy } from 'utility-types';
 
 export type ValidatorFunction<T> = (value: T) => boolean
 
@@ -31,6 +32,8 @@ export interface InputProps<T, S> {
    * The description set in the Collection settings
    */
   description?: string
+
+  required: boolean
 
   onChange: (value: T) => void
   registerValidator: (fn: ValidatorFunction<T>) => void
@@ -68,15 +71,6 @@ interface BaseInput<T, S> {
   description?: string
 
   /**
-   * Called before sending data to server (client-side only)
-   */
-  serialize: (data: T) => string
-  /**
-   * Called before rendering input and HTML (client and server side)
-   */
-  deserialize: (data: string) => T
-
-  /**
    * Called client-side to render input in CMS.
    *
    * The Collection Input name and description will be passed as props.
@@ -91,13 +85,6 @@ interface BaseInput<T, S> {
   isAllowed?: (website: Website, collection: Collection) => boolean
 
   /**
-   * Called server-side to ensure that the input value is valid.
-   * You should throw an error if it is invalid.
-   */
-  validate?: (serializedValue: string, deserialize: BaseInput<T, S>['deserialize'],
-    settings: S | null, req: Request) => void | Promise<void>
-
-  /**
    * Called server-side when page is requested through API
    * with the query parameter `?render=true`.
    *
@@ -108,6 +95,34 @@ interface BaseInput<T, S> {
     RenderHtmlType<T> | Promise<RenderHtmlType<T>>
 }
 
+interface VisualOnlyInput<T, S> extends BaseInput<T, S> {
+  isVisualOnly: true
+  serialize?: never
+  deserialize?: never
+  validate?: never
+}
+
+interface InputWithValue<T, S> extends BaseInput<T, S> {
+  isVisualOnly?: Falsy
+  /**
+   * Called before sending data to server (client-side only)
+   */
+  serialize: (data: T) => string
+  /**
+   * Called before rendering input and HTML (client and server side)
+   */
+  deserialize: (data: string) => T
+
+  /**
+   * Called server-side to ensure that the input value is valid.
+   * You should throw an error if it is invalid.
+   */
+  validate?: (serializedValue: string, deserialize: InputWithValue<T, S>['deserialize'],
+  required: boolean, settings: S | null, req: Request) => void | Promise<void>
+}
+
+type CommonBaseInput<T, S> = VisualOnlyInput<T, S> | InputWithValue<T, S>
+
 interface SettingsProps<S> {
   settings: S
   onChange: (value: S) => void
@@ -115,7 +130,7 @@ interface SettingsProps<S> {
   unregisterValidator: () => void
 }
 
-interface InputWithSettings<T, S> extends BaseInput<T, S> {
+type InputWithSettings<T, S> = CommonBaseInput<T, S> & {
   /**
    * The default settings that will be merged with the configured settings.
    * This ensures that all settings are available, even before any are
@@ -137,7 +152,7 @@ interface InputWithSettings<T, S> extends BaseInput<T, S> {
 }
 
 // This ensures that if one of these are defined, the other one has to be as well
-interface InputWithoutSettings<T, S> extends BaseInput<T, S> {
+type InputWithoutSettings<T, S> = CommonBaseInput<T, S> & {
   defaultSettings?: never
   renderSettings?: never
   validateSettings?: never

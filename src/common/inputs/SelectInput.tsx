@@ -7,7 +7,6 @@ import ExpressError from '../ExpressError';
 
 interface SelectInputSettings {
   options: [string, string][]
-  required: boolean
 }
 
 const input: Input<string, SelectInputSettings> = {
@@ -18,10 +17,10 @@ const input: Input<string, SelectInputSettings> = {
   serialize: (data) => data,
 
   renderInput: ({
-    name, description, value, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
     const error = useInputValidator((v) => {
-      return !v && settings.required ? `${name} is required` : null
+      return !v && required ? `${name} is required` : null
     }, registerValidator, unregisterValidator);
 
     return (
@@ -33,7 +32,7 @@ const input: Input<string, SelectInputSettings> = {
           label,
           value
         }))}
-        required={settings.required}
+        required={required}
         error={error}
         onChange={onChange}
         allowDeselect={false}
@@ -41,8 +40,8 @@ const input: Input<string, SelectInputSettings> = {
     );
   },
 
-  validate: (serializedValue, deserialize, settings) => {
-    if (!serializedValue && settings.required) {
+  validate: (serializedValue, deserialize, required, settings) => {
+    if (!serializedValue && required) {
       throw new ExpressError('Empty value for Select Input');
     }
     
@@ -54,7 +53,6 @@ const input: Input<string, SelectInputSettings> = {
 
   defaultSettings: {
     options: [],
-    required: false
   },
 
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
@@ -85,11 +83,6 @@ const input: Input<string, SelectInputSettings> = {
           })}
           error={errors?.options}
           required />
-
-        <Checkbox
-          label="Required"
-          checked={settings.required}
-          onChange={(e) => setSetting('required', e.target.checked)} />
       </Stack>
     );
   },

@@ -46,6 +46,7 @@ export default async function init(knex: Knex) {
       table.string('input').notNullable();
       table.text('inputConfig').nullable();
       table.integer('order').unsigned().notNullable();
+      table.boolean('required').notNullable().defaultTo(false);
 
       table.foreign('collectionId').references('collections.id');
     });

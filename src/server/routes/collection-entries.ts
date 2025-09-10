@@ -27,7 +27,7 @@ async function renderInput(input: string, data: string, settings: Record<string,
   const registryInput = InputRegistry.getInput(input);
   if (registryInput) {
     return registryInput.renderHtml(
-      registryInput.deserialize(data),
+      !registryInput.isVisualOnly ? registryInput.deserialize(data) : null,
       mergeSettings(registryInput, settings),
       req
     );
@@ -36,13 +36,15 @@ async function renderInput(input: string, data: string, settings: Record<string,
   return null;
 }
 
-async function checkInputValueValidity(input: string, data: string,
-  settings: Record<string, any>, req: Request) {
+async function checkInputValueValidity({ name, input, inputConfig, required }: CollectionInput, data: string, req: Request) {
   const registryInput = InputRegistry.getInput(input);
+  if (registryInput.isVisualOnly) return;
+  if (required && !data) throw new ExpressError(`Required input "${name}" does not have a value`);
   return registryInput?.validate?.(
     data,
     registryInput.deserialize,
-    mergeSettings(registryInput, settings),
+    required,
+    mergeSettings(registryInput, inputConfig),
     req
   );
 }
@@ -227,19 +229,20 @@ async function prepareData(data: Record<string, string>, collectionId: string,
       [c.fieldName]: c
     }), {});
 
-  const updates = [];
-  for (const key in data) {
-    if (Object.prototype.hasOwnProperty.call(data, key)) {
-      if (!(key in collectionInputs)) {
-        throw new ExpressError(`Invalid data: Input ${key} does not exist on this Collection`);
-      }
+  Object.keys(data).forEach((key) => {
+    if (!(key in collectionInputs)) {
+      throw new ExpressError(`Invalid data: Input ${key} does not exist on this Collection`);
+    }
+  });
 
+  const updates = [];
+  for (const key in collectionInputs) {
+    if (Object.prototype.hasOwnProperty.call(collectionInputs, key)) {
       const collectionInput = collectionInputs[key];
       // eslint-disable-next-line no-await-in-loop
       await checkInputValueValidity(
-        collectionInput.input,
+        collectionInput,
         data[key],
-        collectionInput.inputConfig,
         req
       );
 

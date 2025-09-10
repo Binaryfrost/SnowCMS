@@ -80,11 +80,15 @@ export default function CollectionEntryEditorForm({
   }
 
   function serialize(id: string, value: any): string {
-    return getRegistryInput(id).serialize(value);
+    const registryInput = getRegistryInput(id);
+    if (registryInput.isVisualOnly) return null;
+    return registryInput.serialize(value);
   }
 
   function deserialize<T = any>(id: string, value: string): T {
-    return getRegistryInput<T>(id).deserialize(value);
+    const registryInput = getRegistryInput<T>(id);
+    if (registryInput.isVisualOnly) return null;
+    return registryInput.deserialize(value);
   }
 
   function getFormData(validate: boolean = true): Record<string, string> {
@@ -184,6 +188,7 @@ export default function CollectionEntryEditorForm({
               name: input.name,
               fieldName: input.fieldName,
               description: input.description,
+              required: input.required,
               settings,
               value: values[input.id],
               values: getFormData(false),

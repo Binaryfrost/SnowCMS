@@ -5,7 +5,6 @@ import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface RemoteDataSettings {
   url: string
-  required: boolean
 }
 
 const input: Input<string, RemoteDataSettings> = {
@@ -16,9 +15,9 @@ const input: Input<string, RemoteDataSettings> = {
   deserialize: (data) => data,
 
   renderInput: ({
-    name, description, value, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
-    const { url, required } = settings;
+    const { url } = settings;
     const error = useInputValidator(
       (v) => {
         if (required && !url && !v) return 'URL is required';
@@ -38,8 +37,7 @@ const input: Input<string, RemoteDataSettings> = {
   },
 
   defaultSettings: {
-    url: '',
-    required: false
+    url: ''
   },
 
   renderSettings: ({ settings, onChange }) => {
@@ -60,14 +58,12 @@ const input: Input<string, RemoteDataSettings> = {
         <TextInput label="URL" description={'URL to request when rendering this Input. ' +
           'If not set, a field will be shown in the Collection Entry form'}
           value={settings.url} onChange={(e) => setSetting('url', e.target.value)} />
-        <Checkbox label="Required" checked={settings.required}
-          onChange={(e) => setSetting('required', e.target.checked)} />
       </>
     );
   },
 
-  validate: (stringifiedValue, deserialize, settings) => {
-    if (settings.required && !stringifiedValue) {
+  validate: (stringifiedValue, deserialize, required, settings) => {
+    if (required && !stringifiedValue) {
       throw new Error('Required Remote Data Input does not have a value');
     }
   },
@@ -75,10 +71,6 @@ const input: Input<string, RemoteDataSettings> = {
   validateSettings: (settings) => {
     if (settings.url && typeof settings.url !== 'string') {
       throw new ExpressError('URL, if it exists, must be a string');
-    }
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
     }
   },
 

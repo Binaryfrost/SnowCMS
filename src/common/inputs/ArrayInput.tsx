@@ -10,7 +10,6 @@ import { useInputValidator, useSettingsHandler } from './hooks';
 interface ArrayInputSettings {
   input: string
   maxInputs: number,
-  required: boolean
   inputConfig: Record<string, any>
 }
 
@@ -47,6 +46,7 @@ const input: Input<Value, ArrayInputSettings> = {
     description,
     value,
     values,
+    required,
     settings,
     onChange,
     registerValidator,
@@ -62,7 +62,7 @@ const input: Input<Value, ArrayInputSettings> = {
 
         if (childrenHaveErrors) return 'One or more inputs have errors';
 
-        return settings.required &&
+        return required &&
           (!v || v.length === 0) ? `${name} is required` : null;
       },
       registerValidator,
@@ -72,18 +72,24 @@ const input: Input<Value, ArrayInputSettings> = {
     const selectedInput = getInput(settings.input);
     const RenderedInput = selectedInput?.renderInput;
     const internalValue: Value = selectedInput ? (value || [])
-        .map(([id, value]) => [id, selectedInput.deserialize(value)]) : [];
+        .map(([id, value]) => [
+          id,
+          selectedInput.isVisualOnly ? null : selectedInput.deserialize(value)
+        ]) : [];
 
     function updateValue() {
       onChange(
         internalValue
-        .map(([id, value]) => [id, selectedInput.serialize(value)])
+        .map(([id, value]) => [
+          id,
+          selectedInput.isVisualOnly ? null : selectedInput.serialize(value)
+        ])
       );
     }
 
     return RenderedInput && (
       <InputArray name={name} description={description} error={error}
-        required={settings.required} inputs={internalValue || []}
+        required={required} inputs={internalValue || []}
         maxInputs={settings.maxInputs} addInput={() => {
           internalValue.push([uuid(), null]);
           updateValue();
@@ -98,6 +104,7 @@ const input: Input<Value, ArrayInputSettings> = {
               name={`${name} (${index + 1} of ${internalValue.length})`}
               value={i[1]}
               values={values}
+              required={!selectedInput.isVisualOnly}
               settings={mergeChildSettings(selectedInput, settings.inputConfig)}
               fieldName={fieldName}
               onChange={(v) => {
@@ -116,7 +123,6 @@ const input: Input<Value, ArrayInputSettings> = {
   defaultSettings: {
     input: '',
     maxInputs: 0,
-    required: false,
     inputConfig: {}
   },
 
@@ -146,6 +152,7 @@ const input: Input<Value, ArrayInputSettings> = {
         <Select label="Input" required searchable nothingFoundMessage="No Input found"
           data={Object.values(inputs)
             .filter((i) => i.id !== INPUT_ID)
+            .filter((i) => !i.isVisualOnly)
             .map((i) => ({
               label: `${i.name} (${i.id})`,
               value: i.id
@@ -155,9 +162,6 @@ const input: Input<Value, ArrayInputSettings> = {
         <NumberInput label="Max Inputs" required description="Set to 0 to disable limit"
           allowDecimal={false} allowNegative={false} value={settings.maxInputs}
           onChange={(v: number) => setSetting('maxInputs', v)} />
-
-        <Checkbox label="Required" checked={settings.required}
-          onChange={(e) => setSetting('required', e.target.checked)} />
 
         {InputSettings && (
           <>
@@ -172,31 +176,37 @@ const input: Input<Value, ArrayInputSettings> = {
     );
   },
 
-  validate: async (stringifiedValue, deserialize, settings, req) => {
+  validate: async (stringifiedValue, deserialize, required, settings, req) => {
     if (!stringifiedValue) {
-      throw new Error('Empty value for Array Input');
+      throw new ExpressError('Empty value for Array Input');
     }
 
     const value = deserialize(stringifiedValue);
 
     if (!Array.isArray(value)) {
-      throw new Error('Array Input must be a value');
+      throw new ExpressError('Array Input must be a value');
     }
 
-    if (settings.required && value.length === 0) {
-      throw new Error('Required Array Input does not have a value');
+    if (required && value.length === 0) {
+      throw new ExpressError('Required Array Input does not have a value');
     }
 
     if (settings.maxInputs > 0 && value.length > settings.maxInputs) {
-      throw new Error('Array Input has more inputs than allowed');
+      throw new ExpressError('Array Input has more inputs than allowed');
     }
 
     const selectedInput = getInput(settings.input);
 
+    if (selectedInput.isVisualOnly) {
+      throw new ExpressError('Visual-only Inputs cannot be used in an Array Input');
+    }
+
     await Promise.all(value.map(([, v]) => {
+      if (!selectedInput.isVisualOnly && !v) return;
       return selectedInput.validate?.(
         v,
         selectedInput.deserialize,
+        !selectedInput.isVisualOnly,
         {
           ...selectedInput.defaultSettings,
           ...settings.inputConfig
@@ -231,10 +241,6 @@ const input: Input<Value, ArrayInputSettings> = {
 
     if (settings.maxInputs < 0) {
       throw new ExpressError('Max Inputs cannot be negative');
-    }
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
     }
 
     await selectedInput.validateSettings?.(

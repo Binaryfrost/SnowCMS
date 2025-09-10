@@ -13,8 +13,7 @@ const input: Input<null, AlertInputSettings> = {
   id: 'alert',
   name: 'Alert',
 
-  serialize: () => '',
-  deserialize: () => null,
+  isVisualOnly: true,
 
   renderInput: ({ settings }) => {
     const { content, ...props } = settings;

@@ -28,21 +28,25 @@ export async function getWebsite(id: string) {
 }
 
 export async function getCollection(id: string) {
-  return db()<Collection>('collections')
+  const collection = await db()<Collection>('collections')
     .select('id', 'websiteId', 'name', 'callHook', 'title', 'slug', 'backdatingEnabled')
     .where({
       id
     })
     .first();
+
+  return handleBooleanConversion(collection, 'backdatingEnabled');
 }
 
 export async function getCollectionInputs(collectionId: string) {
-  return db()<DatabaseCollectionInput>('collection_inputs')
-    .select('id', 'collectionId', 'name', 'description', 'fieldName', 'input', 'inputConfig')
+  const collectionInputs = await db()<DatabaseCollectionInput>('collection_inputs')
+    .select('id', 'collectionId', 'name', 'description', 'fieldName', 'input', 'inputConfig', 'required')
     .where({
       collectionId
     })
     .orderBy('order', 'asc');
+
+  return collectionInputs.map((v) => handleBooleanConversion(v, 'required'));
 }
 
 // https://softwareengineering.stackexchange.com/a/304597
@@ -86,6 +90,14 @@ export async function reorderCollectionInputs(inputId: string, collectionId: str
     .where({
       id: inputId
     });
+}
+
+export function handleBooleanConversion<T>(obj: T, ...keys: (keyof T)[]): T {
+  return Object.entries(obj)
+    .reduce((a, [k, v]) => {
+      if (keys.includes(k as keyof T)) a[k] = Boolean(v);
+      return a;
+    }, { ... obj});
 }
 
 export function handleUserBooleanConversion

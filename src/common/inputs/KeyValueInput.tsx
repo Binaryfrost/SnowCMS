@@ -12,7 +12,6 @@ interface KeyValueInputSettings {
   maxInputs?: number
   maxKeyLength?: number
   maxValueLength?: number
-  required?: boolean
 }
 
 function convertToArray(v: LegacyValue | Value): Value {
@@ -35,7 +34,7 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
   serialize: JSON.stringify,
 
   renderInput: ({
-    name, description, value, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
     const internalState = convertToArray(value);
 
@@ -43,7 +42,7 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
       (v) => {
         const is = convertToArray(v);
 
-        if (settings.required && is.length === 0) {
+        if (required && is.length === 0) {
           return `${input.name} is required`;
         }
 
@@ -60,7 +59,7 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
         name={name}
         description={description}
         error={error}
-        required={settings.required}
+        required={required}
         maxInputs={settings.maxInputs}
         maxKeyLength={settings.maxKeyLength}
         maxValueLength={settings.maxValueLength}
@@ -78,8 +77,7 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
   defaultSettings: {
     maxInputs: 0,
     maxKeyLength: 0,
-    maxValueLength: 0,
-    required: false
+    maxValueLength: 0
   },
 
   renderSettings: ({
@@ -95,13 +93,11 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
           onChange={(v: number) => setSetting('maxKeyLength', v)} />
         <LengthInput label="Max Value Length" value={settings.maxValueLength}
           onChange={(v: number) => setSetting('maxValueLength', v)} />
-        <Checkbox label="Required" checked={settings.required}
-          onChange={(e) => setSetting('required', e.target.checked)} />
       </>
     );
   },
 
-  validate: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, required, settings) => {
     if (!stringifiedValue) {
       throw new ExpressError('Empty value for Key Value Input');
     }
@@ -113,12 +109,12 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
 
     const kvEntries = convertToArray(value);
 
-    if (settings.required && kvEntries.length === 0) {
-      throw new ExpressError('Required Key Value Input does not have a value');
-    }
-
     if (settings.maxInputs > 0 && kvEntries.length > settings.maxInputs) {
       throw new ExpressError('Key Value Input has more inputs than allowed');
+    }
+
+    if (kvEntries.some(([k, v]) => !k || !v)) {
+      throw new ExpressError('Some inputs have an empty key or value');
     }
 
     if (settings.maxKeyLength > 0 && kvEntries.some(([k]) => k.length > settings.maxKeyLength)) {
@@ -142,10 +138,6 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
         throw new ExpressError(`${field} cannot be negative`);
       }
     });
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
-    }
   },
 
   renderHtml: (value) => {

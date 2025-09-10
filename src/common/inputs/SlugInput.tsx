@@ -15,7 +15,6 @@ import { useLocation } from 'react-router-dom';
 interface SlugInputSettings {
   fieldName: string
   maxLength: number
-  required: boolean
   before?: string
 }
 
@@ -59,9 +58,9 @@ const input: Input<string, SlugInputSettings> = {
   deserialize: (data) => data,
 
   renderInput: ({
-    name, description, value, values, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, values, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
-    const { maxLength, required, fieldName } = settings;
+    const { maxLength, fieldName, before } = settings;
     const error = useInputValidator(
       (v) => {
         if (required && !v) return `${name} is required`;
@@ -80,11 +79,11 @@ const input: Input<string, SlugInputSettings> = {
     );
 
     const previousValue = useRef('');
-    const prependedValue = useRef(populatePlaceholders(settings.before));
+    const prependedValue = useRef(populatePlaceholders(before));
     const isNewEntry = useLocation().pathname.endsWith('/create');
 
     function updateSlug() {
-      const dependentFieldValue = values[settings.fieldName];
+      const dependentFieldValue = values[fieldName];
       if (!dependentFieldValue) return;
 
       const slugValue = prependedValue.current + slug(dependentFieldValue, {
@@ -117,7 +116,6 @@ const input: Input<string, SlugInputSettings> = {
   defaultSettings: {
     fieldName: '',
     maxLength: 0,
-    required: true,
     before: ''
   },
 
@@ -143,8 +141,6 @@ const input: Input<string, SlugInputSettings> = {
           description="Set to 0 to disable length limit" required
           error={errors?.maxLength} value={settings.maxLength}
           onChange={(v: number) => setSetting('maxLength', v)} />
-        <Checkbox label="Required" checked={settings.required}
-        onChange={(e) => setSetting('required', e.target.checked)} />
         <TextInput label="Before"
           description={(
             <MantineInput.Label>
@@ -162,8 +158,8 @@ const input: Input<string, SlugInputSettings> = {
     );
   },
 
-  validate: (serializedValue, deserialize, settings) => {
-    if (settings.required && !serializedValue) {
+  validate: (serializedValue, deserialize, required, settings) => {
+    if (required && !serializedValue) {
       throw new ExpressError('Required Slug Input does not have a value');
     }
 
@@ -203,10 +199,6 @@ const input: Input<string, SlugInputSettings> = {
 
     if (settings.maxLength < 0) {
       throw new ExpressError('Max Length cannot be negative');
-    }
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
     }
   },
 

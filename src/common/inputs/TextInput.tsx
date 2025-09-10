@@ -5,7 +5,6 @@ import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface TextInputSettings {
   maxLength: number
-  required: boolean
 }
 
 const input: Input<string, TextInputSettings> = {
@@ -16,9 +15,9 @@ const input: Input<string, TextInputSettings> = {
   deserialize: (data) => data,
 
   renderInput: ({
-    name, description, settings, value, onChange, registerValidator, unregisterValidator
+    name, description, required, settings, value, onChange, registerValidator, unregisterValidator
   }) => {
-    const { maxLength, required } = settings;
+    const { maxLength } = settings;
     const error = useInputValidator((v) => {
       if (required && !v) return `${name} is required`;
       if (maxLength && maxLength !== 0 && v?.length > maxLength) {
@@ -40,8 +39,7 @@ const input: Input<string, TextInputSettings> = {
   },
 
   defaultSettings: {
-    maxLength: 0,
-    required: true
+    maxLength: 0
   },
 
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
@@ -61,15 +59,12 @@ const input: Input<string, TextInputSettings> = {
           description="Set to 0 to disable length limit" required
           error={errors?.maxLength} value={settings.maxLength}
           onChange={(v: number) => changeSetting('maxLength', v)} />
-        <Checkbox label="Required" error={errors?.required}
-          checked={settings.required}
-          onChange={(v) => changeSetting('required', v.target.checked)} />
       </Stack>
     );
   },
 
-  validate: (stringifiedValue, deserialize, settings) => {
-    if (settings.required && !stringifiedValue) {
+  validate: (stringifiedValue, deserialize, required, settings) => {
+    if (required && !stringifiedValue) {
       throw new ExpressError('Required Text Input does not have a value');
     }
 
@@ -87,10 +82,6 @@ const input: Input<string, TextInputSettings> = {
 
     if (settings.maxLength < 0) {
       throw new ExpressError('Max Length cannot be negative');
-    }
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
     }
   },
 

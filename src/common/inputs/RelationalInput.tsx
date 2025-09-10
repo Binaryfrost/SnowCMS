@@ -18,7 +18,6 @@ import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface RelationalInputSettings {
   collectionId: string
-  required: boolean
 }
 
 const input: Input<string, RelationalInputSettings> = {
@@ -29,11 +28,11 @@ const input: Input<string, RelationalInputSettings> = {
   serialize: (data) => data,
 
   renderInput: ({
-    name, description, value, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
     const { websiteId } = useParams();
     const error = useInputValidator(
-      (v) => (settings.required && !v ? `${name} is required` : null),
+      (v) => (required && !v ? `${name} is required` : null),
       registerValidator,
       unregisterValidator
     );
@@ -47,7 +46,7 @@ const input: Input<string, RelationalInputSettings> = {
             data={entries.map((e) => ({
               value: e.id,
               label: `${e.title || 'Untitled Entry'} (${shortenUuid(e.id)})`
-            }))} required={settings.required} error={error}
+            }))} required={required} error={error}
               value={value} onChange={onChange} />
         )}
       </DataGetter.AllPages>
@@ -57,8 +56,7 @@ const input: Input<string, RelationalInputSettings> = {
   },
 
   defaultSettings: {
-    collectionId: '',
-    required: false
+    collectionId: ''
   },
 
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
@@ -86,17 +84,14 @@ const input: Input<string, RelationalInputSettings> = {
               }))} searchable nothingFoundMessage="No collection found with that name"
                 error={errors?.collectionId} value={settings.collectionId}
                 onChange={(v) => setSetting('collectionId', v)} />
-
-            <Checkbox label="Required" checked={settings.required}
-              onChange={(e) => setSetting('required', e.target.checked)} />
           </>
         )}
       </DataGetter.AllPages>
     );
   },
 
-  validate: async (stringifiedValue, deserialize, settings, req) => {
-    if (settings.required && !stringifiedValue) {
+  validate: async (stringifiedValue, deserialize, required, settings, req) => {
+    if (required && !stringifiedValue) {
       throw new Error('Required Relational Input does not have a value');
     }
 
@@ -133,10 +128,6 @@ const input: Input<string, RelationalInputSettings> = {
 
     if (collections.filter((c) => c.id === settings.collectionId).length === 0) {
       throw new ExpressError('Collection with that ID does not exist');
-    }
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
     }
   },
 

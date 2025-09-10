@@ -17,7 +17,6 @@ import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface MediaInputSettings {
   mimeTypes: string[]
-  required: boolean
 }
 
 const MIME_REGEX = /^[a-z]+\/(?:\*|[^*]+)$/;
@@ -30,7 +29,7 @@ const input: Input<string, MediaInputSettings> = {
   deserialize: (data) => data,
 
   renderInput: ({
-    name, description, value, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
     const { websiteId } = useParams();
     const [media, setMedia] = useState<MediaWithUrls>(null);
@@ -38,7 +37,7 @@ const input: Input<string, MediaInputSettings> = {
 
     const error = useInputValidator(
       (v) => {
-        if (settings.required && !v) {
+        if (required && !v) {
           return `${name} is required`;
         }
       },
@@ -63,7 +62,7 @@ const input: Input<string, MediaInputSettings> = {
 
     return (
       <Box>
-        <MantineInput.Label required={settings.required}>{name}</MantineInput.Label>
+        <MantineInput.Label required={required}>{name}</MantineInput.Label>
         {description && (
           <MantineInput.Description>{description}</MantineInput.Description>
         )}
@@ -113,8 +112,7 @@ const input: Input<string, MediaInputSettings> = {
   },
 
   defaultSettings: {
-    mimeTypes: [],
-    required: true
+    mimeTypes: []
   },
 
   renderSettings: ({
@@ -137,17 +135,17 @@ const input: Input<string, MediaInputSettings> = {
           description="Limit file selections by mime type" splitChars={[',', ' ']}
           value={settings.mimeTypes} onChange={(v) => setSetting('mimeTypes', v)}
           error={errors?.mimeTypes} />
-        <Checkbox label="Required" checked={settings.required}
-          onChange={(e) => setSetting('required', e.target.checked)} />
       </Stack>
     );
   },
 
-  validate: async (stringifiedValue, deserialize, settings, req) => {
-    if (settings.required && !stringifiedValue) {
-      throw new Error('Required Media Input does not have a value');
-    }
+  validate: async (stringifiedValue, deserialize, required, settings, req) => {
+    console.log('media input');
 
+    if (required && !stringifiedValue) {
+      throw new ExpressError('Required Media Input does not have a value');
+    }
+    
     const value = deserialize(stringifiedValue);
     if (!value) return;
     if (settings.mimeTypes?.length === 0) return;
@@ -156,6 +154,10 @@ const input: Input<string, MediaInputSettings> = {
       req,
       ({ websiteId }) => `/api/websites/${websiteId}/media/${value}`
     );
+
+    if (resp.status === 404) {
+      throw new ExpressError('Selected media file does not exist');
+    }
 
     if (resp.status !== 200) return;
 
@@ -177,10 +179,6 @@ const input: Input<string, MediaInputSettings> = {
 
     if (!settings.mimeTypes?.every((v) => v.match(MIME_REGEX))) {
       throw new ExpressError('One or more mime types are invalid');
-    }
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
     }
   },
 

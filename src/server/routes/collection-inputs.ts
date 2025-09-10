@@ -74,7 +74,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     )?.order
   ) ?? -1;
 
-  const { name, description, fieldName, input, inputConfig } = req.body;
+  const { name, description, fieldName, input, inputConfig, required } = req.body;
 
   if (!name || !fieldName || !input) {
     throw new ExpressError('Name, field name, and input required');
@@ -90,6 +90,7 @@ router.post('/', asyncRouteFix(async (req, res) => {
     description,
     fieldName,
     input,
+    required,
     inputConfig: merged
   };
 
@@ -125,7 +126,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     throw new ExpressError('Collection Input not found', 404);
   }
 
-  const { name, description, fieldName, input, inputConfig } = req.body;
+  const { name, description, fieldName, input, inputConfig, required } = req.body;
 
   if (!name || !fieldName || !input) {
     throw new ExpressError('Name, field name, and input required');
@@ -140,6 +141,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
     description,
     fieldName,
     input,
+    required,
     inputConfig: merged
   };
 
@@ -154,6 +156,7 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
       description,
       fieldName,
       input,
+      required,
       inputConfig: JSON.stringify(inputConfig)
     })
     .where({
@@ -209,7 +212,7 @@ router.delete('/:id', asyncRouteFix(async (req, res) => {
   }
 
   const collectionInput = await db()<CollectionInput>('collection_inputs')
-    .select('id', 'collectionId', 'name', 'description', 'fieldName', 'input', 'inputConfig')
+    .select('id', 'collectionId', 'name', 'description', 'fieldName', 'input', 'inputConfig', 'required')
     .where({
       id
     })

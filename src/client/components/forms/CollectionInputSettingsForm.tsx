@@ -1,5 +1,5 @@
 import { ChangeEvent, useRef, useState } from 'react';
-import { Button, Group, Stack, TextInput } from '@mantine/core';
+import { Button, Checkbox, Group, Stack, TextInput } from '@mantine/core';
 import { type UseListStateHandlers } from '@mantine/hooks';
 import InputRegistry, {
   ValidateFunctionErrorObject, ValidatorFunction
@@ -19,7 +19,8 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
     name: collectionInput.name || '',
     fieldName: collectionInput.fieldName || '',
     description: collectionInput.description || '',
-    inputConfig: collectionInput.inputConfig || {}
+    inputConfig: collectionInput.inputConfig || {},
+    required: collectionInput.required ?? (settingsInput.isVisualOnly ? false : true)
   });
   const validator = useRef<ValidatorFunction<any>>();
 
@@ -49,13 +50,14 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
 
     if (commonSettingsHasError || inputSettingsHasError) return;
 
-    const { name, fieldName, description, inputConfig } = settings;
+    const { name, fieldName, description, inputConfig, required } = settings;
     
     update((input) => ({
       ...input,
       name,
       fieldName,
       description,
+      required,
       inputConfig
     }));
   }
@@ -80,11 +82,19 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
       <Stack gap="sm">
         <TextInput label="Name" required error={errors.name}
           value={settings.name} onChange={(e) => onChangeInput('name', e)} />
+
         <TextInput label="Field Name" required error={errors.fieldName}
           description="Used as the key in the API response"
           value={settings.fieldName} onChange={(e) => onChangeInput('fieldName', e)} />
+
         <TextInput label="Description" error={errors.description}
           value={settings.description} onChange={(e) => onChangeInput('description', e)} />
+
+        {!settingsInput.isVisualOnly && (
+          <Checkbox label="Required" checked={settings.required}
+            onChange={(e) => onChange('required', e.target.checked)} />
+        )}
+
         {InputSettings && (
           <InputSettings
             settings={mergedInputConfig}

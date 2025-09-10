@@ -9,6 +9,7 @@ import type {
 
 type StringError = string | null
 type ObjectError<T> = ValidateFunctionErrorObject<T> | null
+type RequiredStruct<T> = { [x in keyof T]?: boolean }
 
 export function useInputValidator<T>(
   validate: ValidateFunction<T, StringError>,

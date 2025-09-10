@@ -42,7 +42,6 @@ import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface RichTextInputSettings {
   maxLength: number
-  required: boolean
 }
 
 const lowlight = createLowlight(all);
@@ -96,7 +95,7 @@ const input: Input<JSONContent, RichTextInputSettings> = {
   deserialize: (data) => JSON.parse(data),
 
   renderInput: ({
-    name, description, value, settings, onChange, registerValidator, unregisterValidator
+    name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
     const { websiteId } = useParams();
 
@@ -110,7 +109,7 @@ const input: Input<JSONContent, RichTextInputSettings> = {
       (v) => {
         const { length } = editor.getText();
 
-        if (settings.required && length === 0) {
+        if (required && length === 0) {
           return `${name} is required`;
         }
   
@@ -126,7 +125,7 @@ const input: Input<JSONContent, RichTextInputSettings> = {
 
     return (
       <Box>
-        <MantineInput.Label required={settings.required}>{name}</MantineInput.Label>
+        <MantineInput.Label required={required}>{name}</MantineInput.Label>
         {description && (
           <MantineInput.Description>{description}</MantineInput.Description>
         )}
@@ -405,8 +404,7 @@ const input: Input<JSONContent, RichTextInputSettings> = {
   },
 
   defaultSettings: {
-    maxLength: 0,
-    required: true
+    maxLength: 0
   },
 
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
@@ -425,8 +423,6 @@ const input: Input<JSONContent, RichTextInputSettings> = {
         <NumberInput label="Max Length" allowDecimal={false}
           description="Set to 0 to disable length limit" required error={errors?.maxLength}
           value={settings.maxLength} onChange={(v: number) => setSetting('maxLength', v)} />
-        <Checkbox label="Required" checked={settings.required}
-          onChange={(e) => setSetting('required', e.target.checked)} />
       </Stack>
     );
   },
@@ -435,9 +431,9 @@ const input: Input<JSONContent, RichTextInputSettings> = {
    * It would be great to check the max length here, but it doesn't look
    * like Tiptap provides a server-side getText() API.
    */
-  validate: (stringifiedValue, deserialize, settings) => {
+  validate: (stringifiedValue, deserialize, required) => {
     if (!stringifiedValue) {
-      if (settings.required) {
+      if (required) {
         throw new ExpressError('Required Rich Text Input does not have a value');
       }
       return;
@@ -456,10 +452,6 @@ const input: Input<JSONContent, RichTextInputSettings> = {
 
     if (settings.maxLength < 0) {
       throw new ExpressError('Max Length cannot be negative');
-    }
-
-    if (typeof settings.required !== 'boolean') {
-      throw new ExpressError('Required must be a boolean');
     }
 
     if (settings.maxLength >= 10) {

@@ -2,6 +2,7 @@ export interface CollectionInputSettings {
   name: string
   fieldName: string
   description: string
+  required: boolean
   inputConfig: Record<string, any>
 }
 

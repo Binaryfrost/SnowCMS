@@ -129,7 +129,8 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
               description: '',
               fieldName: '',
               input: input.id,
-              inputConfig: {}
+              inputConfig: {},
+              required: input.isVisualOnly ? false : true
             });
 
             modals.close(ADD_INPUT_MODAL_ID);
