@@ -158,12 +158,12 @@ const input: Input<string, SlugInputSettings> = {
     );
   },
 
-  validate: (serializedValue, deserialize, required, settings) => {
+  validate: (serializedValue, required, settings) => {
     if (required && !serializedValue) {
       throw new ExpressError('Required Slug Input does not have a value');
     }
 
-    const value = deserialize(serializedValue);
+    const value = input.deserialize(serializedValue);
 
     if (settings.maxLength > 0 && value.length > settings.maxLength) {
       throw new ExpressError('Slug Input value is longer than allowed');

@@ -42,7 +42,6 @@ async function checkInputValueValidity({ name, input, inputConfig, required }: C
   if (required && !data) throw new ExpressError(`Required input "${name}" does not have a value`);
   return registryInput?.validate?.(
     data,
-    registryInput.deserialize,
     required,
     mergeSettings(registryInput, inputConfig),
     req

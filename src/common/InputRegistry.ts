@@ -117,8 +117,9 @@ interface InputWithValue<T, S> extends BaseInput<T, S> {
    * Called server-side to ensure that the input value is valid.
    * You should throw an error if it is invalid.
    */
-  validate?: (serializedValue: string, deserialize: InputWithValue<T, S>['deserialize'],
-  required: boolean, settings: S | null, req: Request) => void | Promise<void>
+  validate?: (
+    serializedValue: string, required: boolean, settings: S | null, req: Request
+  ) => void | Promise<void>
 }
 
 type CommonBaseInput<T, S> = VisualOnlyInput<T, S> | InputWithValue<T, S>

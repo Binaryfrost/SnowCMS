@@ -139,14 +139,14 @@ const input: Input<string, MediaInputSettings> = {
     );
   },
 
-  validate: async (stringifiedValue, deserialize, required, settings, req) => {
+  validate: async (stringifiedValue, required, settings, req) => {
     console.log('media input');
 
     if (required && !stringifiedValue) {
       throw new ExpressError('Required Media Input does not have a value');
     }
     
-    const value = deserialize(stringifiedValue);
+    const value = input.deserialize(stringifiedValue);
     if (!value) return;
     if (settings.mimeTypes?.length === 0) return;
 

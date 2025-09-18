@@ -90,12 +90,12 @@ const input: Input<string, RelationalInputSettings> = {
     );
   },
 
-  validate: async (stringifiedValue, deserialize, required, settings, req) => {
+  validate: async (stringifiedValue, required, settings, req) => {
     if (required && !stringifiedValue) {
       throw new Error('Required Relational Input does not have a value');
     }
 
-    const value = deserialize(stringifiedValue);
+    const value = input.deserialize(stringifiedValue);
     if (!value || !settings.collectionId) return;
 
     const resp = await serverInputFetch(

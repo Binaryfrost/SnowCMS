@@ -63,12 +63,12 @@ const input: Input<string, TextInputSettings> = {
     );
   },
 
-  validate: (stringifiedValue, deserialize, required, settings) => {
+  validate: (stringifiedValue, required, settings) => {
     if (required && !stringifiedValue) {
       throw new ExpressError('Required Text Input does not have a value');
     }
 
-    const value = deserialize(stringifiedValue);
+    const value = input.deserialize(stringifiedValue);
 
     if (settings.maxLength > 0 && value.length > settings.maxLength) {
       throw new ExpressError('Text Input value is longer than allowed');

@@ -40,7 +40,7 @@ const input: Input<string, SelectInputSettings> = {
     );
   },
 
-  validate: (serializedValue, deserialize, required, settings) => {
+  validate: (serializedValue, required, settings) => {
     if (!serializedValue && required) {
       throw new ExpressError('Empty value for Select Input');
     }

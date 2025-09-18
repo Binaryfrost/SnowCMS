@@ -176,12 +176,12 @@ const input: Input<Value, ArrayInputSettings> = {
     );
   },
 
-  validate: async (stringifiedValue, deserialize, required, settings, req) => {
+  validate: async (stringifiedValue, required, settings, req) => {
     if (!stringifiedValue) {
       throw new ExpressError('Empty value for Array Input');
     }
 
-    const value = deserialize(stringifiedValue);
+    const value = input.deserialize(stringifiedValue);
 
     if (!Array.isArray(value)) {
       throw new ExpressError('Array Input must be a value');
@@ -205,7 +205,6 @@ const input: Input<Value, ArrayInputSettings> = {
       if (!selectedInput.isVisualOnly && !v) return;
       return selectedInput.validate?.(
         v,
-        selectedInput.deserialize,
         !selectedInput.isVisualOnly,
         {
           ...selectedInput.defaultSettings,
