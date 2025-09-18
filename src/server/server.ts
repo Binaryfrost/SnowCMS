@@ -146,10 +146,6 @@ export async function start(config: NormalizedConfig) {
     console.log(`Using alternative asset public path ${__SNOWCMS_CLIENT_PUBLIC_PATH__}`);
   }
 
-  app.get("/debug-sentry", function mainHandler(req, res) {
-    throw new Error("My first Sentry error!");
-  });
-
   // Catch all GET requests that haven't already been handled and serve the CMS SPA
   app.get('*', async (req, res) => {
     const MANIFEST = await getManifest();
