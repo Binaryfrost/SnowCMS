@@ -197,7 +197,15 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
       tokens.claims().sub
     );
 
-    const { email } = userInfo;
+    const { email, email_verified } = userInfo;
+
+    if (!email) {
+      throw new ExpressError('The SSO provider did not return the user\'s email address');
+    }
+
+    if ('email_verified' in userInfo && !email_verified) {
+      throw new ExpressError('The SSO provider reports that the email has not yet been verified');
+    }
 
     const userWithEmail = await db()<User>('users')
       .select('id')
