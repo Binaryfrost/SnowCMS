@@ -1,8 +1,10 @@
+import './sentry';
 import { createRoot } from 'react-dom/client';
 import { ActionIcon, MantineProvider, Tooltip, createTheme } from '@mantine/core';
 import { NavigationProgress } from '@mantine/nprogress';
 import { Notifications } from '@mantine/notifications';
 import { RouterProvider } from 'react-router-dom';
+import { ErrorBoundary as SentryErrorBoundary } from '@sentry/react';
 
 import { router } from './router';
 
@@ -29,9 +31,11 @@ const theme = createTheme({
 });
 
 createRoot(document.getElementById('app')).render(
-  <MantineProvider theme={theme}>
-    <NavigationProgress />
-    <Notifications />
-    <RouterProvider router={router} />
-  </MantineProvider>
+  <SentryErrorBoundary>
+    <MantineProvider theme={theme}>
+      <NavigationProgress />
+      <Notifications />
+      <RouterProvider router={router} />
+    </MantineProvider>
+  </SentryErrorBoundary>
 );

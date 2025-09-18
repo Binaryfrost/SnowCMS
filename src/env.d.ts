@@ -8,6 +8,7 @@ declare global {
   const __SNOWCMS_ROUTES_PLUGIN_CONFIG__: string;
   const __SNOWCMS_IS_PRODUCTION__: string;
   const __SNOWCMS_CLIENT_PUBLIC_PATH__: string | undefined;
+  const __SNOWCMS_SENTRY_DSN__: string | undefined;
 
   namespace Express {
     interface Request {

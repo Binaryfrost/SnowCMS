@@ -18,6 +18,7 @@ const CLIENT_DIST = (dir) => path.join(dir, 'dist', 'client');
 
 const CLIENT_PUBLIC_PATH = process.env.CLIENT_PUBLIC_PATH?.includes('://') &&
   process.env.CLIENT_PUBLIC_PATH;
+const { SENTRY_DSN } = process.env;
 
 /**
  * @param {string} userDir
@@ -96,7 +97,8 @@ const BASE_WEBPACK_TEMPLATE = async (opts) => ({
       __SNOWCMS_HOOKS_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'hooks'),
       __SNOWCMS_ROUTES_PLUGIN_CONFIG__: await pluginConfig(opts.userDir, 'routes'),
       __SNOWCMS_IS_PRODUCTION__: opts.mode === 'production',
-      __SNOWCMS_CLIENT_PUBLIC_PATH__: CLIENT_PUBLIC_PATH && JSON.stringify(CLIENT_PUBLIC_PATH)
+      __SNOWCMS_CLIENT_PUBLIC_PATH__: CLIENT_PUBLIC_PATH && JSON.stringify(CLIENT_PUBLIC_PATH),
+      __SNOWCMS_SENTRY_DSN__: SENTRY_DSN && JSON.stringify(SENTRY_DSN)
     })
   ]
 });
@@ -133,7 +135,8 @@ export async function getWebpackServerConfig(opts) {
       'bcrypt',
       '@aws-sdk/client-s3',
       '@aws-sdk/s3-request-presigner',
-      'redis'
+      'redis',
+      '@sentry/node'
     ],
     plugins: [
       ...baseConfig.plugins,

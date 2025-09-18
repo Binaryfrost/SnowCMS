@@ -1,3 +1,4 @@
+import initSentry from './sentry'
 import type { NormalizedConfig } from '../config';
 import setup from '../common/setup';
 import { verifyNodeVersion } from '../version';
@@ -8,6 +9,7 @@ verifyNodeVersion();
 const configFile = require(__SNOWCMS_CONFIG_FILE__);
 const config: NormalizedConfig = configFile.default;
 
+initSentry();
 setup();
 
 // Using a dynamic import forces Webpack to code split the rest of the app

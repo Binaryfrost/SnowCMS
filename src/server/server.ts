@@ -23,6 +23,7 @@ import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
 import { router as pluginRouter } from './plugins/routes';
+import { initExpressSentry } from './sentry';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -145,6 +146,10 @@ export async function start(config: NormalizedConfig) {
     console.log(`Using alternative asset public path ${__SNOWCMS_CLIENT_PUBLIC_PATH__}`);
   }
 
+  app.get("/debug-sentry", function mainHandler(req, res) {
+    throw new Error("My first Sentry error!");
+  });
+
   // Catch all GET requests that haven't already been handled and serve the CMS SPA
   app.get('*', async (req, res) => {
     const MANIFEST = await getManifest();
@@ -186,6 +191,8 @@ export async function start(config: NormalizedConfig) {
       </html>
     `);
   });
+
+  initExpressSentry(app);
 
   // Express expects error handling middleware to have 4 arguments
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
