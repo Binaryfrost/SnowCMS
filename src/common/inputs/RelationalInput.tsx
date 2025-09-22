@@ -104,7 +104,7 @@ const input: Input<string, RelationalInputSettings> = {
       `/${settings.collectionId}/entries/${value}`);
 
     if (resp.status !== 200) {
-      throw new ExpressError('Relational Input referenced non-existant entry');
+      throw new ExpressError('Relational Input referenced non-existent entry');
     }
   },
 
