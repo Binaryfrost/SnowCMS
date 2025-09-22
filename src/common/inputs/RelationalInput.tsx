@@ -132,16 +132,12 @@ const input: Input<string, RelationalInputSettings> = {
   },
 
   renderHtml: async (value, settings, req) => {
-    if (!value) return null;
+    if (!value || !settings.collectionId) return null;
 
-    const resp = await serverInputFetch(
-      req,
-      ({ websiteId }) => `/api/websites/${websiteId}/collections` +
-      `/${settings.collectionId}/entries/${value}?render=true`);
-
-    if (resp.status !== 200) return null;
-
-    return resp.json();
+    return {
+      collection: settings.collectionId,
+      entry: value
+    };
   }
 };
 
