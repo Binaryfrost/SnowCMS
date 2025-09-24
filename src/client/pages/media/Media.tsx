@@ -21,7 +21,8 @@ export async function getMediaConfig(websiteId: string): Promise<MediaConfig> {
 
   if (resp.status !== 200) {
     notifications.show({
-      message: `Failed to load media config: ${resp.body.error || 'An error occurred'}`
+      message: `Failed to load media config: ${resp.body.error || 'An error occurred'}`,
+      color: 'red'
     });
     return null;
   }
@@ -35,10 +36,15 @@ export function Component() {
   const [search, setSearch] = useState('');
   const [config, setConfig] = useState<MediaConfig>(null);
   const [opened, { open, close }] = useDisclosure(false);
+  const [mediaDisabled, setMediaDisabled] = useState(false);
 
   useEffect(() => {
     getMediaConfig(websiteId).then((m) => {
-      if (!m) return;
+      if (!m) {
+        setMediaDisabled(true);
+        return;
+      }
+
       setConfig(m);
     });
   }, []);
@@ -60,11 +66,11 @@ export function Component() {
           }} iconButtonProps={{
             role: 'USER'
           }} />
-        <SearchInput setSearch={setSearch} />
+        {!mediaDisabled && <SearchInput setSearch={setSearch} />}
       </Group>
 
       <Stack gap="sm">
-        <MediaStorageUsage config={config} />
+        {!mediaDisabled && <MediaStorageUsage config={config} />}
         <MediaGallery websiteId={websiteId} refresh={refresh} search={search} />
       </Stack>
 

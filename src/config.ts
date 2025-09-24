@@ -38,7 +38,7 @@ interface Config {
      */
     buttonText?: string
   }
-  media: {
+  media?: {
     /**
      * The maximum size for uploaded files
      * @default 52428800 (50MB)
@@ -84,16 +84,16 @@ export interface PluginConfig<T> {
 }
 
 type DeepRequiredExcept<T, K extends keyof T> = DeepRequired<Omit<T, K>> & Pick<T, K>
-export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis'>
+export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis' | 'media'>
 
 export const defineConfig = (config: Config): NormalizedConfig => ({
   ...config,
   port: config.port || 3080,
-  media: {
+  media: config.media ? {
     ...config.media,
     maxSize: config.media.maxSize || 52428800,
     maxStorage: config.media.maxStorage || 5368709120
-  },
+  } : null,
   database: {
     ...config.database,
     port: config.database.port || 3306

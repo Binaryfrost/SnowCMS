@@ -133,7 +133,10 @@ router.put('/:id', asyncRouteFix(async (req, res) => {
 
 // https://www.codemzy.com/blog/delete-s3-folder-nodejs
 async function deleteFolder(location: string) {
-  const { s3 } = getConfig().media;
+  const { media } = getConfig();
+  if (!media) return;
+
+  const { s3 } = media;
   const client = new S3Client({
     credentials: {
       accessKeyId: s3.accessKeyId,

@@ -8,6 +8,7 @@ import MediaUploadForm from './forms/MediaUploadForm';
 import SearchInput from './SearchInput';
 import { useIsMobile } from '../util/mobile';
 import ConditionalFlexDirection from './ConditionalFlexDirection';
+import { notifications } from '@mantine/notifications';
 
 export type SelectMediaProps = Omit<MediaGalleryProps, 'refresh'>
 
@@ -20,26 +21,42 @@ export default function SelectMedia({ websiteId, mimeTypes, select }: SelectMedi
   const [search, setSearch] = useState('');
   const [config, setConfig] = useSetState(null);
   const [opened, { open, close }] = useDisclosure(false);
+  const [mediaDisabled, setMediaDisabled] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     getMediaConfig(websiteId).then((m) => {
-      if (!m) return;
+      if (!m) {
+        setMediaDisabled(true);
+        return;
+      }
+
       setConfig(m);
     });
   }, []);
 
   return (
     <Box>
-      <ConditionalFlexDirection group={() => !isMobile} groupProps={{
-        align: 'start'
-      }} stackProps={{
-        mb: 'xs',
-        gap: 0
-      }}>
-        <Button leftSection={<IconUpload />} onClick={open} mb="sm">Upload File</Button>
-        <SearchInput setSearch={setSearch} />
-      </ConditionalFlexDirection>
+      {!mediaDisabled && (
+        <ConditionalFlexDirection group={() => !isMobile} groupProps={{
+          align: 'start'
+        }} stackProps={{
+          mb: 'xs',
+          gap: 0
+        }}>
+          <Button leftSection={<IconUpload />} onClick={() => {
+            if (!config) {
+              notifications.show({
+                message: 'Media features are disabled or config has not yet loaded. Please try again later.',
+                color: 'yellow'
+              });
+              return;
+            }
+            open();
+          }} mb="sm">Upload File</Button>
+          <SearchInput setSearch={setSearch} />
+        </ConditionalFlexDirection>
+      )}
 
       {config && (
         <MediaUploadForm websiteId={websiteId} config={config}

@@ -82,6 +82,17 @@ function hmac(secret: string, ...data: any[]) {
   return h.digest().toString('hex');
 }
 
+function ensureMediaIsEnabled() {
+  if (!getConfig().media) {
+    throw new ExpressError('Media features are disabled on this instance', 501);
+  }
+}
+
+router.use((req, res, next) => {
+  ensureMediaIsEnabled();
+  next();
+});
+
 router.get('/', asyncRouteFix(async (req, res) => {
   const { websiteId } = req.params;
   const { search, mime } = req.query;
