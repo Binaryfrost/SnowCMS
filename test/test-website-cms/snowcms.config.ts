@@ -19,7 +19,7 @@ export default defineConfig({
     callbackUrl: process.env.SSO_CALLBACK_URL,
     buttonText: 'Employee SSO Login'
   } : undefined,
-  /*media: {
+  media: {
     // Maximum size of one file
     maxSize: 20971520, // 20 MB (default: 50MB)
     // Per-website maximum storage for all files
@@ -34,7 +34,7 @@ export default defineConfig({
       secretAccessKey: process.env.S3_SECRET_KEY,
       publicUrl: process.env.S3_PUBLIC_URL
     }
-  },*/
+  },
   database: {
     host: '127.0.0.1',
     database: 'snowcms',
