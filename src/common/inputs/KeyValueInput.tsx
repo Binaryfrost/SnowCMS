@@ -98,11 +98,11 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
   },
 
   validate: (stringifiedValue, required, settings) => {
-    if (!stringifiedValue) {
+    if (!stringifiedValue && required) {
       throw new ExpressError('Empty value for Key Value Input');
     }
 
-    const value = input.deserialize(stringifiedValue);
+    const value = input.deserialize(stringifiedValue || '[]');
     if (typeof value !== 'object') {
       throw new ExpressError('Key Value Input must be an object');
     }

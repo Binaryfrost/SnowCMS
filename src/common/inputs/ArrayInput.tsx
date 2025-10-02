@@ -177,7 +177,7 @@ const input: Input<Value, ArrayInputSettings> = {
   },
 
   validate: async (stringifiedValue, required, settings, req) => {
-    if (!stringifiedValue) {
+    if (!stringifiedValue && required) {
       throw new ExpressError('Empty value for Array Input');
     }
 
