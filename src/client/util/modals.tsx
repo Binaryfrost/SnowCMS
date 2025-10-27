@@ -10,6 +10,7 @@ import IconButton from '../components/IconButton';
 import type { Website } from '../../common/types/Website';
 import type { Collection } from '../../common/types/Collection';
 import SelectMedia, { SelectMediaProps } from '../components/SelectMedia';
+import { OpenConfirmModal } from '@mantine/modals/lib/context';
 
 export interface DeleteModalOpts {
   url: string
@@ -119,5 +120,19 @@ export function showSelectMediaModal({ ...props }: SelectMediaProps) {
     size: 'xl',
     modalId: SELECT_MEDIA_MODAL_ID,
     children: <SelectMedia {...props} />
+  });
+}
+
+export enum BlockingConfirmModalResult {
+  CONFIRM,
+  CANCEL
+};
+export function showBlockingConfirmModal({ ... props }: Omit<OpenConfirmModal, 'onCancel' | 'onConfirm'>) {
+  return new Promise((resolve) => {
+    modals.openConfirmModal({
+      ...props,
+      onConfirm: () => resolve(BlockingConfirmModalResult.CONFIRM),
+      onCancel: () => resolve(BlockingConfirmModalResult.CANCEL)
+    });
   });
 }

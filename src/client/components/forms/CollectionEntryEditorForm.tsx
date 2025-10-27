@@ -14,6 +14,7 @@ import IconButton from '../IconButton';
 import { formatDate } from '../../util/data';
 import { useDisclosure } from '@mantine/hooks';
 import { DateTimePicker } from '@mantine/dates';
+import { BlockingConfirmModalResult, showBlockingConfirmModal } from '../../util/modals';
 
 interface Props {
   entryId?: string
@@ -129,17 +130,37 @@ export default function CollectionEntryEditorForm({
      * If draft is false and there is an entryId but no draftId, update that entry.
      */
 
+    if (draftId && !draft) {
+      const confirmResult = await showBlockingConfirmModal({
+        title: 'Publish draft',
+        labels: {
+          confirm: 'Publish',
+          cancel: 'Cancel'
+        },
+        children: 'Are you sure you want to publish this draft? Once published, the Collection Entry will stay published - you can still edit it or create new drafts, but it can\'t be reverted back to a draft without creating a new one and deleting the published Collection Entry.'
+      });
+
+      if (confirmResult !== BlockingConfirmModalResult.CONFIRM) {
+        return;
+      }
+    }
+
     let resp: HttpResponse;
     setSubmitting(true);
 
+    // Save as draft
     if (draft) {
+      // New non-draft entry
       if (!draftId) {
         const url = entryId ? `${draftsApiRoot}?entry=${entryId}` : draftsApiRoot;
         resp = await post(url, formData);
+      // Draft entry
       } else {
         resp = await put(`${draftsApiRoot}/${draftId}`, formData);
       }
+    // Publish
     } else {
+      // Draft not related to an existing entry
       if (draftId && !entryId) {
         resp = await post(addBackdatedTimestamp(entriesApiRoot, backdatedTime), formData);
 
@@ -147,6 +168,7 @@ export default function CollectionEntryEditorForm({
           const delResp = await del(`${draftsApiRoot}/${draftId}`);
           handleFormResponseNotification(delResp);
         }
+      // Draft related to an existing entry
       } else if (draftId && entryId) {
         resp = await patch(`${entriesApiRoot}/${entryId}`, formData);
 
@@ -154,8 +176,10 @@ export default function CollectionEntryEditorForm({
           const delResp = await del(`${draftsApiRoot}/${draftId}`);
           handleFormResponseNotification(delResp);
         }
+      // New entry
       } else if (!entryId && !draftId) {
         resp = await post(addBackdatedTimestamp(entriesApiRoot, backdatedTime), formData);
+      // Existing entry
       } else {
         resp = await patch(`${entriesApiRoot}/${entryId}`, formData);
       }
