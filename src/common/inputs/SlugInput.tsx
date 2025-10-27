@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import {
-  ActionIcon, Checkbox, Code, Input as MantineInput, NumberInput, Stack, TextInput
+  ActionIcon, Code, Input as MantineInput, NumberInput, Select, Stack, TextInput, Tooltip
 } from '@mantine/core';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
@@ -11,38 +11,42 @@ import { IconRefresh } from '@tabler/icons-react';
 import IconButton from '../../client/components/IconButton';
 import { useInputValidator, useSettingsHandler } from './hooks';
 import { useLocation } from 'react-router-dom';
+import DataGetter from '../../client/components/DataGetter';
+import FormSkeleton from '../../client/components/FormSkeleton';
+import { DateTime } from 'luxon';
 
 interface SlugInputSettings {
   fieldName: string
   maxLength: number
   before?: string
+  timezone: string
 }
 
-function populatePlaceholders(str: string) {
+const PLACEHOLDERS = {
+  year: (date: DateTime) => date.year.toString(),
+  month: (date: DateTime) => (date.month).toString().padStart(2, '0'),
+  day: (date: DateTime) => date.day.toString().padStart(2, '0'),
+  hour: (date: DateTime) => date.hour.toString().padStart(2, '0'),
+  minute: (date: DateTime) => date.minute.toString().padStart(2, '0'),
+  second: (date: DateTime) => date.second.toString().padStart(2, '0'),
+};
+
+function containsPlaceholder(value: string) {
+  return Object.keys(PLACEHOLDERS)
+    .filter((placeholder) => value?.includes(`{${placeholder}}`))
+    .length !== 0;
+}
+
+function populatePlaceholders(str: string, timezone: string) {
   if (!str) return '';
 
-  const date = new Date();
+  const date = DateTime.now().setZone(timezone);
   let output = str;
 
-  const placeholders = {
-    year: () => date.getFullYear().toString(),
-    uyear: () => date.getUTCFullYear().toString(),
-    month: () => (date.getMonth() + 1).toString().padStart(2, '0'),
-    umonth: () => (date.getUTCMonth() + 1).toString().padStart(2, '0'),
-    day: () => date.getDate().toString().padStart(2, '0'),
-    uday: () => date.getUTCDate().toString().padStart(2, '0'),
-    hour: () => date.getHours().toString().padStart(2, '0'),
-    uhour: () => date.getUTCHours().toString().padStart(2, '0'),
-    minute: () => date.getMinutes().toString().padStart(2, '0'),
-    uminute: () => date.getUTCMinutes().toString().padStart(2, '0'),
-    second: () => date.getSeconds().toString().padStart(2, '0'),
-    usecond: () => date.getUTCSeconds().toString().padStart(2, '0')
-  };
-
-  for (const placeholder in placeholders) {
-    if (Object.prototype.hasOwnProperty.call(placeholders, placeholder)) {
-      const fn = placeholders[placeholder as keyof typeof placeholders];
-      output = output.replaceAll(`{${placeholder}}`, fn());
+  for (const placeholder in PLACEHOLDERS) {
+    if (Object.prototype.hasOwnProperty.call(PLACEHOLDERS, placeholder)) {
+      const fn = PLACEHOLDERS[placeholder as keyof typeof PLACEHOLDERS];
+      output = output.replaceAll(`{${placeholder}}`, fn(date));
     }
   }
 
@@ -56,6 +60,14 @@ const input: Input<string, SlugInputSettings> = {
 
   serialize: (data) => data,
   deserialize: (data) => data,
+
+  transform: (value, settings) => {
+    if (settings.before) {
+      return populatePlaceholders(value, settings.timezone);
+    }
+
+    return value;
+  },
 
   renderInput: ({
     name, description, value, values, required, settings, onChange, registerValidator, unregisterValidator
@@ -79,14 +91,13 @@ const input: Input<string, SlugInputSettings> = {
     );
 
     const previousValue = useRef('');
-    const prependedValue = useRef(populatePlaceholders(before));
     const isNewEntry = useLocation().pathname.endsWith('/create');
 
     function updateSlug() {
       const dependentFieldValue = values[fieldName];
       if (!dependentFieldValue) return;
 
-      const slugValue = prependedValue.current + slug(dependentFieldValue, {
+      const slugValue = before + slug(dependentFieldValue, {
         fallback: false
       });
 
@@ -100,8 +111,12 @@ const input: Input<string, SlugInputSettings> = {
       if (isNewEntry) updateSlug();
     });
 
+    const descriptionWithPlaceholderTip = `${description}${description?.endsWith('.') ? '' : '.'} Placeholders (e.g. {hour}) will be replaced automatically.`;
+
     return (
-      <TextInput label={name} description={description} required={required}
+      <TextInput label={name}
+        description={containsPlaceholder(value) ? descriptionWithPlaceholderTip : description}
+        required={required}
         maxLength={maxLength > 1 ? maxLength : null} rightSection={!isNewEntry && (
           <IconButton label="Update Slug" role="USER">
             <ActionIcon onClick={updateSlug}>
@@ -116,7 +131,8 @@ const input: Input<string, SlugInputSettings> = {
   defaultSettings: {
     fieldName: '',
     maxLength: 0,
-    before: ''
+    before: '',
+    timezone: 'Etc/UTC'
   },
 
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
@@ -125,7 +141,8 @@ const input: Input<string, SlugInputSettings> = {
     const errors = useInputValidator(
       (v) => ({
         fieldName: !v.fieldName ? 'Field name is required' : null,
-        maxLength: v.maxLength < 0 ? 'Max length must be positive' : null
+        maxLength: v.maxLength < 0 ? 'Max length must be positive' : null,
+        timezone: !v.timezone ? 'Timezone is required' : null
       }),
       registerValidator,
       unregisterValidator
@@ -137,23 +154,30 @@ const input: Input<string, SlugInputSettings> = {
           description="The field name of the input the slug will be generated from" required
           error={errors?.fieldName} value={settings.fieldName}
           onChange={(e) => setSetting('fieldName', e.target.value)} />
+
         <NumberInput label="Max Length" allowDecimal={false}
           description="Set to 0 to disable length limit" required
           error={errors?.maxLength} value={settings.maxLength}
           onChange={(v: number) => setSetting('maxLength', v)} />
+
         <TextInput label="Before"
           description={(
             <MantineInput.Label>
               Value prepended to slug. The following placeholder values are available:&nbsp;
               <Code>{'{year}'}</Code>, <Code>{'{month}'}</Code>, <Code>{'{day}'}</Code>,&nbsp;
-              <Code>{'{hour}'}</Code>, <Code>{'{minute}'}</Code>, <Code>{'{second}'}</Code>&nbsp;
-              (all returned in local time),&nbsp;
-              <Code>{'{uyear}'}</Code>, <Code>{'{umonth}'}</Code>, <Code>{'{uday}'}</Code>,&nbsp;
-              <Code>{'{uhour}'}</Code>, <Code>{'{uminute}'}</Code>, <Code>{'{usecond}'}</Code>&nbsp;
-              (all returned in UTC).
+              <Code>{'{hour}'}</Code>, <Code>{'{minute}'}</Code>, <Code>{'{second}'}</Code>.
             </MantineInput.Label>
           )}
           value={settings.before} onChange={(e) => setSetting('before', e.target.value)} />
+
+        <DataGetter<string[]> url="/api/config/timezones"
+          skeletonComponent={<FormSkeleton inputs={1} withButton={false} />}>
+          {({ data }) => (
+            <Select label="Timezone" description="Placeholder value timezone" data={data}
+              value={settings.timezone} onChange={(v) => setSetting('timezone', v)}
+              searchable required />
+          )}
+        </DataGetter>
       </Stack>
     );
   },

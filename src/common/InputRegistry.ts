@@ -100,6 +100,7 @@ interface VisualOnlyInput<T, S> extends BaseInput<T, S> {
   serialize?: never
   deserialize?: never
   validate?: never
+  transform?: never
 }
 
 interface InputWithValue<T, S> extends BaseInput<T, S> {
@@ -120,6 +121,12 @@ interface InputWithValue<T, S> extends BaseInput<T, S> {
   validate?: (
     serializedValue: string, required: boolean, settings: S | null, req: Request
   ) => void | Promise<void>
+
+  /**
+   * Called server-side after validation before the value is saved into the database.
+   * Must return the serialized value.
+   */
+  transform?: (serializedValue: string, settings: S) => string
 }
 
 type CommonBaseInput<T, S> = VisualOnlyInput<T, S> | InputWithValue<T, S>

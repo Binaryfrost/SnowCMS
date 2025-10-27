@@ -245,12 +245,18 @@ async function prepareData(data: Record<string, string>, collectionId: string,
         req
       );
 
-      if (slug && slug === collectionInputs[key].id && data[key]) {
+      const registryInput = InputRegistry.getInput(collectionInput.input);
+      const originalValue = data[key];
+      const transformedValue = registryInput?.transform?.(
+        originalValue, collectionInput.inputConfig
+      ) ?? originalValue;
+
+      if (slug && slug === collectionInputs[key].id && transformedValue) {
         // eslint-disable-next-line no-await-in-loop
         const duplicateSlug = await db()<CollectionEntryInputs>('collection_entry_inputs')
           .where({
             inputId: slug,
-            data: data[key]
+            data: transformedValue
           })
           .andWhereNot({
             entryId
@@ -264,7 +270,7 @@ async function prepareData(data: Record<string, string>, collectionId: string,
 
       updates.push({
         inputId: collectionInputs[key].id,
-        data: data[key]
+        data: transformedValue
       });
     }
   }

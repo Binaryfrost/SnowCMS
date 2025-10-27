@@ -22,6 +22,7 @@ import collectionEntryDraftsRouter from './routes/collection-entry-drafts';
 import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
+import configRouter from './routes/config';
 import { router as pluginRouter } from './plugins/routes';
 import { initExpressSentry } from './sentry';
 
@@ -121,6 +122,7 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/websites/:websiteId/media', mediaRouter);
   app.use('/api/accounts', accountRouter);
   app.use('/api/login', await loginRouter(config.sso));
+  app.use('/api/config', configRouter);
   app.use('/c', pluginRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {

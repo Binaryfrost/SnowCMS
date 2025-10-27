@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import type { Request, RequestHandler } from 'express';
 import type { Knex } from 'knex';
+import { getAllTimezones } from 'countries-and-timezones';
+import { DateTime, IANAZone } from 'luxon';
 import type { PromiseType } from 'utility-types';
 import { ExpressError } from '../lib';
 import { db } from './database/db';
@@ -115,4 +117,24 @@ export function paginate<T extends Knex.QueryBuilder>(query: T,
     .orderBy(column, sort)
     .limit(limit)
     .offset((page - 1) * limit);
+}
+
+let timezones: string[];
+export function getTimezones() {
+  if (timezones) return timezones;
+
+  const ALL_TIMEZONES = Object.keys(getAllTimezones())
+    .filter(e => e === 'Etc/UTC' || (e.includes('/') && !e.startsWith('Etc/')));
+
+  timezones = ALL_TIMEZONES
+    .filter(e => {
+      if (IANAZone.isValidZone(e)) {
+        return true;
+      }
+
+      console.warn(`Unsupported timezone: ${e}`);  
+    });
+
+  console.log(`Loaded ${timezones.length}/${ALL_TIMEZONES.length} timezones`);
+  return timezones;
 }
