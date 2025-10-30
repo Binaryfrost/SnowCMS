@@ -30,8 +30,11 @@ export default async function init(knex: Knex) {
       table.boolean('backdatingEnabled').defaultTo(false);
 
       table.foreign('websiteId').references('websites.id');
-      table.foreign('title').references('collection_inputs.id');
-      table.foreign('slug').references('collection_inputs.id');
+      /**
+       * The following foreign keys are created after collection_inputs initialization:
+       * title->collection_inputs.id
+       * slug->collection_inputs.id
+       */
     });
   }
 
@@ -49,6 +52,12 @@ export default async function init(knex: Knex) {
       table.boolean('required').notNullable().defaultTo(false);
 
       table.foreign('collectionId').references('collections.id');
+    });
+
+    console.log('Adding collections->collection_inputs references');
+    await knex.schema.alterTable('collections', (table) => {
+      table.foreign('title').references('collection_inputs.id');
+      table.foreign('slug').references('collection_inputs.id');
     });
   }
 
