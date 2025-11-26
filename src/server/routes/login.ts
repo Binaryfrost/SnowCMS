@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcrypt';
 import * as oidcClient from 'openid-client';
 import { v7 as uuid } from 'uuid';
+import useragent from 'useragent';
 import { db } from '../database/db';
 import { asyncRouteFix, decrypt, encrypt, getAuthToken } from '../util';
 import ExpressError from '../../common/ExpressError';
@@ -12,6 +13,9 @@ import { redis } from '../database/redis';
 import { NormalizedConfig } from '../../config';
 import { getConfig } from '../config/config';
 import { Session, getSession, getUser } from '../database/util';
+import * as smtp from '../email/smtp';
+import { renderEmailTemplate } from '../email/templates/render';
+import type { PasswordResetTemplate } from '../email/templates/password-reset';
 
 export default async function loginRouter(sso?: NormalizedConfig['sso']) {
   const router = express.Router();
@@ -46,6 +50,16 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
     return await redis().getDel(`sso:${ssoToken}`);
   }
 
+  async function getActiveUserIfExists(email: string) {
+    return await db()<DatabaseUser>('users')
+      .select('id', 'email', 'password', 'role', 'active')
+      .where({
+        email,
+        active: true
+      })
+      .first();
+  }
+
   router.post('/', asyncRouteFix(async (req, res) => {
     if (sso?.forceSso) {
       throw new ExpressError('Local accounts are disabled');
@@ -57,12 +71,7 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
       throw new ExpressError('Email and password are required');
     }
 
-    const user = await db()<DatabaseUser>('users')
-      .select('id', 'email', 'password', 'role', 'active')
-      .where({
-        email
-      })
-      .first();
+    const user = await getActiveUserIfExists(email);
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new ExpressError('Email or password incorrect');
@@ -81,7 +90,8 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
         enabled: !!sso,
         forced: sso?.forceSso || false,
         text: sso?.buttonText || 'Log in with SSO'
-      }
+      },
+      smtp: smtp.isEnabled()
     };
 
     res.json(loginConfig);
@@ -254,6 +264,105 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
 
     res.json({
       token
+    });
+  }));
+
+  router.use('/password-reset', (req, res, next) => {
+    if (!smtp.isEnabled() || getConfig().sso?.forceSso) throw new ExpressError('Password resets are disabled');
+    next();
+  });
+
+  router.get('/password-reset/:token', asyncRouteFix(async (req, res) => {
+    const { token } = req.params;
+    const key = `password-reset:${token}`;
+
+    const exists = await redis().EXISTS(key)
+
+    if (!exists) {
+      throw new ExpressError('Password reset token expired', 403);
+    }
+
+    await redis().EXPIRE(key, 5 * 60, 'GT');
+
+    res.status(204).end();
+  }));
+
+  router.post('/password-reset/:token', asyncRouteFix(async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    const key = `password-reset:${token}`;
+
+    if (!password) {
+      throw new ExpressError('Password is required');
+    }
+
+    const userId = await redis().GET(key);
+
+    if (!userId) {
+      throw new ExpressError('Password reset token expired', 403);
+    }
+
+    await db<DatabaseUser>()('users')
+      .update({
+        password: await bcrypt.hash(password, 10)
+      })
+      .where({
+        id: userId,
+        active: true
+      });
+
+    await redis().DEL(key);
+
+    res.json({
+      message: 'Password reset'
+    });
+  }));
+
+  function parseUserAgent(userAgent: string): { browser: string, os: string } {
+    const agent = useragent.parse(userAgent);
+    return {
+      browser: agent.toAgent() || 'Unknown',
+      os: agent.os.toString() || 'Unknown'
+    };
+  }
+
+  router.post('/password-reset', asyncRouteFix(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new ExpressError('Email is required');
+    }
+
+    const user = await getActiveUserIfExists(email);
+
+    if (user) {
+      const token = randomBytes(32).toString('base64url');
+      await redis().SET(`password-reset:${token}`, user.id, {
+        EX: 15 * 60
+      });
+
+      const { instanceRootUrl } = getConfig();
+      const { browser, os } = parseUserAgent(req.headers['user-agent']);
+
+      const { text, html } = await renderEmailTemplate<PasswordResetTemplate>('password-reset', {
+        email,
+        instance_url: instanceRootUrl,
+        ip_address: req.ip.replace(/^::ffff:/, ''),
+        browser,
+        os,
+        reset_link: new URL(`/login/password-reset#${token}`, instanceRootUrl).href
+      });
+
+      await smtp.send({
+        to: email,
+        subject: 'SnowCMS Password Reset',
+        html,
+        text
+      });
+    }
+
+    res.json({
+      message: 'A password link has been sent to the email, if the account exists'
     });
   }));
 

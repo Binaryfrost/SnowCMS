@@ -5,7 +5,7 @@ import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
-import { exists } from './util.js';
+import { exists } from '../util.js';
 
 /**
  * @callback WebpackFunction
@@ -136,7 +136,10 @@ export async function getWebpackServerConfig(opts) {
       '@aws-sdk/client-s3',
       '@aws-sdk/s3-request-presigner',
       'redis',
-      '@sentry/node'
+      '@sentry/node',
+      'nodemailer',
+      'mjml',
+      'useragent'
     ],
     plugins: [
       ...baseConfig.plugins,
@@ -144,6 +147,12 @@ export async function getWebpackServerConfig(opts) {
         patterns: [{
           from: path.join(opts.cmsSrcDir, 'src', 'cli', 'server-package.json'),
           to: 'package.json'
+        }, {
+          from: '**/*.ejs', //path.join(opts.cmsSrcDir, 'src', 'server', 'email', 'templates', '**', '*.ejs')
+            // Only forward slashes are supported in glob syntax
+            //.replaceAll('\\', '/'),
+          to: 'email',
+          context: path.join(opts.cmsSrcDir, 'src', 'server', 'email', 'templates')
         }]
       })
     ]

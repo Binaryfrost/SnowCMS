@@ -45,5 +45,18 @@ export default defineConfig({
     socket: {
       host: '127.0.0.1'
     }
-  }
+  },
+  smtp: process.env.SMTP_HOST ? {
+    from: process.env.SMTP_FROM,
+    server: {
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT),
+      secure: false,
+      auth: process.env.SMTP_USER ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      } : undefined
+    }
+  } : undefined,
+  instanceRootUrl: process.env.INSTANCE_ROOT_URL || 'http://localhost:3080'
 });

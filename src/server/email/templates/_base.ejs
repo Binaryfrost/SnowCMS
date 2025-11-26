@@ -1,0 +1,24 @@
+<mjml>
+  <mj-head>
+    <mj-attributes>
+      <mj-button background-color="#22c3d3" font-weight="bold" />
+      <mj-divider border-color="#22c3d3" />
+      <mj-all font-family="Helvetica, Arial, sans-serif" font-size="16px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+
+        <mj-image width="200px" src="<%= logo_url %>"></mj-image>
+
+        <mj-divider />
+
+        <mj-text font-size="20px">Hi <%= email %>,</mj-text>
+
+        <%- body %>
+
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

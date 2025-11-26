@@ -1,7 +1,7 @@
 import initSentry from './sentry'
 import type { NormalizedConfig } from '../config';
 import setup from '../common/setup';
-import { verifyNodeVersion } from '../version';
+import { verifyNodeVersion } from '../util';
 
 verifyNodeVersion();
 

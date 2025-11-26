@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { fork } from 'child_process';
 import { getWebpackClientConfig, getWebpackServerConfig } from '../webpack.js';
-import { exists } from '../util.js';
+import { exists } from '../../util.js';
 
 /** @param {import('../webpack').WebpackOptions} opts */
 export async function run(opts) {

@@ -48,5 +48,6 @@ export interface LoginConfig {
     enabled: boolean
     forced: boolean,
     text: string
-  }
+  },
+  smtp: boolean
 }

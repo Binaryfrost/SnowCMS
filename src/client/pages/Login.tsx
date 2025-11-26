@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActionFunctionArgs, Form, useActionData, useNavigate } from 'react-router-dom';
+import { ActionFunctionArgs, Form, Link, useActionData, useNavigate } from 'react-router-dom';
 import { Anchor, Box, Button, Divider, Flex, Group, Loader, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { UseFormReturnType, useForm } from '@mantine/form';
 import { nprogress } from '@mantine/nprogress';
@@ -45,13 +45,15 @@ function LoginForm({ config, form, submitting } : LoginFormProps) {
         <PasswordInput label="Password" name="password" required {...form.getInputProps('password')}
           key={form.key('password')} />
 
-        <Anchor component="span" fz="xs" style={{
-          userSelect: 'none'
-        }} onClick={() => openModal({
-          title: 'Forgot password',
-          children: 'If you have forgotten your password, contact the administrator of this SnowCMS instance.',
-          centered: true
-        })}>Forgot password</Anchor>
+        <Anchor
+          component={config.smtp ? Link : 'span'}
+          to={'/login/password-reset'}
+          onClick={!config.smtp ? () => openModal({
+            title: 'Forgot password',
+            children: 'If you have forgotten your password, contact the administrator of this SnowCMS instance.',
+            centered: true
+          }) : undefined}
+        >Forgot password</Anchor>
       </Box>
 
       <Group>

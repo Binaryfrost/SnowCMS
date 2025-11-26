@@ -1,14 +1,5 @@
 import path from 'path';
-import fs from 'fs/promises';
-
-export async function exists(f) {
-  try {
-    await fs.stat(f);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { exists } from '../util.js';
 
 export async function findPackageRoot(dir, skipNodeModules = false) {
   const packageJson = path.join(dir, 'package.json');

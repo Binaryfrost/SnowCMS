@@ -5,6 +5,7 @@ import type { Role } from './common/types/User';
 import { Input } from './common/InputRegistry';
 import { Hooks } from './server/plugins/hooks';
 import { Route } from './server/plugins/routes';
+import type SMTPConnection from 'nodemailer/lib/smtp-connection';
 
 interface Config {
   /**
@@ -70,7 +71,12 @@ interface Config {
     password: string
   },
   redis: RedisClientOptions,
-  trustProxy?: any
+  trustProxy?: any,
+  smtp?: {
+    from: string
+    server: SMTPConnection.Options
+  },
+  instanceRootUrl: string
 }
 
 /*
@@ -84,7 +90,7 @@ export interface PluginConfig<T> {
 }
 
 type DeepRequiredExcept<T, K extends keyof T> = DeepRequired<Omit<T, K>> & Pick<T, K>
-export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis' | 'media'>
+export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis' | 'media' | 'smtp'>
 
 export const defineConfig = (config: Config): NormalizedConfig => ({
   ...config,

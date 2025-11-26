@@ -13,6 +13,8 @@ import { UserWithWebsites } from '../common/types/User';
 import { ROLE_HIERARCHY } from '../common/users';
 import ExpressError from '../common/ExpressError';
 import { loadPlugins } from './plugins/plugins';
+import { initExpressSentry } from './sentry';
+import { initSmtp } from './email/smtp';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
@@ -23,8 +25,8 @@ import mediaRouter from './routes/media';
 import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
 import configRouter from './routes/config';
+import assetRouter from './routes/assets';
 import { router as pluginRouter } from './plugins/routes';
-import { initExpressSentry } from './sentry';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -123,6 +125,7 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/accounts', accountRouter);
   app.use('/api/login', await loginRouter(config.sso));
   app.use('/api/config', configRouter);
+  app.use('/api/assets', assetRouter);
   app.use('/c', pluginRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
@@ -191,6 +194,7 @@ export async function start(config: NormalizedConfig) {
   });
 
   initExpressSentry(app);
+  initSmtp();
 
   // Express expects error handling middleware to have 4 arguments
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

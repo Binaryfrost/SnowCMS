@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { exists, findPackageRoot } from './util.js';
+import { findPackageRoot } from './util.js';
+import { exists } from '../util.js';
 import * as BuildCommand from './commands/build.js';
 import * as DevCommand from './commands/dev.js';
-import { verifyNodeVersion } from '../version.js';
+import { verifyNodeVersion } from '../util.js';
 
 const command = process.argv.slice(2)[0];
 

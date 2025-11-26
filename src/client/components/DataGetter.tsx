@@ -96,8 +96,8 @@ function MultipleDataGetter<T extends any[]>(props: MultipleDataGetterProps<T>) 
       props.paginate && i === 0 ? `${url}?${stringifiedParams}` : url
     )))
       .then((resp) => {
-        if (resp.some((r) => r.status !== 200)) {
-          throw new Error(resp.filter((r) => r.status !== 200)[0].body.error);
+        if (resp.some((r) => r.status >= 400)) {
+          throw new Error(resp.filter((r) => r.status >= 400)[0].body.error);
         }
 
         // @ts-ignore
@@ -142,7 +142,7 @@ function AllPagesDataGetter<T>(props: AllPagesDataGetterProps<T>) {
     });
 
     const resp = await get<PaginatedResponse<T>>(`${route}?${stringifiedParams}`);
-    if (resp.status !== 200) {
+    if (resp.status >= 400) {
       throw new Error(resp.body.error || 'An error occurred');
     }
 

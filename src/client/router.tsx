@@ -14,6 +14,9 @@ export const router = createBrowserRouter([{
     path: '/login',
     lazy: () => import('./pages/Login')
   }, {
+    path: '/login/password-reset',
+    lazy: () => import('./pages/PasswordReset')
+  }, {
     path: '/logout',
     element: <Logout />
   }]
