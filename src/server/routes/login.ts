@@ -321,8 +321,8 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
   function parseUserAgent(userAgent: string): { browser: string, os: string } {
     const agent = useragent.parse(userAgent);
     return {
-      browser: agent.toAgent() || 'Unknown',
-      os: agent.os.toString() || 'Unknown'
+      browser: agent.family || 'Unknown',
+      os: agent.os.family || 'Unknown'
     };
   }
 
