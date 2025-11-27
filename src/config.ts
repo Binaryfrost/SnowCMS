@@ -104,7 +104,7 @@ export const defineConfig = (config: Config): NormalizedConfig => ({
     ...config.database,
     port: config.database.port || 3306
   },
-  trustProxy: false
+  trustProxy: config.trustProxy || false
 });
 
 // To provide types in config file

@@ -58,5 +58,6 @@ export default defineConfig({
       } : undefined
     }
   } : undefined,
+  trustProxy: true,
   instanceRootUrl: process.env.INSTANCE_ROOT_URL || 'http://localhost:3080'
 });
