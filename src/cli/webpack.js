@@ -148,9 +148,7 @@ export async function getWebpackServerConfig(opts) {
           from: path.join(opts.cmsSrcDir, 'src', 'cli', 'server-package.json'),
           to: 'package.json'
         }, {
-          from: '**/*.ejs', //path.join(opts.cmsSrcDir, 'src', 'server', 'email', 'templates', '**', '*.ejs')
-            // Only forward slashes are supported in glob syntax
-            //.replaceAll('\\', '/'),
+          from: '**/*.ejs',
           to: 'email',
           context: path.join(opts.cmsSrcDir, 'src', 'server', 'email', 'templates')
         }]
