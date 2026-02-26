@@ -1,7 +1,6 @@
 import express from 'express';
 import { v7 as uuid } from 'uuid';
 import { basename, extname } from 'path';
-import { createHmac } from 'crypto';
 import slug from 'slug';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -11,7 +10,7 @@ import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { getConfig } from '../config/config';
 import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig, MediaWithUrls } from '../../common/types/Media';
-import { asyncRouteFix, hmac, paginate, pagination } from '../util';
+import { asyncRouteFix, hmac, paginate, pagination, secureEquals } from '../util';
 import { BLOCKED_MIME_TYPES } from '../../common/blocked-mime-types';
 import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
@@ -314,7 +313,7 @@ router.post('/upload/confirm', asyncRouteFix(async (req, res) => {
 
   const h = hmac(secret, id, name, s3Name, size, type, thumbFileName);
 
-  if (h !== confirmationHmac) {
+  if (!secureEquals(h, confirmationHmac)) {
     throw new ExpressError('Invalid HMAC for file upload');
   }
 
