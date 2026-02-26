@@ -140,8 +140,6 @@ const input: Input<string, MediaInputSettings> = {
   },
 
   validate: async (stringifiedValue, required, settings, req) => {
-    console.log('media input');
-
     if (required && !stringifiedValue) {
       throw new ExpressError('Required Media Input does not have a value');
     }
