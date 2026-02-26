@@ -10,7 +10,7 @@ import DataGetter from '../components/DataGetter';
 import { LoginConfig } from '../../common/types/User';
 import FormSkeleton from '../components/FormSkeleton';
 import { formDataToObject, onSubmit } from '../util/form';
-import { HttpResponse, post } from '../util/api';
+import { HttpResponse, get, post } from '../util/api';
 import DarkModeToggle from '../components/DarkModeToggle';
 import Hidden from '../components/Hidden';
 
@@ -113,19 +113,14 @@ export function Component() {
   useEffect(() => {
     nprogress.complete();
 
-    if (ssoToken) {
-      post('/api/login/sso/token', { ssoToken }, { noRedirectOn401: true }).then((resp) => {
-        if (resp.status !== 200) {
-          setError(resp.body.error || 'An error occurred');
-          return;
-        }
-
-        localStorage.setItem('token', resp.body.token);
+    setSubmitting(true);
+    get('/api/accounts/me').then((resp) => {
+      if (resp.status === 200) {
         redirectAfterLogin();
-      });
-    } else if (localStorage.getItem('token')) {
-      redirectAfterLogin();
-    }
+      }
+    }).finally(() => {
+      setSubmitting(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -135,7 +130,6 @@ export function Component() {
       if (actionData.status !== 200) {
         setError(actionData.body.error || 'An error occurred');
       } else {
-        localStorage.setItem('token', actionData.body.token);
         redirectAfterLogin();
       }
     }
@@ -159,27 +153,15 @@ export function Component() {
                 {error && (
                   <Stack>
                     <Text ta="center" c="red">{error}</Text>
-                    {ssoToken && (
-                      <Button component="a" href="/login">Retry</Button>
-                    )}
                   </Stack>
                 )}
 
-                {ssoToken ? (
-                  <Hidden hidden={error}>
-                    <Group justify="center">
-                      <Loader />
-                      <Text size="lg">Logging you in...</Text>
-                    </Group>
-                  </Hidden>
-                ) : (
-                  <DataGetter<LoginConfig> url="/api/login/config"
-                    skeletonComponent={<FormSkeleton inputs={2} />}>
-                    {(config) => (
-                      <LoginForm config={config.data} form={form} submitting={submitting} />
-                    )}
-                  </DataGetter>
-                )}
+                <DataGetter<LoginConfig> url="/api/login/config"
+                  skeletonComponent={<FormSkeleton inputs={2} />}>
+                  {(config) => (
+                    <LoginForm config={config.data} form={form} submitting={submitting} />
+                  )}
+                </DataGetter>
               </Stack>
             </Form>
           </Paper>
@@ -190,7 +172,5 @@ export function Component() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  return post('/api/login', await formDataToObject(request), {
-    noRedirectOn401: true
-  });
+  return post('/api/login', await formDataToObject(request));
 }

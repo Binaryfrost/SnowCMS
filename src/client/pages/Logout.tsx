@@ -9,7 +9,6 @@ export default function Logout() {
         throw new Error(resp.body.error || 'An error occurred');
       }
 
-      localStorage.removeItem('token');
       location.href = resp.body.redirect || '/login';
     }).catch(alert);
   }, []);

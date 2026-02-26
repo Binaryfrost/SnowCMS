@@ -11,7 +11,7 @@ import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { getConfig } from '../config/config';
 import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, MediaConfig, MediaWithUrls } from '../../common/types/Media';
-import { asyncRouteFix, paginate, pagination } from '../util';
+import { asyncRouteFix, hmac, paginate, pagination } from '../util';
 import { BLOCKED_MIME_TYPES } from '../../common/blocked-mime-types';
 import { callHook } from '../plugins/hooks';
 import ExpressError from '../../common/ExpressError';
@@ -74,12 +74,6 @@ function getUrlTimePart() {
   const month = date.getUTCMonth() + 1;
 
   return `${year}/${month.toString().padStart(2, '0')}`;
-}
-
-function hmac(secret: string, ...data: any[]) {
-  const h = createHmac('sha256', secret);
-  h.update(data.join('.'));
-  return h.digest().toString('hex');
 }
 
 function ensureMediaIsEnabled() {

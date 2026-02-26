@@ -19,6 +19,7 @@ export function handleFormResponseNotification(resp: HttpResponse) {
       message: resp.body.message
     });
   } else {
+    console.log('form response error', resp);
     notifications.show({
       message: resp.body.error || 'An error occurred',
       color: 'red'

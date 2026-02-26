@@ -1,8 +1,7 @@
-interface Opts {
-  noRedirectOn401?: boolean
-}
+import { CSRF_COOKIE, CSRF_HEADER, CSRF_METHODS } from '../../common/constants'
+import Cookies from 'js-cookie';
 
-interface RequestBase extends Opts {
+interface RequestBase {
   route: string
 }
 
@@ -28,8 +27,10 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
     Accept: 'application/json'
   };
 
-  const token = localStorage.getItem('token');
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (CSRF_METHODS.includes(opts.method)) {
+    const csrfToken = Cookies.get(CSRF_COOKIE);
+    headers[CSRF_HEADER] = csrfToken;
+  }
 
   let serializedData: string;
 
@@ -50,15 +51,11 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
     body: serializedData
   });
 
-  if (resp.status === 401 && !opts.noRedirectOn401) {
+  if (resp.status === 401 && !location.pathname.startsWith('/login')) {
     localStorage.setItem('redirect', location.pathname);
-    localStorage.removeItem('token');
     location.href = '/login';
-    return {
-      status: 401,
-      body: null
-    };
   }
+
 
   const respData = await resp.text();
   return {
@@ -67,46 +64,41 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
   };
 }
 
-export async function get<T = any>(route: string, opts?: Opts) {
+export async function get<T = any>(route: string) {
   return request<T>({
     method: 'GET',
-    route,
-    ...opts
+    route
   });
 }
 
-export async function post<T = any>(route: string, data: FormData | object, opts?: Opts) {
+export async function post<T = any>(route: string, data: FormData | object) {
   return request<T>({
     method: 'POST',
     route,
-    data,
-    ...opts
+    data
   });
 }
 
-export async function patch<T = any>(route: string, data: FormData | object, opts?: Opts) {
+export async function patch<T = any>(route: string, data: FormData | object) {
   return request<T>({
     method: 'PATCH',
     route,
-    data,
-    ...opts
+    data
   });
 }
 
-export async function put<T = any>(route: string, data: FormData | object, opts?: Opts) {
+export async function put<T = any>(route: string, data: FormData | object) {
   return request<T>({
     method: 'PUT',
     route,
-    data,
-    ...opts
+    data
   });
 }
 
-export async function del<T = any>(route: string, opts?: Opts) {
+export async function del<T = any>(route: string) {
   return request<T>({
     method: 'DELETE',
-    route,
-    ...opts
+    route
   });
 }
 

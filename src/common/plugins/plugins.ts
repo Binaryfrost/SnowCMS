@@ -49,7 +49,7 @@ export function loadPlugins<T>(config: PluginConfig<T>, type: PluginTypes,
 
 type Fn = ({ websiteId, collectionId }: { websiteId: string, collectionId: string }) => string;
 
-// It isn't ideal, but it works.
+// It isn't ideal, but it works. This is temporary and will be removed in a future version.
 /**
  * As Inputs are shared between the server and client, attempting to access the database
  * directly breaks the build. To get around that, use this function to send an HTTP request to server
@@ -67,16 +67,21 @@ type Fn = ({ websiteId, collectionId }: { websiteId: string, collectionId: strin
  */
 export async function serverInputFetch(req: Request, fn: Fn) {
   const { websiteId, collectionId } = req.params;
-  const { authorization } = req.headers;
+  const { authorization, cookie } = req.headers;
   const port = req.socket.localPort;
 
   const apiPath = fn({ websiteId, collectionId });
   const url = new URL(apiPath, `http://localhost:${port}`);
 
+  const headers = new Headers();
+  if (authorization) {
+    headers.append('authorization', authorization);
+  } else if (cookie) {
+    headers.append('cookie', cookie);
+  }
+
   return fetch(url, {
-    headers: {
-      authorization
-    }
+    headers
   });
 }
 

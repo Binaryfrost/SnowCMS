@@ -17,14 +17,9 @@ export default function UserProvider({ children }: Props) {
   async function refresh() {
     setLoading(true);
 
-    try {
-      const resp = await get<UserWithWebsites>('/api/accounts/me');
-      if (resp.status === 200) {
-        setUser(resp.body);
-      } else {
-        navigate('/login');
-      }
-    } finally {
+    const resp = await get<UserWithWebsites>('/api/accounts/me');
+    if (resp.status === 200) {
+      setUser(resp.body);
       setLoading(false);
     }
   }

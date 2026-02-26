@@ -1,5 +1,6 @@
 import express from 'express';
 import type { ServeStaticOptions } from 'serve-static';
+import cookieParser from 'cookie-parser';
 import { type NormalizedConfig } from '../config';
 import { callHook } from './plugins/hooks';
 import devServer from './dev-server';
@@ -27,6 +28,8 @@ import loginRouter from './routes/login';
 import configRouter from './routes/config';
 import assetRouter from './routes/assets';
 import { router as pluginRouter } from './plugins/routes';
+import { CsrfCookie, SessionCookie } from './cookie';
+import { CSRF_HEADER, CSRF_METHODS } from '../common/constants';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -54,6 +57,8 @@ export async function start(config: NormalizedConfig) {
     }
     next();
   });
+
+  app.use(cookieParser());
 
   const cacheConfig: ServeStaticOptions = __SNOWCMS_IS_PRODUCTION__ ? {
     maxAge: '30d',
@@ -111,6 +116,41 @@ export async function start(config: NormalizedConfig) {
     const user = await getAuthedUser(token);
     if (user && user.active) {
       req.user = user;
+      req.sessionCookie = !req.headers.authorization ?
+        SessionCookie.fromReadOnly(SessionCookie.get(req)) : null;
+    }
+
+    next();
+  }));
+
+  app.use(asyncRouteFix(async (req, res, next) => {
+    const CHECK_PREFIXES = ['/api', '/c'];
+    const BYPASS_PREFIXES = ['/api/login'];
+
+    if (!CHECK_PREFIXES.some((e) => req.url.startsWith(e))) return next();
+    if (BYPASS_PREFIXES.some((e) => req.url.startsWith(e))) return next();
+
+    if (CSRF_METHODS.includes(req.method)) {
+      const sessionCookie = req.sessionCookie;
+      const sessionId = sessionCookie?.getData();
+      // Authenticated with API key
+      if (!sessionId) return next();
+      
+      const csrfToken = req.header(CSRF_HEADER);
+      if (!csrfToken) {
+        throw new ExpressError('CSRF token error: No token provided');
+      }
+
+      const csrfCookie = CsrfCookie.get(req);
+      if (!csrfCookie) {
+        sessionCookie.setCsrfCookie(res);
+        throw new ExpressError('CSRF token error: No CSRF cookie');
+      }
+
+      if (!csrfCookie.verify(sessionId, csrfToken)) {
+        sessionCookie.setCsrfCookie(res);
+        throw new ExpressError('CSRF token error: Token mismatch');
+      }
     }
 
     next();
