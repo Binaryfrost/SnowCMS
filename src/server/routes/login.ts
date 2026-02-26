@@ -227,6 +227,8 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
           id,
           email,
           active: true,
+          // TODO: Set null password for SSO-created accounts. Require user to set
+          // password through the dashboard to utilize password login.
           password: await bcrypt.hash(randomBytes(32).toString('base64url'), 10),
           role: sso.defaultRole || 'USER'
         });

@@ -133,7 +133,7 @@ export async function start(config: NormalizedConfig) {
     if (CSRF_METHODS.includes(req.method)) {
       const sessionCookie = req.sessionCookie;
       const sessionId = sessionCookie?.getData();
-      // Authenticated with API key
+      // Authenticated with API key or unauthenticated which will be caught by in-route auth check
       if (!sessionId) return next();
       
       const csrfToken = req.header(CSRF_HEADER);
