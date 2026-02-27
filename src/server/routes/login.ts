@@ -285,10 +285,11 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
   }));
 
   function parseUserAgent(userAgent: string): { browser: string, os: string } {
-    const agent = useragent.parse(userAgent);
+    // Workaround for CVE-2020-26311
+    const agent = userAgent.length <= 255 ? useragent.parse(userAgent) : null;
     return {
-      browser: agent.family || 'Unknown',
-      os: agent.os.family || 'Unknown'
+      browser: agent?.family || 'Unknown',
+      os: agent?.os.family || 'Unknown'
     };
   }
 
