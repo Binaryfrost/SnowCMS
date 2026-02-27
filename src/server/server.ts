@@ -113,6 +113,11 @@ export async function start(config: NormalizedConfig) {
 
   app.use(asyncRouteFix(async (req, res, next) => {
     const token = getAuthToken(req);
+    // If a session cookie exists, but is invalid, remove it.
+    if (!token && req.cookies[SessionCookie.COOKIE_NAME]) {
+      SessionCookie.clearCookie(res);
+    }
+
     const user = await getAuthedUser(token);
     if (user && user.active) {
       req.user = user;

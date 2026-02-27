@@ -41,14 +41,6 @@ export class ReadOnlyCookie {
   }
 }
 
-export const DEFAULT_OPTS: CookieOpts = Object.freeze({
-  // Allow HTTP access over LAN during development
-  secure: __SNOWCMS_IS_PRODUCTION__ ? true : false,
-  httpOnly: true,
-  // 24 hours
-  maxAge: 24 * 60 * 60 * 1000
-});
-
 /**
  * A cookie that is, by default:
  * - HTTP Only
@@ -62,11 +54,13 @@ export const DEFAULT_OPTS: CookieOpts = Object.freeze({
  * - `hmac`: HMAC of name, IV, and encrypted data
  */
 export default class Cookie extends ReadOnlyCookie {
-  protected static readonly ENCRYPT_ALGORITHM = 'aes-256-cbc';
-  protected secure: boolean = DEFAULT_OPTS.secure;
-  protected httpOnly: boolean = DEFAULT_OPTS.httpOnly;
-  protected maxAge: number = DEFAULT_OPTS.maxAge;
-  protected encrypted = true;
+  private static readonly ENCRYPT_ALGORITHM = 'aes-256-cbc';
+  private static DEFAULT_OPTS: Readonly<CookieOpts>;
+  private encrypted = true;
+  // The defaults for these are taken from DEFAULT_OPTS after initialization
+  private secure: boolean;
+  private httpOnly: boolean;
+  private maxAge: number;
 
   /**
    * Creates a new encrypted cookie
@@ -75,6 +69,11 @@ export default class Cookie extends ReadOnlyCookie {
    */
   constructor(name: string, data: string) {
     super(name, data);
+    if (!Cookie.DEFAULT_OPTS) Cookie.initDefaultOpts();
+    const { secure, httpOnly, maxAge } = Cookie.DEFAULT_OPTS;
+    this.secure = secure;
+    this.httpOnly = httpOnly;
+    this.maxAge = maxAge;
   }
 
   /**
@@ -85,10 +84,24 @@ export default class Cookie extends ReadOnlyCookie {
   }
 
   /**
+   * Returns whether this cookie will only be usable with HTTPS.
+   */
+  isSecure() {
+    return this.secure;
+  }
+
+  /**
    * Flags the cookie to be accessible only by the web server.
    */
   setHttpOnly(httpOnly: boolean) {
     this.httpOnly = httpOnly;
+  }
+
+  /**
+   * Returns whether this cookie is only accessible by the web server.
+   */
+  isHttpOnly() {
+    return this.httpOnly;
   }
 
   /**
@@ -100,10 +113,24 @@ export default class Cookie extends ReadOnlyCookie {
   }
 
   /**
-   * Sets whether this cookie should be encrypted
+   * Returns the expiry time relative to the current time, in milliseconds.
+   */
+  getMaxAge() {
+    return this.maxAge;
+  }
+
+  /**
+   * Sets whether this cookie should be encrypted.
    */
   setEncrypted(encrypted: boolean) {
     this.encrypted = encrypted;
+  }
+
+  /**
+   * Returns whether this cookie is encrypted.
+   */
+  isEncrypted() {
+    return this.encrypted;
   }
 
   /**
@@ -177,6 +204,14 @@ export default class Cookie extends ReadOnlyCookie {
     return new Cookie(cookie.getName(), cookie.getData());
   }
 
+  /**
+   * Returns the default cookie options.
+   */
+  static getDefaultOpts() {
+    if (!Cookie.DEFAULT_OPTS) this.initDefaultOpts();
+    return Cookie.DEFAULT_OPTS;
+  }
+
   private static deriveKeyFromSecret(secret: string) {
     return Buffer.from(
       crypto.createHash('sha256')
@@ -232,6 +267,19 @@ export default class Cookie extends ReadOnlyCookie {
     return hmac(secret, name, iv, enc);
   }
 
+  // getConfig() is not available at the time modules are imported,
+  // so we initialize the default cookie options this way instead
+  private static initDefaultOpts() {
+    Cookie.DEFAULT_OPTS = Object.freeze<CookieOpts>({
+      // Allow HTTP access over LAN during development
+      secure: __SNOWCMS_IS_PRODUCTION__ &&
+        getConfig().instanceRootUrl.startsWith('https://') ? true : false,
+      httpOnly: true,
+      // 24 hours
+      maxAge: 24 * 60 * 60 * 1000
+    });
+  }
+
   private getCookieOpts(): CookieOpts {
     return {
       secure: this.secure,
@@ -246,7 +294,7 @@ export default class Cookie extends ReadOnlyCookie {
  * By default, valid for 24 hours.
  */
 export class SessionCookie extends Cookie {
-  private static readonly COOKIE_NAME = 'snowcms_session';
+  public static readonly COOKIE_NAME = 'snowcms_session';
 
   /**
    * Creates a new session cookie with the given session ID
@@ -274,7 +322,7 @@ export class SessionCookie extends Cookie {
   }
 
   static override clearCookie(res: Response) {
-    super.clearCookie(res, this.COOKIE_NAME, DEFAULT_OPTS);
+    super.clearCookie(res, this.COOKIE_NAME, Cookie.getDefaultOpts());
     CsrfCookie.clearCookie(res);
   }
 
@@ -303,7 +351,7 @@ export class SsoStateCookie extends Cookie {
   }
 
   static override clearCookie(res: Response) {
-    super.clearCookie(res, this.COOKIE_NAME, DEFAULT_OPTS);
+    super.clearCookie(res, this.COOKIE_NAME, Cookie.getDefaultOpts());
   }
 
   static override get(req: Request) {
@@ -371,7 +419,7 @@ export class CsrfCookie extends Cookie {
 
   static override clearCookie(res: Response) {
     super.clearCookie(res, CSRF_COOKIE, {
-      ...DEFAULT_OPTS,
+      ...Cookie.getDefaultOpts(),
       httpOnly: false
     });
   }
