@@ -78,7 +78,7 @@
     "@vercel/nft": "^0.27.4",
     "autoprefixer": "^10.4.20",
     "babel-loader": "^9.2.1",
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "copy-webpack-plugin": "^12.0.2",
     "countries-and-timezones": "^3.8.0",
@@ -132,5 +132,10 @@
     "eslint-plugin-jsx-a11y": "^6.5.1",
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0"
+  },
+  "overrides": {
+    "html-minifier": "npm:html-minifier-next@4.19.1",
+    "fast-xml-parser": "5.3.8",
+    "tmp": "0.2.4"
   }
 }
