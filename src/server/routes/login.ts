@@ -40,12 +40,6 @@ export default async function loginRouter(sso?: NormalizedConfig['sso']) {
     await redis().del(`session:${token}`);
   }
 
-  async function createSsoToken(sessionToken: string) {
-    const ssoToken = randomBytes(32).toString('base64url');
-    await redis().set(`sso:${ssoToken}`, sessionToken, { EX: 120 });
-    return ssoToken;
-  }
-
   async function getActiveUserIfExists(email: string) {
     return await db()<DatabaseUser>('users')
       .select('id', 'email', 'password', 'role', 'active')
