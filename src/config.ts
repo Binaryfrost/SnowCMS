@@ -6,6 +6,7 @@ import { Input } from './common/InputRegistry';
 import { Hooks } from './server/plugins/hooks';
 import { Route } from './server/plugins/routes';
 import type SMTPConnection from 'nodemailer/lib/smtp-connection';
+import type { UnsafeIp } from './server/ssrf';
 
 interface Config {
   /**
@@ -76,7 +77,13 @@ interface Config {
     from: string
     server: SMTPConnection.Options
   },
-  instanceRootUrl: string
+  instanceRootUrl: string,
+  security?: {
+    ssrf?: {
+      enabled: boolean,
+      additional?: UnsafeIp[]
+    }
+  }
 }
 
 /*
@@ -90,7 +97,7 @@ export interface PluginConfig<T> {
 }
 
 type DeepRequiredExcept<T, K extends keyof T> = DeepRequired<Omit<T, K>> & Pick<T, K>
-export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis' | 'media' | 'smtp'>
+export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis' | 'media' | 'smtp' | 'security'>
 
 export const defineConfig = (config: Config): NormalizedConfig => ({
   ...config,

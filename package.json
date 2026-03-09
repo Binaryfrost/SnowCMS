@@ -1,6 +1,6 @@
 {
   "name": "@binaryfrost/snowcms",
-  "version": "0.0.35",
+  "version": "0.0.36",
   "publishConfig": {
     "access": "public"
   },
@@ -98,6 +98,7 @@
     "nodemailer": "^7.0.10",
     "openid-client": "^6.1.7",
     "postcss-loader": "^8.1.1",
+    "quick-lru": "^7.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",

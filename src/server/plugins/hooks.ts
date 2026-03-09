@@ -6,6 +6,7 @@ import type { CollectionInput } from '../../common/types/CollectionInputs';
 import type { Media, MediaWithUrls } from '../../common/types/Media';
 import type { Website } from '../../common/types/Website';
 import { PluginConfig } from '../../config';
+import { isSafeUrl } from '../ssrf';
 
 interface ServerStartHook {
   port: number
@@ -112,6 +113,7 @@ const httpHookFetchError = (website: Website) =>
 export async function callHttpHook(website: Website, collection: Collection,
   reason: BeforeWebsiteHookCalledHook['reason']) {
   if (!website.hook || !collection.callHook) return;
+  if (!isSafeUrl(website.hook)) return;
 
   let cancelled = false;
 

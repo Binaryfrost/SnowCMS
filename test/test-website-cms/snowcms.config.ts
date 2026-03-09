@@ -59,5 +59,16 @@ export default defineConfig({
     }
   } : undefined,
   trustProxy: true,
-  instanceRootUrl: process.env.INSTANCE_ROOT_URL || 'http://localhost:3080'
+  instanceRootUrl: process.env.INSTANCE_ROOT_URL || 'http://localhost:3080',
+  security: {
+    ssrf: {
+      enabled: true,
+      additional: [{
+        ip: '192.168.0.0',
+        family: 'ipv4',
+        prefix: 16,
+        type: 'cidr'
+      }]
+    }
+  }
 });

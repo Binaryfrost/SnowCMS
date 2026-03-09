@@ -1,9 +1,16 @@
 import { type NormalizedConfig } from '../../config';
+import { init as initSsrf, addToUnsafeIpList } from '../ssrf';
 
 let cmsConfig: NormalizedConfig;
 
 export function initConfig(config: NormalizedConfig) {
   cmsConfig = config;
+
+  const ssrfEnabled = config.security?.ssrf?.enabled ?? true;
+  if (ssrfEnabled) {
+    initSsrf();
+    addToUnsafeIpList(...(config.security?.ssrf?.additional || []));
+  }
 }
 
 export function getConfig(): NormalizedConfig {
