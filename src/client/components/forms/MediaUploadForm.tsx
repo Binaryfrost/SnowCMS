@@ -1,4 +1,4 @@
-import { Box, Modal, Stack, Text, rem } from '@mantine/core';
+import { Box, Modal, Progress, Stack, Text, rem } from '@mantine/core';
 import { Dropzone, MIME_TYPES } from '@mantine/dropzone';
 import { IconFileUpload, IconUpload, IconX } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
@@ -17,12 +17,39 @@ export interface MediaUploadFormProps {
   close: () => void
 }
 
+/**
+ * Can contain either the bytes or upload percentage
+ */
+interface UploadMetadata {
+  file: number
+  thumbnail: number
+}
+
+function calculateUploadProgress(
+  uploadBytes: UploadMetadata, uploadProgress: UploadMetadata
+) {
+  if (!uploadBytes || !uploadProgress) return 0;
+  const fileSize = uploadBytes.file || 0;
+  const thumbnailSize = uploadBytes.thumbnail || 0;
+  const uploadFileBytes = uploadProgress.file || 0;
+  const uploadThumbnailBytes = uploadProgress.thumbnail || 0;
+
+  const combinedSize = fileSize + thumbnailSize;
+  const calculatePercentage = (file: number, progress: number) =>
+      Math.min((file / combinedSize) * progress, 1);
+  const fileSizePercentage = calculatePercentage(fileSize, uploadFileBytes);
+  const thumbnailSizePercentage = calculatePercentage(thumbnailSize, uploadThumbnailBytes);
+  return Math.min(fileSizePercentage + thumbnailSizePercentage, 1) * 100;
+}
+
 export default function MediaUploadForm({
   websiteId, config, opened, mimeTypes, close
 }: MediaUploadFormProps) {
   const [usedStorage, setUsedStorage] = useState(config.usedStorage);
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadMetadata>(null);
+  const uploadBytes = useRef<UploadMetadata>(null);
 
   return (
     <Modal opened={opened} title="Upload Media" zIndex={300}
@@ -50,6 +77,7 @@ export default function MediaUploadForm({
               }
 
               setError(null);
+              setUploadProgress(null);
               setUploading(true);
 
               const generateThumbnailFor = [
@@ -78,10 +106,32 @@ export default function MediaUploadForm({
                 throw new Error(resp.body.error || 'An error occurred');
               }
 
+              const handleUploadProgress = (key: keyof UploadMetadata, progress) => {
+                setUploadProgress((current) => ({
+                  ...current,
+                  [key]: progress
+                }));
+              };
+
               const uploads = [
-                s3Upload(resp.body.upload.image.url, fileType, file),
-                thumbnail && s3Upload(resp.body.upload.thumbnail.url, thumbnail.type, thumbnail)
+                s3Upload(
+                  resp.body.upload.image.url,
+                  fileType,
+                  file,
+                  (p) => handleUploadProgress('file', p)
+                ),
+                thumbnail && s3Upload(
+                  resp.body.upload.thumbnail.url,
+                  thumbnail.type,
+                  thumbnail,
+                  (p) => handleUploadProgress('thumbnail', p)
+                )
               ].filter(Boolean);
+
+              uploadBytes.current = {
+                file: file.size,
+                thumbnail: thumbnail.size
+              };
 
               const uploaded = await Promise.all(uploads);
               if (!uploaded.every((upload) => upload.status === 200)) {
@@ -148,6 +198,7 @@ export default function MediaUploadForm({
             </Stack>
           </Stack>
         </Dropzone>
+        {uploading && <Progress value={calculateUploadProgress(uploadBytes.current, uploadProgress)} />}
       </Stack>
     </Modal>
   );

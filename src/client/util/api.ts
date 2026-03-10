@@ -102,12 +102,35 @@ export async function del<T = any>(route: string) {
   });
 }
 
-export async function s3Upload(url: string, type: string, data: any) {
-  return fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': type
-    },
-    body: data
+export const S3_UPLOAD_ERRORS = Object.freeze({
+  TIMED_OUT: 'Timed out',
+  ERROR: 'An error occurred',
+  ABORTED: 'Upload aborted'
+});
+
+interface S3UploadResponse {
+  status: number
+}
+
+export async function s3Upload(
+  url: string, type: string, data: File | Blob,
+  progressCallback: (percent: number) => void
+) {
+  return new Promise<S3UploadResponse>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        progressCallback(e.loaded / e.total);
+      }
+    });
+    xhr.addEventListener('loadend', () => resolve({ status: xhr.status }));
+    xhr.upload.addEventListener('timeout', () => reject(S3_UPLOAD_ERRORS.TIMED_OUT));
+    xhr.upload.addEventListener('error', () => reject(S3_UPLOAD_ERRORS.ERROR));
+    xhr.upload.addEventListener('abort', () => reject(S3_UPLOAD_ERRORS.ABORTED));
+
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Type', type);
+    xhr.send(data);
   });
 }
