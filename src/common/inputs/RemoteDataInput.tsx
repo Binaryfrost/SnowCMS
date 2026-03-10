@@ -2,6 +2,8 @@ import { Box, Checkbox, Code, List, Text, TextInput } from '@mantine/core';
 import type { Input } from '../InputRegistry';
 import ExpressError from '../ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
+import { serverInputFetch } from '../plugins/plugins';
+import { SafeUrlResult } from '../types/SafeUrlResult';
 
 interface RemoteDataSettings {
   url: string
@@ -83,6 +85,18 @@ const input: Input<string, RemoteDataSettings> = {
       .replace(/\{website\}/g, websiteId)
       .replace(/\{collection\}/g, collectionId)
       .replace(/\{entry\}/g, id);
+
+    const safeUrlResp = await serverInputFetch(req, () => '/api/security/ssrf/check-url', {
+      method: 'POST',
+      body: JSON.stringify({
+        url: urlWithPlaceholdersReplaced
+      })
+    });
+    const safeUrlResult: SafeUrlResult = await safeUrlResp.json();
+    if (!safeUrlResult.safe) {
+      console.log(`RemoteDataInput request to ${safeUrlResult.hostname || 'unparseable URL'} for Collection Entry ${id}, Collection ${collectionId}, website ${websiteId} blocked by SSRF filter`);
+      return null;
+    }
 
     const resp = await fetch(urlWithPlaceholdersReplaced, {
       headers: {

@@ -16,6 +16,8 @@ import ExpressError from '../common/ExpressError';
 import { loadPlugins } from './plugins/plugins';
 import { initExpressSentry } from './sentry';
 import { initSmtp } from './email/smtp';
+import { CsrfCookie, SessionCookie } from './cookie';
+import { CSRF_HEADER, CSRF_METHODS } from '../common/constants';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
@@ -27,9 +29,8 @@ import accountRouter from './routes/accounts';
 import loginRouter from './routes/login';
 import configRouter from './routes/config';
 import assetRouter from './routes/assets';
+import securityRouter from './routes/security';
 import { router as pluginRouter } from './plugins/routes';
-import { CsrfCookie, SessionCookie } from './cookie';
-import { CSRF_HEADER, CSRF_METHODS } from '../common/constants';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -171,6 +172,7 @@ export async function start(config: NormalizedConfig) {
   app.use('/api/login', await loginRouter(config.sso));
   app.use('/api/config', configRouter);
   app.use('/api/assets', assetRouter);
+  app.use('/api/security', securityRouter);
   app.use('/c', pluginRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {

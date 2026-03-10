@@ -48,6 +48,10 @@ export function loadPlugins<T>(config: PluginConfig<T>, type: PluginTypes,
 }
 
 type Fn = ({ websiteId, collectionId }: { websiteId: string, collectionId: string }) => string;
+interface Opts {
+  method?: 'GET' | 'POST',
+  body?: string
+}
 
 // It isn't ideal, but it works. This is temporary and will be removed in a future version.
 /**
@@ -65,7 +69,7 @@ type Fn = ({ websiteId, collectionId }: { websiteId: string, collectionId: strin
  * // Use response data
  * ```
  */
-export async function serverInputFetch(req: Request, fn: Fn) {
+export async function serverInputFetch(req: Request, fn: Fn, opts: Opts = { method: 'GET' }) {
   const { websiteId, collectionId } = req.params;
   const { authorization, cookie } = req.headers;
   const port = req.socket.localPort;
@@ -73,15 +77,23 @@ export async function serverInputFetch(req: Request, fn: Fn) {
   const apiPath = fn({ websiteId, collectionId });
   const url = new URL(apiPath, `http://localhost:${port}`);
 
-  const headers = new Headers();
+  const headers = new Headers({
+    accept: 'application/json'
+  });
   if (authorization) {
     headers.append('authorization', authorization);
   } else if (cookie) {
     headers.append('cookie', cookie);
   }
 
+  if (opts.body) {
+    headers.append('content-type', 'application/json');
+  }
+
   return fetch(url, {
-    headers
+    headers,
+    method: opts.method,
+    body: opts.body
   });
 }
 

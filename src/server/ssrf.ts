@@ -1,5 +1,6 @@
 import { isIP, BlockList } from 'net';
 import { lookup } from './dns';
+import type { SafeUrlResult } from '../common/types/SafeUrlResult';
 
 interface UnsafeIpBase {
   family: 'ipv4' | 'ipv6'
@@ -24,11 +25,6 @@ ipBlocklist.addAddress('::', 'ipv6');
 ipBlocklist.addAddress('::1', 'ipv6');
 
 let ssrfFilterEnabled = false;
-
-interface SafeUrlResult {
-  safe: boolean
-  hostname?: string
-}
 
 export async function isSafeUrl(url: string): Promise<SafeUrlResult> {
   if (!ssrfFilterEnabled) return {
