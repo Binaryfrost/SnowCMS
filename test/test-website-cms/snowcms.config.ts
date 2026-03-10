@@ -68,6 +68,9 @@ export default defineConfig({
         family: 'ipv4',
         prefix: 16,
         type: 'cidr'
+      },
+      (ip) => {
+        return ip === '203.0.113.1'
       }]
     }
   }

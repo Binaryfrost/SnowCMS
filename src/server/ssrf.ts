@@ -16,7 +16,9 @@ interface UnsafeSubnet extends UnsafeIpBase {
   prefix: number
 }
 
-export type UnsafeIp = UnsafeIpAddr | UnsafeSubnet
+type UnsafeIpFunction = (ip: string) => boolean
+
+export type UnsafeIp = UnsafeIpAddr | UnsafeSubnet | UnsafeIpFunction
 
 const ipBlocklist = new BlockList();
 ipBlocklist.addSubnet('127.0.0.0', 8, 'ipv4');
@@ -25,6 +27,7 @@ ipBlocklist.addAddress('::', 'ipv6');
 ipBlocklist.addAddress('::1', 'ipv6');
 
 let ssrfFilterEnabled = false;
+const unsafeIpFunctionRegistry: UnsafeIpFunction[] = [];
 
 export async function isSafeUrl(url: string): Promise<SafeUrlResult> {
   if (!ssrfFilterEnabled) return {
@@ -56,7 +59,9 @@ function normalizeIp(ip: string) {
 function isSafeIp(ip: string) {
   const normalizedIp = normalizeIp(ip);
   const family = isIP(normalizedIp) === 4 ? 'ipv4' : 'ipv6';
-  return !ipBlocklist.check(normalizedIp, family);
+  const safe = !ipBlocklist.check(normalizedIp, family);
+  if (!safe) return false;
+  return unsafeIpFunctionRegistry.every((fn) => !fn(normalizedIp));
 }
 
 async function isSafeDomain(domain: string) {
@@ -72,6 +77,11 @@ function isDomain(hostname: string) {
 
 export function addToUnsafeIpList(...unsafeIps: UnsafeIp[]) {
   for (const unsafeIp of unsafeIps) {
+    if (typeof unsafeIp === 'function') {
+      unsafeIpFunctionRegistry.push(unsafeIp);
+      return;
+    }
+
     const { type, ip, family } = unsafeIp;
     if (type === 'ip') {
       ipBlocklist.addAddress(ip, family);
