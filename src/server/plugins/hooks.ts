@@ -113,7 +113,13 @@ const httpHookFetchError = (website: Website) =>
 export async function callHttpHook(website: Website, collection: Collection,
   reason: BeforeWebsiteHookCalledHook['reason']) {
   if (!website.hook || !collection.callHook) return;
-  if (!isSafeUrl(website.hook)) return;
+
+  const safeUrlResult = await isSafeUrl(website.hook);
+  if (!safeUrlResult.safe) {
+    // Only log the hostname as the rest of the URL could contain sensitive information
+    console.log(`Webhook request to ${safeUrlResult.hostname || 'unparseable URL'} for website ${website.id} blocked by SSRF filter`);
+    return;
+  }
 
   let cancelled = false;
 

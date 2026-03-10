@@ -25,13 +25,27 @@ ipBlocklist.addAddress('::1', 'ipv6');
 
 let ssrfFilterEnabled = false;
 
-export async function isSafeUrl(url: string) {
-  if (!ssrfFilterEnabled) return true;
+interface SafeUrlResult {
+  safe: boolean
+  hostname?: string
+}
+
+export async function isSafeUrl(url: string): Promise<SafeUrlResult> {
+  if (!ssrfFilterEnabled) return {
+    safe: true
+  };
+
   try {
     const { hostname } = new URL(url);
-    return isDomain(hostname) ? await isSafeDomain(hostname) : isSafeIp(hostname);
+    const safe = isDomain(hostname) ? await isSafeDomain(hostname) : isSafeIp(hostname);
+    return {
+      safe,
+      hostname
+    }
   } catch (_) {
-    return false;
+    return {
+      safe: false
+    };
   }
 }
 
@@ -106,17 +120,25 @@ async function test() {
   ].map((hostname) => `http://${hostname}`);
 
   const failTestResults = await Promise.all(
-    shouldFail.map(async (test) => ({
-      test,
-      safe: await isSafeUrl(test)
-    }))
+    shouldFail.map(async (test) => {
+      const { safe, hostname } = await isSafeUrl(test);
+      return {
+        test,
+        safe,
+        hostname
+      }
+    })
   );
 
   const succeedTestResults = await Promise.all(
-    shouldPass.map(async (test) => ({
-      test,
-      safe: await isSafeUrl(test)
-    }))
+    shouldPass.map(async (test) => {
+      const { safe, hostname } = await isSafeUrl(test);
+      return {
+        test,
+        safe,
+        hostname
+      }
+    })
   );
   
   const succeedTestPassed = succeedTestResults.every((result) => result.safe);
