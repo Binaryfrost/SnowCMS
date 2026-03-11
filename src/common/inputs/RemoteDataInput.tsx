@@ -4,6 +4,7 @@ import ExpressError from '../ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
 import { serverInputFetch } from '../plugins/plugins';
 import { SafeUrlResult } from '../types/SafeUrlResult';
+import { UNSAFE_SOURCE_HEADER } from '../constants';
 
 interface RemoteDataSettings {
   url: string
@@ -101,7 +102,8 @@ const input: Input<string, RemoteDataSettings> = {
     const resp = await fetch(urlWithPlaceholdersReplaced, {
       headers: {
         // Getting the version here is easier said than done
-        'User-Agent': 'SnowCMS/0.0.0'
+        'User-Agent': 'SnowCMS/0.0.0',
+        [UNSAFE_SOURCE_HEADER]: 'RemoteDataInput'
       }
     });
     if (resp.status >= 400) return null;

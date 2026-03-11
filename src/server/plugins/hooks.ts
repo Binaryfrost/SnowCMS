@@ -1,4 +1,5 @@
 import ExpressError from '../../common/ExpressError';
+import { UNSAFE_SOURCE_HEADER } from '../../common/constants';
 import { loadPlugins } from '../../common/plugins/plugins';
 import type { Collection } from '../../common/types/Collection';
 import type { CollectionEntryDraft, CollectionEntryWithData } from '../../common/types/CollectionEntry';
@@ -134,7 +135,10 @@ export async function callHttpHook(website: Website, collection: Collection,
 
   try {
     const resp = await fetch(website.hook, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        [UNSAFE_SOURCE_HEADER]: 'webhook'
+      }
     });
 
     if (resp.status >= 400) {

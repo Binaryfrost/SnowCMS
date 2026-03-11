@@ -17,7 +17,7 @@ import { loadPlugins } from './plugins/plugins';
 import { initExpressSentry } from './sentry';
 import { initSmtp } from './email/smtp';
 import { CsrfCookie, SessionCookie } from './cookie';
-import { CSRF_HEADER, CSRF_METHODS } from '../common/constants';
+import { CSRF_HEADER, CSRF_METHODS, UNSAFE_SOURCE_HEADER } from '../common/constants';
 
 import websiteRouter from './routes/website';
 import collectionRouter from './routes/collections';
@@ -111,6 +111,12 @@ export async function start(config: NormalizedConfig) {
       websites: apiKey.websites
     };
   }
+
+  // Block requests that originated from user-controlled sources (e.g. webhooks, RemoteDataInput)
+  app.use(asyncRouteFix(async (req, res, next) => {
+    if (req.get(UNSAFE_SOURCE_HEADER)) throw new ExpressError('Forbidden', 403);
+    next();
+  }));
 
   app.use(asyncRouteFix(async (req, res, next) => {
     const token = getAuthToken(req);
