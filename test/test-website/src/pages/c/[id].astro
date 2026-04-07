@@ -1,0 +1,14 @@
+---
+import { getEntryData } from '../../../cms';
+import EntryData from '../../../components/EntryData.astro';
+import Layout from '../../layouts/Layout.astro';
+
+const { id } = Astro.params;
+
+const entryData = await getEntryData(id as string);
+---
+
+<Layout>
+  <h1>{id}</h1>
+  <EntryData data={entryData.data} />
+</Layout>

@@ -1,0 +1,20 @@
+---
+import { serialize } from '../util';
+
+interface Props {
+  data: Record<string, any>
+}
+
+const { data } = Astro.props;
+---
+
+{Object.keys(data).map((k) => (
+  <h2>{k}</h2>
+  <pre>{serialize(data[k])}</pre>
+))}
+
+<style>
+  pre {
+    white-space: pre-wrap;
+  }
+</style>

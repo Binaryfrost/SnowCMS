@@ -1,0 +1,17 @@
+---
+import { getAllEntries } from '../../cms';
+import EntrySummary from '../../components/EntrySummary.astro';
+import Layout from '../layouts/Layout.astro';
+
+const collectionEntries = await getAllEntries();
+---
+
+<Layout>
+  <ul>
+	  {collectionEntries.map((entry) => (
+      <li>
+        <EntrySummary entry={entry} />
+      </li>
+    ))}
+  </ul>
+</Layout>

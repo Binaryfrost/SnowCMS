@@ -1,0 +1,13 @@
+---
+import type { CollectionEntry } from '../cms';
+
+interface Props {
+  entry: CollectionEntry.CollectionEntryWithMetadata
+}
+
+const { entry } = Astro.props;
+---
+
+<a href={`/c/${entry.id}`}>
+  <span>{entry.title || 'Unknown title'} ({entry.id})</span>
+</a>
