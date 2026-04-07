@@ -1,4 +1,5 @@
 ---
+import { CMS_RENDER_HTML } from 'astro:env/server';
 import { serialize } from '../util';
 
 interface Props {
@@ -9,8 +10,14 @@ const { data } = Astro.props;
 ---
 
 {Object.keys(data).map((k) => (
-  <h2>{k}</h2>
-  <pre>{serialize(data[k])}</pre>
+  <>
+    <h2>{k}</h2>
+    {CMS_RENDER_HTML ? (
+      <Fragment set:html={serialize(data[k])} />
+    ) : (
+      <pre>{serialize(data[k])}</pre>
+    )}
+  </> 
 ))}
 
 <style>
