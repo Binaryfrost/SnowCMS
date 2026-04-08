@@ -1,9 +1,17 @@
 import { Node } from '@tiptap/react';
+import { randomHex } from '../../util';
 
 export interface AlertProps {
   bg: string
   color: string
   text: string
+}
+
+function styleAttrsToString(attrs: Record<string, any>) {
+  return Object.entries(attrs).map(([k, v]) => {
+    const name = k.replaceAll(/([A-Z])/g, (m) => `-${m.toLowerCase()}`);
+    return `${name}: ${v}`
+  }).join(';');
 }
 
 const Alert = Node.create({
@@ -19,17 +27,21 @@ const Alert = Node.create({
     };
   },
   renderHTML({ HTMLAttributes }) {
-    const attrs = {
-      'data-alert': '',
-      style: {
-        backgroundColor: HTMLAttributes.bg,
-        color: HTMLAttributes.color,
-        padding: '1rem',
-        borderRadius: '0.25rem'
-      }
-    };
+    const styleAttrs = styleAttrsToString({
+      backgroundColor: HTMLAttributes.bg,
+      color: HTMLAttributes.color,
+      padding: '1rem',
+      borderRadius: '0.25rem'
+    });
 
-    return ['div', attrs, HTMLAttributes.text];
+    const alertId = randomHex(8);
+
+    return [
+      'div', { 'data-alert': alertId},
+      ['div', HTMLAttributes.text],
+      // Workaround for https://github.com/ueberdosis/tiptap/issues/7408
+      ['style', {}, `div[data-alert="${alertId}"] div { ${styleAttrs} }`]
+    ];
   },
   parseHTML() {
     return [{
