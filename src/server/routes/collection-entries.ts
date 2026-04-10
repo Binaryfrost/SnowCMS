@@ -59,50 +59,36 @@ router.get('/', asyncRouteFix(async (req, res) => {
   }
 
   const searchQuery = search ? `%${search}%` : undefined;
-  const query = (withSelect: boolean) => {
-    const q = db()
-      .from('collection_entries')
-      .innerJoin(
-        'collections',
-        'collection_entries.collectionId',
-        'collections.id'
-      )
-      .having((builder) => {
-        if (searchQuery) {
-          builder.whereILike('collection_entries.id', searchQuery);
-          builder.orWhereILike('title', searchQuery);
-        }
-      })
-      .andWhere('collection_entries.collectionId', collectionId);
+  const query = db().select(
+    'collection_entries.id',
+    'collection_entries.collectionId',
+    'collection_entries.createdAt',
+    'collection_entries.updatedAt',
+    'title_input.data AS title',
+    'slug_input.data AS slug'
+  )
+  .from('collection_entries')
+  .innerJoin('collections', 'collection_entries.collectionId', 'collections.id')
+  .leftJoin({ title_input: 'collection_entry_inputs' }, (builder) => {
+    builder.on('title_input.entryId', 'collection_entries.id')
+      .andOn('title_input.inputId', 'collections.title')
+  })
+  .leftJoin({ slug_input: 'collection_entry_inputs' }, (builder) => {
+    builder.on('slug_input.entryId', 'collection_entries.id')
+      .andOn('slug_input.inputId', 'collections.slug')
+  })
+  .where('collection_entries.collectionId', collectionId)
+  .andWhere((builder) => {
+    if (searchQuery) {
+      builder.whereILike('collection_entries.id', searchQuery)
+        .orWhereILike('title_input.data', searchQuery)
+    }
+  });
 
-    const titleSelect = () => db().select('data')
-      .from('collection_entry_inputs')
-      .whereRaw('`collection_entry_inputs`.`entryId` = `collection_entries`.`id`')
-      .andWhereRaw('`collections`.`title` IS NOT NULL')
-      .andWhereRaw('`collection_entry_inputs`.`inputId` = `collections`.`title`')
-      .as('title');
-
-    const slugSelect = () => db().select('data')
-      .from('collection_entry_inputs')
-      .whereRaw('`collection_entry_inputs`.`entryId` = `collection_entries`.`id`')
-      .andWhereRaw('`collections`.`slug` IS NOT NULL')
-      .andWhereRaw('`collection_entry_inputs`.`inputId` = `collections`.`slug`')
-      .as('slug');
-
-    return withSelect ? q.select(
-      'collection_entries.id',
-      'collection_entries.collectionId',
-      'createdAt',
-      'updatedAt',
-      titleSelect(),
-      slugSelect()
-    ) : q.select('collection_entries.id', titleSelect(), slugSelect());
-  };
-
-  const p = await pagination(req, query(false));
+  const p = await pagination(req, query);
 
   const entries = await paginate(
-    query(true),
+    query,
     p,
     'collection_entries.createdAt'
   );
