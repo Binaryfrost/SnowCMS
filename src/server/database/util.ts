@@ -5,7 +5,7 @@ import type { Website } from '../../common/types/Website';
 import type { DatabaseCollectionInput } from '../../common/types/CollectionInputs';
 import { ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, User, UserWebsite, UserWithWebsites } from '../../common/types/User';
 import { redis } from './redis';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 
 export async function exists<T extends { id: string }>(table: string, id: string) {
   const [result] = await db()<T>(table)
@@ -95,9 +95,10 @@ export async function reorderCollectionInputs(inputId: string, collectionId: str
 export function handleBooleanConversion<T>(obj: T, ...keys: (keyof T)[]): T {
   return Object.entries(obj)
     .reduce((a, [k, v]) => {
+      // eslint-disable-next-line no-param-reassign
       if (keys.includes(k as keyof T)) a[k] = Boolean(v);
       return a;
-    }, { ... obj});
+    }, { ...obj });
 }
 
 export function handleUserBooleanConversion
@@ -236,4 +237,9 @@ export async function removeRedisKeysMatching(pattern: string,
   }
 
   await Promise.all(deletePromises.map((m) => m()));
+}
+
+export function serialize(data: any) {
+  if (typeof data === 'string') return data;
+  return JSON.stringify(data);
 }

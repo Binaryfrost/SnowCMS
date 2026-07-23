@@ -1,6 +1,6 @@
 import { Checkbox } from '@mantine/core';
 import { Input } from '../InputRegistry';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 
 const input: Input<boolean> = {
   id: 'checkbox',

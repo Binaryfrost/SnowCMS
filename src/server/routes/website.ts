@@ -11,7 +11,7 @@ import { Collection } from '../../common/types/Collection';
 import { getConfig } from '../config/config';
 import { deleteCollection } from './collections';
 import { callHook } from '../plugins/hooks';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { ApiKeyWebsite, UserWebsite } from '../../common/types/User';
 import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 

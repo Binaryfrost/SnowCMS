@@ -1,14 +1,86 @@
 import type { DeepRequired } from 'utility-types';
 import type { RedisClientOptions } from 'redis';
+import type SMTPConnection from 'nodemailer/lib/smtp-connection';
 import type { Plugin } from './common/plugins/plugins';
 import type { Role } from './common/types/User';
 import { Input } from './common/InputRegistry';
 import { Hooks } from './server/plugins/hooks';
 import { Route } from './server/plugins/routes';
-import type SMTPConnection from 'nodemailer/lib/smtp-connection';
 import type { UnsafeIp } from './server/ssrf';
 
-interface Config {
+export interface SsoConfig {
+  clientId: string
+  clientSecret: string
+  issuer: string
+  callbackUrl: string
+  /**
+   * If enabled, the login form will be disabled and all logins will be handled using SSO
+   */
+  forceSso?: boolean
+  /**
+   * If no account exists in SnowCMS with the user's email,
+   * a new one will be created with this role.
+   * If set to null, a new user will not be created.
+   * @default USER
+   */
+  defaultRole?: Role | null
+  /**
+   * Text shown on the SSO login button.
+   * @default 'Log in with SSO'
+   */
+  buttonText?: string
+}
+
+export interface MediaS3Config {
+  endpoint: string
+  region: string
+  bucket: string
+  accessKeyId: string
+  secretAccessKey: string
+  /**
+   * The URL that media assets will be accessed through.
+   * Ensure that this is publicly accessible without authorization.
+   */
+  publicUrl: string
+}
+
+export interface MediaConfig {
+  /**
+   * The maximum size for uploaded files
+   * @default 52428800 (50MB)
+   */
+  maxSize?: number
+  /**
+   * The maximum storage per website
+   * @default 5368709120 (5GB)
+   */
+  maxStorage?: number
+  s3: MediaS3Config
+}
+
+export interface DatabaseConfig {
+  host: string
+  port?: number
+  database: string
+  username: string
+  password: string
+}
+
+export interface SmtpConfig {
+  from: string
+  server: SMTPConnection.Options
+}
+
+export interface SecuritySsrfConfig {
+  enabled: boolean,
+  additional?: UnsafeIp[]
+}
+
+export interface SecurityConfig {
+  ssrf?: SecuritySsrfConfig
+}
+
+export interface Config {
   /**
    * The port SnowCMS will run on.
    * In dev mode, a WebSocket server will be started on the next consecutive port.
@@ -18,72 +90,14 @@ interface Config {
    * Secret used for signing HMACs and encrypting SSO cookie
    */
   secret: string
-  sso?: {
-    clientId: string
-    clientSecret: string
-    issuer: string
-    callbackUrl: string
-    /**
-     * If enabled, the login form will be disabled and all logins will be handled using SSO
-     */
-    forceSso?: boolean
-    /**
-     * If no account exists in SnowCMS with the user's email,
-     * a new one will be created with this role.
-     * If set to null, a new user will not be created.
-     * @default USER
-     */
-    defaultRole?: Role | null
-    /**
-     * Text shown on the SSO login button.
-     * @default 'Log in with SSO'
-     */
-    buttonText?: string
-  }
-  media?: {
-    /**
-     * The maximum size for uploaded files
-     * @default 52428800 (50MB)
-     */
-    maxSize?: number
-    /**
-     * The maximum storage per website
-     * @default 5368709120 (5GB)
-     */
-    maxStorage?: number
-    s3: {
-      endpoint: string
-      region: string
-      bucket: string
-      accessKeyId: string
-      secretAccessKey: string
-      /**
-       * The URL that media assets will be accessed through.
-       * Ensure that this is publicly accessible without authorization.
-       */
-      publicUrl: string
-    }
-  }
-  database: {
-    host: string
-    port?: number
-    database: string
-    username: string
-    password: string
-  },
-  redis: RedisClientOptions,
-  trustProxy?: any,
-  smtp?: {
-    from: string
-    server: SMTPConnection.Options
-  },
   instanceRootUrl: string,
-  security?: {
-    ssrf?: {
-      enabled: boolean,
-      additional?: UnsafeIp[]
-    }
-  }
+  trustProxy?: any,
+  sso?: SsoConfig
+  media?: MediaConfig
+  database: DatabaseConfig,
+  redis: RedisClientOptions,
+  smtp?: SmtpConfig,
+  security?: SecurityConfig
 }
 
 /*
@@ -96,6 +110,7 @@ export interface PluginConfig<T> {
   plugins: Plugin<T>[]
 }
 
+// TODO: Move defaults to ConfigProvider
 type DeepRequiredExcept<T, K extends keyof T> = DeepRequired<Omit<T, K>> & Pick<T, K>
 export type NormalizedConfig = DeepRequiredExcept<Config, 'sso' | 'redis' | 'media' | 'smtp' | 'security'>
 

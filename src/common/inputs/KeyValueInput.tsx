@@ -1,6 +1,6 @@
 import { Checkbox, NumberInput, NumberInputProps } from '@mantine/core';
 import { Input } from '../InputRegistry';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
 import KeyValueInputArray from './common/KeyValueInputArray';
 

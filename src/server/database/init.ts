@@ -99,7 +99,7 @@ export default async function init(knex: Knex) {
 
       table.foreign('collectionId').references('collections.id');
       table.foreign('entryId').references('collection_entries.id');
-    })
+    });
   }
 
   if (!await knex.schema.hasTable('media')) {

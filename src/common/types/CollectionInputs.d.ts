@@ -1,3 +1,8 @@
+/*
+  TODO: Delete type file (and all type files in `src/common/types`)
+  as DTOs serve the same purpose and offer more functionality.
+*/
+
 export interface CollectionInputSettings {
   name: string
   fieldName: string

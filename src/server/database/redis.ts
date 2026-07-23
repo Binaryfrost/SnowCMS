@@ -1,7 +1,9 @@
 import { createClient } from 'redis';
 import { getConfig } from '../config/config';
 
-let client: ReturnType<typeof createClient>;
+export type RedisClientType = ReturnType<typeof createClient>;
+
+let client: RedisClientType;
 export default async function initRedis() {
   const config = getConfig();
 

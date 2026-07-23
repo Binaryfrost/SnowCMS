@@ -11,7 +11,7 @@ import { SELECT_MEDIA_MODAL_ID, showSelectMediaModal } from '../../client/util/m
 import FilePreview from '../../client/components/FilePreview';
 import { get } from '../../client/util/api';
 import { mimeTypeMatch } from '../util';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { serverInputFetch } from '../plugins/plugins';
 import { useInputValidator, useSettingsHandler } from './hooks';
 

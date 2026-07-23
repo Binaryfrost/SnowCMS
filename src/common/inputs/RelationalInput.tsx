@@ -6,7 +6,7 @@ import type { CollectionEntryWithMetadata } from '../types/CollectionEntry';
 import DataGetter from '../../client/components/DataGetter';
 import { shortenUuid } from '../../client/components/ShortUuid';
 import FormSkeleton from '../../client/components/FormSkeleton';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { serverGetAllPagesFetch, serverInputFetch } from '../plugins/plugins';
 import { useInputValidator, useSettingsHandler } from './hooks';
 

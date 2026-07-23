@@ -1,4 +1,4 @@
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { UNSAFE_SOURCE_HEADER } from '../../common/constants';
 import { loadPlugins } from '../../common/plugins/plugins';
 import type { Collection } from '../../common/types/Collection';

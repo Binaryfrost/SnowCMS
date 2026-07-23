@@ -4,7 +4,7 @@ import { v7 as uuid } from 'uuid';
 import InputRegistry, { RegisterValidatorFunction, ValidatorFunction, type Input } from '../InputRegistry';
 import InputArray from './common/InputArray';
 import FlexGrow from '../../client/components/FlexGrow';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface ArrayInputSettings {

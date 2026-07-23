@@ -13,7 +13,7 @@ import type { FileMetadata, FileUploadConfirmation, FileUploadResponse, Media, M
 import { asyncRouteFix, hmac, paginate, pagination, secureEquals } from '../util';
 import { BLOCKED_MIME_TYPES } from '../../common/blocked-mime-types';
 import { callHook } from '../plugins/hooks';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 import { convertMimeTypeForSqlQuery } from '../../common/util';
 

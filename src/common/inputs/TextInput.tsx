@@ -1,6 +1,6 @@
 import { Checkbox, NumberInput, Stack, TextInput } from '@mantine/core';
 import { type Input } from '../InputRegistry';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
 
 interface TextInputSettings {

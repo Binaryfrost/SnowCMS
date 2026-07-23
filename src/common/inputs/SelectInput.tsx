@@ -2,7 +2,7 @@ import { Checkbox, Select, Stack } from '@mantine/core';
 import type { Input } from '../InputRegistry'
 import { useInputValidator, useSettingsHandler } from './hooks';
 import KeyValueInputArray from './common/KeyValueInputArray';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 
 
 interface SelectInputSettings {

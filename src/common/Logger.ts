@@ -1,4 +1,4 @@
-export class PluginLogger {
+export default class Logger {
   private readonly name: string;
 
   public constructor(name: string) {

@@ -4,7 +4,7 @@ import {
 } from '@mantine/core';
 import slug from 'slug';
 import { type Input } from '../InputRegistry';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { serverInputFetch } from '../plugins/plugins';
 import { CollectionInput } from '../types/CollectionInputs';
 import { IconRefresh } from '@tabler/icons-react';

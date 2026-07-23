@@ -6,7 +6,7 @@ import handleAccessControl from '../handleAccessControl';
 import { exists } from '../database/util';
 import { asyncRouteFix, paginate, pagination } from '../util';
 import { callHook } from '../plugins/hooks';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 
 const router = express.Router({ mergeParams: true });

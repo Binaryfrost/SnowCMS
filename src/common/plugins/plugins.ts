@@ -1,12 +1,12 @@
 import type { Request } from 'express';
 import type { PluginConfig } from '../../config';
-import { PluginLogger } from './PluginLogger';
+import Logger from '../Logger';
 import { PaginatedQueryClient } from '../../lib/client/PaginatedQueryClient';
 
 export type PluginTypes = 'inputs' | 'hooks' | 'routes';
 
 export interface PluginParam {
-  logger: PluginLogger
+  logger: Logger
 }
 
 type PluginFn<T> = (p: PluginParam) => T;
@@ -33,7 +33,7 @@ export function loadPlugins<T>(config: PluginConfig<T>, type: PluginTypes,
 
     const pluginName = `${type}/${plugin.name}`;
 
-    const logger = new PluginLogger(pluginName);
+    const logger = new Logger(pluginName);
 
     if (Array.isArray(plugin.plugin)) {
       plugin.plugin.forEach((p) => {

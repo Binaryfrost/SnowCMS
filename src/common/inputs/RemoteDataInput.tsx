@@ -1,6 +1,6 @@
 import { Box, Checkbox, Code, List, Text, TextInput } from '@mantine/core';
 import type { Input } from '../InputRegistry';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
 import { serverInputFetch } from '../plugins/plugins';
 import { SafeUrlResult } from '../types/SafeUrlResult';

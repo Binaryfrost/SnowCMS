@@ -12,7 +12,7 @@ import initRedis from './database/redis';
 import { asyncRouteFix, getAuthToken } from './util';
 import { UserWithWebsites } from '../common/types/User';
 import { ROLE_HIERARCHY } from '../common/users';
-import ExpressError from '../common/ExpressError';
+import ExpressError from '../common/errors/base/ExpressError';
 import { loadPlugins } from './plugins/plugins';
 import { initExpressSentry } from './sentry';
 import { initSmtp } from './email/smtp';
@@ -31,6 +31,7 @@ import configRouter from './routes/config';
 import assetRouter from './routes/assets';
 import securityRouter from './routes/security';
 import { router as pluginRouter } from './plugins/routes';
+import appRouter from './modules/router';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -118,6 +119,7 @@ export async function start(config: NormalizedConfig) {
     next();
   }));
 
+  // TODO: Remove and replace with SecurityMiddleware.authenticate
   app.use(asyncRouteFix(async (req, res, next) => {
     const token = getAuthToken(req);
     // If a session cookie exists, but is invalid, remove it.
@@ -135,6 +137,7 @@ export async function start(config: NormalizedConfig) {
     next();
   }));
 
+  // TODO: Remove and replace with SecurityMiddleware.csrf
   app.use(asyncRouteFix(async (req, res, next) => {
     const CHECK_PREFIXES = ['/api', '/c'];
     const BYPASS_PREFIXES = ['/api/login'];
@@ -143,11 +146,11 @@ export async function start(config: NormalizedConfig) {
     if (BYPASS_PREFIXES.some((e) => req.url.startsWith(e))) return next();
 
     if (CSRF_METHODS.includes(req.method)) {
-      const sessionCookie = req.sessionCookie;
+      const { sessionCookie } = req;
       const sessionId = sessionCookie?.getData();
       // Authenticated with API key or unauthenticated which will be caught by in-route auth check
       if (!sessionId) return next();
-      
+
       const csrfToken = req.header(CSRF_HEADER);
       if (!csrfToken) {
         throw new ExpressError('CSRF token error: No token provided');
@@ -165,9 +168,12 @@ export async function start(config: NormalizedConfig) {
       }
     }
 
-    next();
+    return next();
   }));
 
+  app.use('/', appRouter()._getRouter());
+
+  // TODO: Remove
   app.use('/api/websites', websiteRouter);
   app.use('/api/websites/:websiteId/collections', collectionRouter);
   app.use('/api/websites/:websiteId/collections/:collectionId/inputs', collectionInputsRouter);

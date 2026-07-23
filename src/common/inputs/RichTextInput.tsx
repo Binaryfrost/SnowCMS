@@ -35,7 +35,7 @@ import Youtube from './RichTextInput/Youtube';
 import './RichTextInput/RichTextInput.css';
 import { showYoutubeModal } from './RichTextInput/YoutubeModal';
 import { showVideoModal } from './RichTextInput/VideoModal';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { showAlertModal } from './RichTextInput/AlertModal';
 import Alert, { AlertProps } from './RichTextInput/Alert';
 import { useInputValidator, useSettingsHandler } from './hooks';

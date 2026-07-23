@@ -1,5 +1,5 @@
 import type { Role, UserWithWebsites } from '../common/types/User';
-import ExpressError from '../common/ExpressError';
+import ExpressError from '../common/errors/base/ExpressError';
 import { hasAccess } from '../common/users';
 
 export default function handleAccessControl(user: UserWithWebsites,
