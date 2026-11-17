@@ -95,12 +95,12 @@ const input: Input<string, RelationalInputSettings> = {
       throw new Error('Required Relational Input does not have a value');
     }
 
-    const value = input.deserialize(stringifiedValue);
-    if (!value || !settings.collectionId) return;
+    const value = input.deserialize?.(stringifiedValue);
+    if (!value || !settings?.collectionId) return;
 
     const resp = await serverInputFetch(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/collections` +
+      `/api/websites/${req.params.websiteId}/collections` +
       `/${settings.collectionId}/entries/${value}`);
 
     if (resp.status !== 200) {
@@ -123,7 +123,7 @@ const input: Input<string, RelationalInputSettings> = {
 
     const collections = await serverGetAllPagesFetch<Collection>(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/collections`
+      `/api/websites/${req.params.websiteId}/collections`
     );
 
     if (collections.filter((c) => c.id === settings.collectionId).length === 0) {
@@ -132,7 +132,7 @@ const input: Input<string, RelationalInputSettings> = {
   },
 
   renderHtml: async (value, settings, req) => {
-    if (!value || !settings.collectionId) return null;
+    if (!value || !settings?.collectionId) return null;
 
     return {
       collection: settings.collectionId,

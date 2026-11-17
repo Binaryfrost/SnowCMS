@@ -19,6 +19,12 @@ export default class WebsiteService extends Service {
     this.userService = userService;
   }
 
+  async getWebsite(id: string) {
+    const website = await this.websiteRepo.getWebsite(id);
+    if (!website) return null;
+    return new WebsiteDTO(website.getId(), website.getName(), website.getHook());
+  }
+
   async getAllWebsites(opts?: PaginatedQueryOpts) {
     const paginatedClient = await this.websiteRepo.getAllWebsites(opts);
     return this.adaptToDTO(opts?.page || 1, paginatedClient);

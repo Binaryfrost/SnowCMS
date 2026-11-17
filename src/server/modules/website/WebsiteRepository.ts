@@ -15,6 +15,15 @@ export default class WebsiteRepository extends Repository {
     super(db, 'websites');
   }
 
+  async getWebsite(id: string): Promise<WebsiteModel | null> {
+    const query = await this.db<WebsitesTable>(this.table)
+      .select('id', 'name', 'hook')
+      .first();
+    if (!query) return null;
+    const { name, hook } = query;
+    return new WebsiteModel(id, name, hook);
+  }
+
   async getAllWebsites(opts?: PaginatedQueryOpts): Promise<PaginatedQuery<WebsiteModel>> {
     const query = this.db<WebsitesTable>(this.table)
       .select('id', 'name', 'hook');

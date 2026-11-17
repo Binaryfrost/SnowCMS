@@ -150,7 +150,7 @@ const input: Input<string, MediaInputSettings> = {
 
     const resp = await serverInputFetch(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/media/${value}`
+      `/api/websites/${req.params.websiteId}/media/${value}`
     );
 
     if (resp.status === 404) {
@@ -185,7 +185,7 @@ const input: Input<string, MediaInputSettings> = {
 
     const resp = await serverInputFetch(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/media/${value}`
+      `/api/websites/${req.params.websiteId}/media/${value}`
     );
 
     if (resp.status !== 200) return null;

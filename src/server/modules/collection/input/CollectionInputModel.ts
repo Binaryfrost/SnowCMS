@@ -1,6 +1,6 @@
 import Model from '../../Model';
 
-export default class CollectionInputModel extends Model {
+export class CollectionInputModelWithoutOrder extends Model {
   private id: string;
   private collectionId: string;
   private input: string;
@@ -9,7 +9,6 @@ export default class CollectionInputModel extends Model {
   private description: string;
   private required: boolean;
   private inputConfig: Record<string, any>;
-  private order: number;
 
   constructor(
     id: string,
@@ -20,7 +19,6 @@ export default class CollectionInputModel extends Model {
     description: string,
     required: boolean,
     inputConfig: Record<string, any>,
-    order: number
   ) {
     super();
     this.id = id;
@@ -31,7 +29,6 @@ export default class CollectionInputModel extends Model {
     this.description = description;
     this.required = required;
     this.inputConfig = inputConfig;
-    this.order = order;
   }
 
   getId() {
@@ -64,6 +61,25 @@ export default class CollectionInputModel extends Model {
 
   getInputConfig() {
     return this.inputConfig;
+  }
+}
+
+export default class CollectionInputModel extends CollectionInputModelWithoutOrder {
+  private order: number;
+
+  constructor(
+    id: string,
+    collectionId: string,
+    input: string,
+    name: string,
+    fieldName: string,
+    description: string,
+    required: boolean,
+    inputConfig: Record<string, any>,
+    order: number
+  ) {
+    super(id, collectionId, input, name, fieldName, description, required, inputConfig);
+    this.order = order;
   }
 
   getOrder() {

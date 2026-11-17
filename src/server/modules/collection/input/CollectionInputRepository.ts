@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 import NotFoundError from '../../../../common/errors/base/NotFoundError';
 import Repository from '../../Repository';
-import CollectionInputModel from './CollectionInputModel';
+import CollectionInputModel, { CollectionInputModelWithoutOrder } from './CollectionInputModel';
 
 export interface CollectionInputTable {
   id: string
@@ -85,22 +85,37 @@ export default class CollectionInputRepository extends Repository {
     );
   }
 
-  async create(input: CollectionInputModel) {
-    await this.db<CollectionInputTable>(this.table)
-      .insert({
-        id: input.getId(),
-        collectionId: input.getCollectionId(),
-        name: input.getName(),
-        description: input.getDescription(),
-        fieldName: input.getFieldName(),
-        input: input.getInput(),
-        inputConfig: input.getInputConfig(),
-        required: input.isRequired(),
-        order: input.getOrder()
-      });
+  async create(input: CollectionInputModelWithoutOrder) {
+    await this.db.transaction(async (trx) => {
+      const lastRecordOrder = (
+        (
+          await trx<CollectionInputTable>()
+            .first('order')
+            .from('collection_inputs')
+            .where({
+              collectionId: input.getCollectionId()
+            })
+            .orderBy('order', 'desc')
+            .limit(1)
+        )?.order
+      ) ?? -1;
+
+      await trx<CollectionInputTable>(this.table)
+        .insert({
+          id: input.getId(),
+          collectionId: input.getCollectionId(),
+          name: input.getName(),
+          description: input.getDescription(),
+          fieldName: input.getFieldName(),
+          input: input.getInput(),
+          inputConfig: input.getInputConfig(),
+          required: input.isRequired(),
+          order: lastRecordOrder + 1
+        });
+    });
   }
 
-  async update(input: CollectionInputModel) {
+  async update(input: CollectionInputModelWithoutOrder) {
     if (!(await this.exists(input.getId()))) {
       throw new NotFoundError('Collection Input not found');
     }

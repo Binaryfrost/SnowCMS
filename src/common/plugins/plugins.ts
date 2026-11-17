@@ -2,6 +2,7 @@ import type { Request } from 'express';
 import type { PluginConfig } from '../../config';
 import Logger from '../Logger';
 import { PaginatedQueryClient } from '../../lib/client/PaginatedQueryClient';
+import RequestContext, { CollectionRequestContext, WebsiteRequestContext } from '../RequestContext';
 
 export type PluginTypes = 'inputs' | 'hooks' | 'routes';
 
@@ -47,7 +48,6 @@ export function loadPlugins<T>(config: PluginConfig<T>, type: PluginTypes,
   });
 }
 
-type Fn = ({ websiteId, collectionId }: { websiteId: string, collectionId: string }) => string;
 interface Opts {
   method?: 'GET' | 'POST',
   body?: string
@@ -56,12 +56,13 @@ interface Opts {
 // It isn't ideal, but it works. This is temporary and will be removed in a future version.
 /**
  * As Inputs are shared between the server and client, attempting to access the database
- * directly breaks the build. To get around that, use this function to send an HTTP request to server
- * from itself with the user's auth token to get information about the image.
+ * directly breaks the build or leaks sensitive configuration. To get around that, use this
+ * function to send an HTTP request to server from itself with the user's auth token to
+ * get information about the image.
  *
  * Example:
  * ```js
- * const resp = await serverInputFetch(req, ({ websiteId }) => `/api/websites/${websiteId}/media/1234`);
+ * const resp = await serverInputFetch(req, `/api/websites/${req.params.websiteId}/media/1234`);
  * if (resp.status !== 200) {
  *  // Handle error
  * }
@@ -69,21 +70,18 @@ interface Opts {
  * // Use response data
  * ```
  */
-export async function serverInputFetch(req: Request, fn: Fn, opts: Opts = { method: 'GET' }) {
-  const { websiteId, collectionId } = req.params;
-  const { authorization, cookie } = req.headers;
-  const port = req.socket.localPort;
-
-  const apiPath = fn({ websiteId, collectionId });
+export async function serverInputFetch<R extends RequestContext<any>>(req: R, apiPath: string, opts: Opts = { method: 'GET' }) {
+  const port = req._localPort;
   const url = new URL(apiPath, `http://localhost:${port}`);
 
+  const auth = req.auth;
   const headers = new Headers({
     accept: 'application/json'
   });
-  if (authorization) {
-    headers.append('authorization', authorization);
-  } else if (cookie) {
-    headers.append('cookie', cookie);
+  if (auth?.type === 'header') {
+    headers.append('authorization', auth.auth);
+  } else if (auth?.type === 'cookie') {
+    headers.append('cookie', auth.cookie);
   }
 
   if (opts.body) {
@@ -103,7 +101,7 @@ interface Paginated<T> {
   pages: number
 }
 
-export async function serverGetAllPagesFetch<T>(req: Request, fn: Fn): Promise<T[]> {
+export async function serverGetAllPagesFetch<T, R extends RequestContext<any> = RequestContext<any>>(req: R, apiPath: string): Promise<T[]> {
   const result: T[][] = [];
   const query = `limit=100&page=`
 
@@ -114,7 +112,7 @@ export async function serverGetAllPagesFetch<T>(req: Request, fn: Fn): Promise<T
     page++;
 
     const resp: Paginated<T> = await (
-      await serverInputFetch(req, (d) => `${fn(d)}?${query}${page}`)
+      await serverInputFetch(req, `${apiPath}?${query}${page}`)
     ).json();
 
     pages = resp.pages;

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { type Request } from 'express';
 import type { FunctionComponent } from 'react';
-import type { Website } from './types/Website';
-import type { Collection } from './types/Collection';
 import { Falsy } from 'utility-types';
+import WebsiteDTO from '../lib/client/dto/website/WebsiteDTO';
+import CollectionDTO from '../lib/client/dto/collection/CollectionDTO';
+import RequestContext, { CollectionRequestContext } from './RequestContext';
 
 export type ValidatorFunction<T> = (value: T) => boolean
 
@@ -82,7 +82,7 @@ interface BaseInput<T, S> {
    * and server-side to validate that the request does not contain input.
    * Defaults to true
    */
-  isAllowed?: (website: Website, collection: Collection) => boolean
+  isAllowed?: (website: WebsiteDTO, collection: CollectionDTO) => boolean
 
   /**
    * Called server-side when page is requested through API
@@ -91,7 +91,7 @@ interface BaseInput<T, S> {
    * If you don't want the input to be rendered as HTML,
    * return a JSON object. You can also return a non-HTML string.
    */
-  renderHtml: (value: T, settings: S | null, req: Request) =>
+  renderHtml: (value: T, settings: S | null, req: CollectionRequestContext) =>
     RenderHtmlType<T> | Promise<RenderHtmlType<T>>
 }
 
@@ -119,7 +119,7 @@ interface InputWithValue<T, S> extends BaseInput<T, S> {
    * You should throw an error if it is invalid.
    */
   validate?: (
-    serializedValue: string, required: boolean, settings: S | null, req: Request
+    serializedValue: string, required: boolean, settings: S | null, req: CollectionRequestContext
   ) => void | Promise<void>
 
   /**
@@ -156,7 +156,7 @@ type InputWithSettings<T, S> = CommonBaseInput<T, S> & {
    * Called server-side to ensure that the input value is valid.
    * You should throw an error if it is invalid.
    */
-  validateSettings?: (settings: S, req: Request) => void | Promise<void>
+  validateSettings?: (settings: S, req: CollectionRequestContext) => void | Promise<void>
 }
 
 // This ensures that if one of these are defined, the other one has to be as well
@@ -170,12 +170,11 @@ type InputWithoutSettings<T, S> = CommonBaseInput<T, S> & {
  * T is value type
  *
  * S is settings type, optional
- *
  */
 export type Input<T, S = any> =
   InputWithoutSettings<T, S> | InputWithSettings<T, S>
 
-const InputRegistry = new Map<string, Input<any>>();
+const InputRegistry = new Map<string, Input<any, any>>();
 
 export default {
   addInput<T = any>(input: Input<T>) {

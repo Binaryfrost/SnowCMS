@@ -87,7 +87,7 @@ const input: Input<string, RemoteDataSettings> = {
       .replace(/\{collection\}/g, collectionId)
       .replace(/\{entry\}/g, id);
 
-    const safeUrlResp = await serverInputFetch(req, () => '/api/security/ssrf/check-url', {
+    const safeUrlResp = await serverInputFetch(req, '/api/security/ssrf/check-url', {
       method: 'POST',
       body: JSON.stringify({
         url: urlWithPlaceholdersReplaced

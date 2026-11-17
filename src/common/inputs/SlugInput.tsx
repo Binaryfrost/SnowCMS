@@ -205,7 +205,7 @@ const input: Input<string, SlugInputSettings> = {
 
     const resp = await serverInputFetch(
       req,
-      (params) => `/api/websites/${params.websiteId}/collections/${params.collectionId}/inputs`
+      `/api/websites/${req.params.websiteId}/collections/${req.params.collectionId}/inputs`
     );
 
     if (resp.status !== 200) {

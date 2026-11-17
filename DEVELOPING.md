@@ -69,6 +69,7 @@ To keep code clean, stable, and testable a few rules apply:
   - Services contain business logic
   - Middleware are reusable request handlers that handle common HTTP logic
   - DTOs are used for sharing data between Services, Controllers, and plugins
+- In the event that a feature requires violating the above rules (e.g. importing an external repository - one that isn't directly related to the service - into a service), a comment must be added justifying this choice
 
 ### Plugins
 
