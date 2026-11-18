@@ -20,6 +20,14 @@ export default class CollectionInputRepository extends Repository {
     super(db, 'collection_inputs');
   }
 
+  private parseInputConfig(inputConfig: Record<string, any> | string) {
+    if (typeof inputConfig === 'string') {
+      return JSON.parse(inputConfig);
+    }
+
+    return inputConfig || {};
+  }
+
   async getAllCollectionInputs(collectionId: string) {
     const results = await this.db<CollectionInputTable>(this.table)
       .select(
@@ -43,8 +51,8 @@ export default class CollectionInputRepository extends Repository {
       result.name,
       result.fieldName,
       result.description,
-      result.required,
-      result.inputConfig,
+      Boolean(result.required),
+      this.parseInputConfig(result.inputConfig),
       result.order
     ));
   }
@@ -79,8 +87,8 @@ export default class CollectionInputRepository extends Repository {
       result.name,
       result.fieldName,
       result.description,
-      result.required,
-      result.inputConfig,
+      Boolean(result.required),
+      this.parseInputConfig(result.inputConfig),
       result.order
     );
   }
@@ -108,7 +116,7 @@ export default class CollectionInputRepository extends Repository {
           description: input.getDescription(),
           fieldName: input.getFieldName(),
           input: input.getInput(),
-          inputConfig: input.getInputConfig(),
+          inputConfig: JSON.stringify(input.getInputConfig()) as any,
           required: input.isRequired(),
           order: lastRecordOrder + 1
         });
@@ -126,7 +134,7 @@ export default class CollectionInputRepository extends Repository {
       description: input.getDescription(),
       fieldName: input.getFieldName(),
       input: input.getInput(),
-      inputConfig: input.getInputConfig(),
+      inputConfig: JSON.stringify(input.getInputConfig()) as any,
       required: input.isRequired()
     };
 
@@ -183,7 +191,6 @@ export default class CollectionInputRepository extends Repository {
       });
   }
 
-  // TODO: IMPORTANT: DO NOT CONFIGURE COLLECTION INPUTS ONDELETE CASCADE
   /**
    * Deletes a Collection Input and reorders remaining Collection Inputs
    * consecutively. The calling method should first unset the Collection
@@ -192,16 +199,6 @@ export default class CollectionInputRepository extends Repository {
    * @param collectionId Collection ID
    */
   async delete(id: string, collectionId: string) {
-    /*
-     * TODO: Implement
-     *
-     * If input is used as slug or title, unset these to ensure that
-     * cascade doesn't delete the collection. After deleting input,
-     * reorder remaining inputs.
-     *
-     * This should be done by the service, not here.
-     */
-
     const input = await this.getCollectionInput(id);
 
     await this.db<CollectionInputTable>('collection_inputs')
@@ -210,6 +207,12 @@ export default class CollectionInputRepository extends Repository {
         collectionId
       })
       .andWhere('order', '>', input.getOrder());
+
+    await this.db('collection_entry_inputs')
+      .where({
+        inputId: id
+      })
+      .delete();
 
     await this.db<CollectionInputTable>(this.table)
       .where({

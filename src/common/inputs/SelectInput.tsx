@@ -1,9 +1,8 @@
 import { Checkbox, Select, Stack } from '@mantine/core';
-import type { Input } from '../InputRegistry'
+import type { Input } from '../InputRegistry';
 import { useInputValidator, useSettingsHandler } from './hooks';
 import KeyValueInputArray from './common/KeyValueInputArray';
 import ExpressError from '../errors/base/ExpressError';
-
 
 interface SelectInputSettings {
   options: [string, string][]
@@ -19,9 +18,7 @@ const input: Input<string, SelectInputSettings> = {
   renderInput: ({
     name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
-    const error = useInputValidator((v) => {
-      return !v && required ? `${name} is required` : null
-    }, registerValidator, unregisterValidator);
+    const error = useInputValidator((v) => (!v && required ? `${name} is required` : null), registerValidator, unregisterValidator);
 
     return (
       <Select
@@ -44,7 +41,6 @@ const input: Input<string, SelectInputSettings> = {
     if (!serializedValue && required) {
       throw new ExpressError('Empty value for Select Input');
     }
-    
 
     if (serializedValue && !settings.options.map(([key]) => key).includes(serializedValue)) {
       throw new ExpressError('Invalid option selected');
@@ -56,22 +52,20 @@ const input: Input<string, SelectInputSettings> = {
   },
 
   renderSettings: ({ settings, onChange, registerValidator, unregisterValidator }) => {
-    const errors = useInputValidator((v) => {
-      return {
-        options: (() => {
-          if (!v.options || v.options.length === 0) return 'At least one option must be set';
-          if (v.options?.some(([key, value]) => !key?.trim() || !value?.trim())) {
-            return 'A key or value was left empty';
-          }
-        })()
-      }
-    }, registerValidator, unregisterValidator);
+    const errors = useInputValidator((v) => ({
+      options: (() => {
+        if (!v.options || v.options.length === 0) return 'At least one option must be set';
+        if (v.options?.some(([key, value]) => !key?.trim() || !value?.trim())) {
+          return 'A key or value was left empty';
+        }
+      })()
+    }), registerValidator, unregisterValidator);
     const setSetting = useSettingsHandler(settings, onChange);
 
     return (
       <Stack>
         <KeyValueInputArray
-          name={'Options'}
+          name="Options"
           value={settings.options}
           labels={['Value', 'Label']}
           onChange={((v) => {

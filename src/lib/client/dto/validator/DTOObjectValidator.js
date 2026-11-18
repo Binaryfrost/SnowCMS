@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/reject-any-type */
 /* eslint-disable jsdoc/no-undefined-types */
-import ValidationError from '../errors/ValidationError';
-import DTOTypedValidator from './DTOTypedValidator';
+import ValidationError from '../errors/ValidationError.js';
+import DTOTypedValidator from './DTOTypedValidator.js';
 
 /**
  * @template [T=Record<string, any>]

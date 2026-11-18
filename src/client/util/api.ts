@@ -1,5 +1,5 @@
-import { CSRF_COOKIE, CSRF_HEADER, CSRF_METHODS } from '../../common/constants'
 import Cookies from 'js-cookie';
+import { CSRF_COOKIE, CSRF_HEADER, CSRF_METHODS } from '../../common/constants';
 
 interface RequestBase {
   route: string
@@ -55,7 +55,6 @@ async function request<T>(opts: Request): Promise<HttpResponse<T>> {
     localStorage.setItem('redirect', location.pathname);
     location.href = '/login';
   }
-
 
   const respData = await resp.text();
   return {

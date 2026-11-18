@@ -1,22 +1,37 @@
 import NotFoundError from '../../../common/errors/base/NotFoundError';
-import UserDTO from '../../../lib/client/dto/user/UserDTO';
 import CreateUpdateWebsiteDTO from '../../../lib/client/dto/website/CreateUpdateWebsiteDTO';
+import UserDTO from '../../../lib/client/dto/user/UserDTO';
 import WebsiteDTO from '../../../lib/client/dto/website/WebsiteDTO';
 import WebsiteListDTO from '../../../lib/client/dto/website/WebsiteListDTO';
 import PaginatedQuery, { PaginatedQueryOpts } from '../../database/PaginatedQuery';
 import Service from '../Service';
+import type { IMediaService } from '../media/MediaService';
+import ApiKeyService from '../user/api-key/ApiKeyService';
 import UserService from '../user/UserService';
+import CollectionService from '../collection/CollectionService';
 import WebsiteModel from './WebsiteModel';
 import WebsiteRepository from './WebsiteRepository';
 
 export default class WebsiteService extends Service {
   private websiteRepo: WebsiteRepository;
   private userService: UserService;
+  private collectionService: CollectionService;
+  private mediaService: IMediaService;
+  private apiKeyService: ApiKeyService;
 
-  constructor(websiteRepo: WebsiteRepository, userService: UserService) {
+  constructor(
+    websiteRepo: WebsiteRepository,
+    userService: UserService,
+    collectionService: CollectionService,
+    mediaService: IMediaService,
+    apiKeyService: ApiKeyService
+  ) {
     super();
     this.websiteRepo = websiteRepo;
     this.userService = userService;
+    this.collectionService = collectionService;
+    this.mediaService = mediaService;
+    this.apiKeyService = apiKeyService;
   }
 
   async getWebsite(id: string) {
@@ -31,14 +46,9 @@ export default class WebsiteService extends Service {
   }
 
   async getAllWebsitesAccessibleBy(
-    user: UserDTO | string, opts?: PaginatedQueryOpts
+    user: UserDTO, opts?: PaginatedQueryOpts
   ) {
-    const resolvedUser = typeof user === 'string' ?
-      await this.userService.getUser(user) : user;
-    if (!resolvedUser) {
-      throw new NotFoundError('User not found');
-    }
-    const { websites, role } = resolvedUser;
+    const { websites, role } = user;
 
     const paginatedClient = role === 'ADMIN' ?
       await this.websiteRepo.getAllWebsites(opts) :
@@ -66,21 +76,65 @@ export default class WebsiteService extends Service {
       website.name,
       website.hook
     );
+
+    const dto = new WebsiteDTO(model.getId(), model.getName(), model.getHook());
+    await this.callHook('beforeWebsiteCreateHook', { website: dto });
     await this.websiteRepo.create(model);
+    await this.callHook('afterWebsiteCreateHook', { website: dto });
     return model.getId();
   }
 
-  async update(id: string, website: WebsiteDTO) {
-    // TODO: Check if website exists first
+  async update(id: string, website: CreateUpdateWebsiteDTO) {
+    const existing = await this.websiteRepo.getWebsite(id);
+    if (!existing) {
+      throw new NotFoundError('Website not found');
+    }
+
     const model = new WebsiteModel(
       id,
       website.name,
       website.hook
     );
+    const dto = new WebsiteDTO(id, model.getName(), model.getHook());
+    await this.callHook('beforeWebsiteModifyHook', { website: dto });
     await this.websiteRepo.update(model);
+    await this.callHook('afterWebsiteModifyHook', { website: dto });
   }
 
   async delete(id: string) {
+    const website = await this.websiteRepo.getWebsite(id);
+    if (!website) {
+      throw new NotFoundError('Website not found');
+    }
+
+    const dto = new WebsiteDTO(id, website.getName(), website.getHook());
+    await this.callHook('beforeWebsiteDeleteHook', { website: dto });
+
+    const collectionIds: string[] = [];
+    let page = 1;
+    let pages = 1;
+    do {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await this.collectionService.getAllCollections(id, {
+        limit: 100,
+        page
+      });
+      pages = result._metadata.pages;
+      collectionIds.push(...result.collections.map((collection) => collection.id));
+      page += 1;
+    } while (page <= pages);
+
+    await Promise.all(
+      collectionIds.map((collectionId) => this.collectionService.delete(collectionId))
+    );
+
+    if (this.mediaService.isEnabled()) {
+      await this.mediaService.deleteAllMediaForWebsite(id);
+    }
+    await this.userService.removeWebsiteAccess(id);
+    await this.apiKeyService.removeWebsiteAccess(id);
+
     await this.websiteRepo.delete(id);
+    await this.callHook('afterWebsiteDeleteHook', { website: dto });
   }
 }

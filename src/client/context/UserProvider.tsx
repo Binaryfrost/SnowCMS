@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingOverlay } from '@mantine/core';
 import { UserContext } from './UserContext';
-import { UserWithWebsites } from '../../common/types/User';
+import type UserDTO from '../../lib/client/dto/user/UserDTO';
 import { get } from '../util/api';
 
 interface Props {
@@ -10,14 +10,14 @@ interface Props {
 }
 
 export default function UserProvider({ children }: Props) {
-  const [user, setUser] = useState<UserWithWebsites>(null);
+  const [user, setUser] = useState<UserDTO>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   async function refresh() {
     setLoading(true);
 
-    const resp = await get<UserWithWebsites>('/api/accounts/me');
+    const resp = await get<UserDTO>('/api/accounts/me');
     if (resp.status === 200) {
       setUser(resp.body);
       setLoading(false);

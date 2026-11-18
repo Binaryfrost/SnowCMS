@@ -1,4 +1,4 @@
-import type { Role, UserWithWebsites } from './types/User';
+import type UserDTO from '../lib/client/dto/user/UserDTO';
 
 export const ROLE_HIERARCHY = Object.freeze({
   VIEWER: 20,
@@ -7,7 +7,9 @@ export const ROLE_HIERARCHY = Object.freeze({
   ADMIN: 80
 });
 
-export function hasAccess(user: UserWithWebsites, requiredRole: Role, websiteId?: string) {
+export type Role = keyof typeof ROLE_HIERARCHY;
+
+export function hasAccess(user: UserDTO, requiredRole: Role, websiteId?: string) {
   if (!user) return false;
 
   const userRoleWeight = ROLE_HIERARCHY[user.role];

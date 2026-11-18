@@ -9,19 +9,23 @@ export default class CreateUserDTO extends DTO {
   #password;
   /** @type {boolean} */
   #active;
+  /** @type {string[]} */
+  #websites;
 
   /**
    * @param {string} email User email
    * @param {string} role The user's role, a string of enum ROLE_HIERARCHY
    * @param {string} password Unhashed user password
    * @param {boolean} active Whether user is active
+   * @param {string[]} websites List of website IDs the user can access
    */
-  constructor(email, role, password, active) {
+  constructor(email, role, password, active, websites) {
     super();
     this.email = email;
     this.role = role;
     this.password = password;
     this.active = active;
+    this.websites = websites;
   }
 
   get email() {
@@ -57,12 +61,24 @@ export default class CreateUserDTO extends DTO {
     this.#active = this.validator(active, 'active').required().boolean().getValue();
   }
 
+  get websites() {
+    return this.#websites;
+  }
+
+  set websites(websites) {
+    this.#websites = this.validator(websites, 'websites').required().array().of(
+      (elem, name) => this.validator(elem, name).required().string()
+    )
+      .getValue();
+  }
+
   clone() {
     return new CreateUserDTO(
       this.email,
       this.role,
       this.password,
-      this.active
+      this.active,
+      this.websites
     );
   }
 
@@ -71,7 +87,8 @@ export default class CreateUserDTO extends DTO {
       json.email,
       json.role,
       json.password,
-      json.active
+      json.active,
+      json.websites
     );
   }
 
@@ -80,7 +97,8 @@ export default class CreateUserDTO extends DTO {
       email: this.email,
       role: this.role,
       password: this.password,
-      active: this.active
+      active: this.active,
+      websites: this.websites
     };
   }
 }

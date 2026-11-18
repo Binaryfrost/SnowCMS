@@ -1,7 +1,12 @@
 import { Box, Group, Progress, Text, Tooltip } from '@mantine/core';
-import type { MediaConfig } from '../../common/types/Media';
 import GenericSkeleton from './GenericSkeleton';
 import { bytesToReadableUnits } from '../util/media';
+
+interface MediaConfig {
+  maxSize: number
+  maxStorage: number
+  usedStorage: number
+}
 
 export default function MediaStorageUsage({ config }: { config: MediaConfig }) {
   const storagePercentage = config ? (config.usedStorage / config.maxStorage) * 100 : 0;

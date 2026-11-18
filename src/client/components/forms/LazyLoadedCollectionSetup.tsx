@@ -4,7 +4,7 @@ import { LoadingOverlay } from '@mantine/core';
 export default function LazyLoadedCollectionSetup({ children }: PropsWithChildren) {
   const didSetup = useRef(false);
   const [loading, setLoading] = useState(true);
-  
+
   if (!didSetup.current) {
     import('../../../common/setup').then(({ default: setup }) => {
       setup();
@@ -19,5 +19,5 @@ export default function LazyLoadedCollectionSetup({ children }: PropsWithChildre
     <>
       {children}
     </>
-  )
+  );
 }

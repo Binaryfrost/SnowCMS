@@ -1,6 +1,6 @@
 import { Tooltip } from '@mantine/core';
 import { ReactNode, useContext } from 'react';
-import type { Role } from '../../common/types/User';
+import type { Role } from '../../common/users';
 import { hasAccess } from '../../common/users';
 import { UserContext } from '../context/UserContext';
 

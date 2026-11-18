@@ -7,7 +7,7 @@ import { ModalsProvider, openModal } from '@mantine/modals';
 import Logo from '../components/Logo';
 import Page from '../components/Page';
 import DataGetter from '../components/DataGetter';
-import { LoginConfig } from '../../common/types/User';
+import type LoginConfigDTO from '../../lib/client/dto/login/LoginConfigDTO';
 import FormSkeleton from '../components/FormSkeleton';
 import { formDataToObject, onSubmit } from '../util/form';
 import { HttpResponse, get, post } from '../util/api';
@@ -15,7 +15,7 @@ import DarkModeToggle from '../components/DarkModeToggle';
 import Hidden from '../components/Hidden';
 
 interface LoginFormProps {
-  config: LoginConfig
+  config: LoginConfigDTO
   form: UseFormReturnType<{
     email: string
     password: string
@@ -47,7 +47,7 @@ function LoginForm({ config, form, submitting } : LoginFormProps) {
 
         <Anchor
           component={config.smtp ? Link : 'span'}
-          to={'/login/password-reset'}
+          to="/login/password-reset"
           onClick={!config.smtp ? () => openModal({
             title: 'Forgot password',
             children: 'If you have forgotten your password, contact the administrator of this SnowCMS instance.',
@@ -156,7 +156,7 @@ export function Component() {
                   </Stack>
                 )}
 
-                <DataGetter<LoginConfig> url="/api/login/config"
+                <DataGetter<LoginConfigDTO> url="/api/login/config"
                   skeletonComponent={<FormSkeleton inputs={2} />}>
                   {(config) => (
                     <LoginForm config={config.data} form={form} submitting={submitting} />

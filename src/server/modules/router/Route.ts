@@ -3,15 +3,6 @@ import Controller, { type ControllerMethod } from '../Controller';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
 
-type ControllerMethods<C> = {
-  [K in keyof C]: C[K] extends (...args: any[]) => any ?
-    Parameters<C[K]> extends Parameters<ControllerMethod> ?
-      ReturnType<C[K]> extends ReturnType<ControllerMethod> ?
-      K : never
-    : never
-  : never
-}[keyof C];
-
 export default class Route<Path extends string> {
   private method: HttpMethod;
   private path: Path;
@@ -23,9 +14,8 @@ export default class Route<Path extends string> {
     this.path = path;
   }
 
-  handler<C extends Controller>(controller: C, method: ControllerMethods<C>) {
-    const h = controller[method] as ControllerMethod;
-    // TODO: Test
+  handler(controller: Controller, method: string) {
+    const h = (controller as any)[method] as ControllerMethod;
     this._handler = (req, res) => {
       h.bind(controller)(req, res);
     };

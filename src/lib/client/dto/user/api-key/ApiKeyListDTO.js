@@ -30,8 +30,8 @@ export default class ApiKeyListDTO extends PaginatedDTO {
       json._metadata.page,
       json._metadata.pages,
       json.apiKeys.map(({
-        id, name, role, active, websites
-      }) => new ApiKeyDTO(id, name, role, active, websites))
+        id, userId, name, role, active, websites
+      }) => new ApiKeyDTO(id, userId, name, role, active, websites))
     );
   }
 

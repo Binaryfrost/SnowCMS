@@ -2,13 +2,13 @@ import { useEffect, useReducer, useState } from 'react';
 import { Box, Button } from '@mantine/core';
 import { useDisclosure, useSetState } from '@mantine/hooks';
 import { IconUpload } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import MediaGallery, { type MediaGalleryProps } from './MediaGallery';
 import { getMediaConfig } from '../pages/media/Media';
 import MediaUploadForm from './forms/MediaUploadForm';
 import SearchInput from './SearchInput';
 import { useIsMobile } from '../util/mobile';
 import ConditionalFlexDirection from './ConditionalFlexDirection';
-import { notifications } from '@mantine/notifications';
 
 export type SelectMediaProps = Omit<MediaGalleryProps, 'refresh'>
 
@@ -61,9 +61,9 @@ export default function SelectMedia({ websiteId, mimeTypes, select }: SelectMedi
       {config && (
         <MediaUploadForm websiteId={websiteId} config={config}
           opened={opened} mimeTypes={mimeTypes} close={() => {
-          close();
-          forceUpdate();
-        }} />
+            close();
+            forceUpdate();
+          }} />
       )}
 
       <MediaGallery key={key} websiteId={websiteId} select={select}

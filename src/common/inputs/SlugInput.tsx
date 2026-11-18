@@ -3,17 +3,17 @@ import {
   ActionIcon, Code, Input as MantineInput, NumberInput, Select, Stack, TextInput, Tooltip
 } from '@mantine/core';
 import slug from 'slug';
+import { IconRefresh } from '@tabler/icons-react';
+import { useLocation } from 'react-router-dom';
+import { DateTime } from 'luxon';
 import { type Input } from '../InputRegistry';
 import ExpressError from '../errors/base/ExpressError';
 import { serverInputFetch } from '../plugins/plugins';
-import { CollectionInput } from '../types/CollectionInputs';
-import { IconRefresh } from '@tabler/icons-react';
+import type CollectionInputDTO from '../../lib/client/dto/collection/input/CollectionInputDTO';
 import IconButton from '../../client/components/IconButton';
 import { useInputValidator, useSettingsHandler } from './hooks';
-import { useLocation } from 'react-router-dom';
 import DataGetter from '../../client/components/DataGetter';
 import FormSkeleton from '../../client/components/FormSkeleton';
-import { DateTime } from 'luxon';
 
 interface SlugInputSettings {
   fieldName: string
@@ -212,7 +212,7 @@ const input: Input<string, SlugInputSettings> = {
       throw new ExpressError('Failed to validate settings', 500);
     }
 
-    const collectionInputs: CollectionInput[] = await resp.json();
+    const collectionInputs: CollectionInputDTO[] = await resp.json();
     if (collectionInputs.filter((i) => i.fieldName === settings.fieldName).length === 0) {
       throw new ExpressError('No Input with that field name exist in this Collection');
     }

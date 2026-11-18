@@ -1,11 +1,36 @@
 import { timingSafeEqual } from 'crypto';
 import { db } from './db';
-import type { Collection } from '../../common/types/Collection';
-import type { Website } from '../../common/types/Website';
-import type { DatabaseCollectionInput } from '../../common/types/CollectionInputs';
-import { ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, User, UserWebsite, UserWithWebsites } from '../../common/types/User';
 import { redis } from './redis';
+import type { Role } from '../../common/users';
 import ExpressError from '../../common/errors/base/ExpressError';
+import type { UsersTable, UserWebsitesTable } from '../modules/user/UserRepository';
+import type { ApiKeysTable, ApiKeyWebsitesTable } from '../modules/user/api-key/ApiKeyRepository';
+import type { WebsitesTable } from '../modules/website/WebsiteRepository';
+import type { CollectionsTable } from '../modules/collection/CollectionRepository';
+import type { CollectionInputTable } from '../modules/collection/input/CollectionInputRepository';
+
+export interface UserWithWebsites {
+  id: string
+  email: string
+  role: Role
+  active: boolean
+  websites: string[]
+}
+
+export interface ApiKeyWithWebsites {
+  id: string
+  key: string
+  userId: string
+  name: string
+  role: Role
+  active: boolean
+  websites: string[]
+}
+
+export interface Session {
+  user: string
+  sso: boolean
+}
 
 export async function exists<T extends { id: string }>(table: string, id: string) {
   const [result] = await db()<T>(table)
@@ -19,7 +44,7 @@ export async function exists<T extends { id: string }>(table: string, id: string
 }
 
 export async function getWebsite(id: string) {
-  return db()<Website>('websites')
+  return db()<WebsitesTable>('websites')
     .select('id', 'name', 'hook')
     .where({
       id
@@ -28,7 +53,7 @@ export async function getWebsite(id: string) {
 }
 
 export async function getCollection(id: string) {
-  const collection = await db()<Collection>('collections')
+  const collection = await db()<CollectionsTable>('collections')
     .select('id', 'websiteId', 'name', 'callHook', 'title', 'slug', 'backdatingEnabled')
     .where({
       id
@@ -39,7 +64,7 @@ export async function getCollection(id: string) {
 }
 
 export async function getCollectionInputs(collectionId: string) {
-  const collectionInputs = await db()<DatabaseCollectionInput>('collection_inputs')
+  const collectionInputs = await db()<CollectionInputTable>('collection_inputs')
     .select('id', 'collectionId', 'name', 'description', 'fieldName', 'input', 'inputConfig', 'required')
     .where({
       collectionId
@@ -52,7 +77,7 @@ export async function getCollectionInputs(collectionId: string) {
 // https://softwareengineering.stackexchange.com/a/304597
 export async function reorderCollectionInputs(inputId: string, collectionId: string,
   newPosition: number) {
-  const oldPosition = (await db<DatabaseCollectionInput>()
+  const oldPosition = (await db<CollectionInputTable>()
     .select('order')
     .from('collection_inputs')
     .where({
@@ -63,7 +88,7 @@ export async function reorderCollectionInputs(inputId: string, collectionId: str
   if (newPosition === oldPosition) return;
 
   if (newPosition > oldPosition) {
-    await db<DatabaseCollectionInput>()
+    await db<CollectionInputTable>()
       .table('collection_inputs')
       .decrement('order', 1)
       .where({
@@ -72,7 +97,7 @@ export async function reorderCollectionInputs(inputId: string, collectionId: str
       .andWhere('order', '>', oldPosition)
       .andWhere('order', '<=', newPosition);
   } else {
-    await db<DatabaseCollectionInput>()
+    await db<CollectionInputTable>()
       .table('collection_inputs')
       .increment('order', 1)
       .where({
@@ -82,7 +107,7 @@ export async function reorderCollectionInputs(inputId: string, collectionId: str
       .andWhere('order', '<=', oldPosition);
   }
 
-  await db<DatabaseCollectionInput>()
+  await db<CollectionInputTable>()
     .table('collection_inputs')
     .update({
       order: newPosition
@@ -109,11 +134,6 @@ export function handleUserBooleanConversion
   };
 }
 
-export interface Session {
-  user: string
-  sso: boolean
-}
-
 export async function getSession(token: string): Promise<Session> {
   const session = await redis().get(`session:${token}`);
 
@@ -126,7 +146,7 @@ export async function getSession(token: string): Promise<Session> {
 }
 
 export async function getUserFromDatabase(id: string): Promise<UserWithWebsites> {
-  const user = await db()<User>('users')
+  const user = await db()<UsersTable>('users')
     .select('id', 'email', 'role', 'active')
     .where({
       id
@@ -137,7 +157,7 @@ export async function getUserFromDatabase(id: string): Promise<UserWithWebsites>
     throw new ExpressError('User not found', 404);
   }
 
-  const userWebsites = await db()<UserWebsite>('user_websites')
+  const userWebsites = await db()<UserWebsitesTable>('user_websites')
     .select('userId', 'websiteId')
     .where({
       userId: id
@@ -170,8 +190,8 @@ export async function getUser(id: string): Promise<UserWithWebsites> {
 }
 
 export async function getApiKeyFromDatabase(id: string):
-  Promise<DatabaseApiKey & ApiKeyWithWebsites> {
-  const key = await db()<DatabaseApiKey>('apikeys')
+  Promise<ApiKeyWithWebsites> {
+  const key = await db()<ApiKeysTable>('apikeys')
     .select('id', 'key', 'userId', 'name', 'role', 'active')
     .where({
       id
@@ -182,7 +202,7 @@ export async function getApiKeyFromDatabase(id: string):
     throw new ExpressError('API key not found', 404);
   }
 
-  const apiKeyWebsites = await db()<ApiKeyWebsite>('apikey_websites')
+  const apiKeyWebsites = await db()<ApiKeyWebsitesTable>('apikey_websites')
     .select('apikeyId', 'websiteId')
     .where({
       apikeyId: id

@@ -1,5 +1,6 @@
+import ValidationError from '../errors/ValidationError.js';
 /* eslint-disable jsdoc/reject-any-type */
-import DTOTypedValidator from './DTOTypedValidator';
+import DTOTypedValidator from './DTOTypedValidator.js';
 
 /** @extends {DTOTypedValidator<any>} */
 export default class DTOEnumValidator extends DTOTypedValidator {

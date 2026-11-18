@@ -1,4 +1,4 @@
-interface CommonFileMetadata {
+export interface CommonFileMetadata {
   size: number
   type: string
 }
@@ -22,7 +22,7 @@ export interface FileUploadResponse {
   hmac: string
 }
 
-interface ConfirmationFileMetadata extends Omit<FileMetadata, 'thumbnail'> {
+export interface ConfirmationFileMetadata extends Omit<FileMetadata, 'thumbnail'> {
   s3Name: string
 }
 
@@ -35,6 +35,6 @@ export interface FileUploadConfirmationData {
 
 export interface FileUploadConfirmation {
   id: string
-  data: FileUploadConfirmation
+  data: FileUploadConfirmationData
   hmac: string
 }

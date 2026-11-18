@@ -16,14 +16,13 @@ export default class RequestContext<P = undefined> {
   #headers: Record<string, string>;
   #params: Record<keyof P, string>;
   #localPort: number;
-  
+
   constructor(req: Request, params?: Record<keyof P, string>) {
     if (!req.ip) throw new InternalServerError('Request has no IP');
     this.#ip = req.ip;
     this.#headers = Object.fromEntries(
       Object.entries(req.headers)
-        .map(([k, v]) =>
-          [k, Array.isArray(v) ? v.join(', ') : v ?? '']
+        .map(([k, v]) => [k, Array.isArray(v) ? v.join(', ') : v ?? '']
         )
     );
     this.#params = params || {} as Record<keyof P, string>;
@@ -48,22 +47,21 @@ export default class RequestContext<P = undefined> {
   }
 
   get auth(): RequestContextAuthHeader | RequestContextAuthCookie | null {
-    const authHeader = this.#headers['authorization'];
-    const cookie = this.#headers['cookie'];
+    const authHeader = this.#headers.authorization;
+    const { cookie } = this.#headers;
 
     if (authHeader) {
       return {
         type: 'header',
         auth: authHeader
       };
-    } else if (cookie) {
+    } if (cookie) {
       return {
         type: 'cookie',
-        cookie: cookie
+        cookie
       };
-    } else {
-      return null;
     }
+    return null;
   }
 }
 

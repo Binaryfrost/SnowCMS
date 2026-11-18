@@ -1,3 +1,4 @@
+import type { Request, Response } from 'express';
 import Service from '../Service';
 import EncryptionService, { EncryptedData } from '../common/EncryptionService';
 import AppConfigProvider from '../config/AppConfigProvider';
@@ -22,16 +23,6 @@ export default class CookieService extends Service {
     });
   }
 
-  /**
-   * TODO: Move cookie code into here
-   *
-   * This class (and extending classes) should only concern themselves with
-   * the cookie content and options: not setting or retrieving the cookie.
-   * It should encrypt, decrypt, and validate the content. Extending classes
-   * provide specific overrides, options, types, or helper methods for the
-   * cookie they manage.
-   */
-
   async createCookie(name: string, value: string, options: Partial<CookieOptions>) {
     return new Cookie(
       name,
@@ -40,12 +31,35 @@ export default class CookieService extends Service {
     );
   }
 
+  setCookie(res: Response, cookie: Cookie) {
+    res.cookie(cookie.getName(), cookie.getData(), cookie.getOpts());
+  }
+
+  clearCookie(res: Response, name: string, opts?: HttpCookieOptions) {
+    const cookieOpts = { ...(opts || this.DEFAULT_OPTS) };
+    delete cookieOpts.maxAge;
+    res.clearCookie(name, cookieOpts);
+  }
+
+  async getCookie(req: Request, name: string) {
+    const raw = req.cookies[name];
+    if (!raw) return null;
+
+    if (!this.isEncrypted(raw)) return raw;
+
+    try {
+      return await this.getDecryptedValue(raw);
+    } catch {
+      return null;
+    }
+  }
+
   private mergeDefaultOpts(options: Partial<CookieOptions>): HttpCookieOptions {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { encrypt, ...opts } = options;
     return {
-      ...opts,
-      ...this.DEFAULT_OPTS
+      ...this.DEFAULT_OPTS,
+      ...opts
     };
   }
 

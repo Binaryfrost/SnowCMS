@@ -69,7 +69,21 @@ export default class MediaRepository extends Repository {
         builder.andWhere('websiteId', websiteId);
       });
 
-    return new PaginatedQuery(this.db, query, opts);
+    return new PaginatedQuery<MediaModel>(
+      this.db,
+      query,
+      opts,
+      (row) => new MediaModel(
+        row.id,
+        row.websiteId,
+        row.origFileName,
+        row.fileName,
+        row.fileSize,
+        row.fileType,
+        row.timestamp,
+        row.thumbName
+      )
+    );
   }
 
   async getMediaById(id: string): Promise<MediaModel | null> {
@@ -122,6 +136,42 @@ export default class MediaRepository extends Repository {
 
     if (!result) return 0;
     return parseInt(result.sum, 10) || 0;
+  }
+
+  async getMediaForWebsite(websiteId: string): Promise<MediaModel[]> {
+    const results = await this.db<MediaTable>(this.table)
+      .select(
+        'id',
+        'websiteId',
+        'origFileName',
+        'fileName',
+        'fileSize',
+        'fileType',
+        'thumbName',
+        'timestamp'
+      )
+      .where({
+        websiteId
+      });
+
+    return results.map((row) => new MediaModel(
+      row.id,
+      row.websiteId,
+      row.origFileName,
+      row.fileName,
+      row.fileSize,
+      row.fileType,
+      row.timestamp,
+      row.thumbName
+    ));
+  }
+
+  async deleteAllMediaForWebsite(websiteId: string) {
+    await this.db<MediaTable>(this.table)
+      .where({
+        websiteId
+      })
+      .delete();
   }
 
   async createMedia(media: MediaModel) {

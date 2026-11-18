@@ -1,6 +1,10 @@
 import { isIP, BlockList } from 'net';
 import { lookup } from './dns';
-import type { SafeUrlResult } from '../common/types/SafeUrlResult';
+
+export interface SafeUrlResult {
+  safe: boolean
+  hostname?: string
+}
 
 // TODO: Remove all non-types
 

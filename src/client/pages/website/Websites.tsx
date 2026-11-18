@@ -2,11 +2,11 @@ import { IconPlus } from '@tabler/icons-react';
 import { Stack, Text } from '@mantine/core';
 import Page from '../../components/Page';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
-import { type Website } from '../../../common/types/Website';
+import type WebsiteDTO from '../../../lib/client/dto/website/WebsiteDTO';
 import DataGetter from '../../components/DataGetter';
 import useRefresh from '../../util/refresh';
 import ListEntry from '../../components/ListEntry';
-import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
+import type { PaginatedResponse } from '../../../lib/client/types/PaginatedResponse';
 import Pagination from '../../components/Pagination';
 
 export function Component() {
@@ -26,14 +26,14 @@ export function Component() {
         iconButtonProps={{
           role: 'ADMIN'
         }} />
-      <DataGetter<PaginatedResponse<Website>> url="/api/websites" paginate
+      <DataGetter<PaginatedResponse<WebsiteDTO>> url="/api/websites" paginate
         skeletonProps={{ h: 85 }} skeletonNum={3}>
         {({ data: websites, setPage }) => (
           <Stack>
-            {websites.data.length === 0 ? (
+            {websites.websites.length === 0 ? (
               <Text>No websites exist, or you do not have access to any</Text>
             ) : (
-              websites.data.map((website) => (
+              websites.websites.map((website) => (
                 <ListEntry key={website.id} type="Website" name={website.name} id={website.id}
                   buttons={{
                     delete: {
@@ -53,7 +53,8 @@ export function Component() {
                   }} />
               ))
             )}
-            <Pagination page={websites.page} pages={websites.pages} setPage={setPage} />
+            <Pagination page={websites._metadata.page} pages={websites._metadata.pages}
+              setPage={setPage} />
           </Stack>
         )}
       </DataGetter>

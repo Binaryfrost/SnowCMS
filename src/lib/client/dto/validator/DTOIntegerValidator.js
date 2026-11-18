@@ -1,4 +1,5 @@
-import DTOTypedValidator from './DTOTypedValidator';
+import ValidationError from '../errors/ValidationError.js';
+import DTOTypedValidator from './DTOTypedValidator.js';
 
 /** @extends {DTOTypedValidator<number>} */
 export default class DTOIntegerValidator extends DTOTypedValidator {

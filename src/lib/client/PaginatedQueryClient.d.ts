@@ -8,7 +8,7 @@ export interface PaginatedQueryOpts {
 }
 
 export class PaginatedQueryClient<T> {
-  constructor(client: BaseClient, route: string, opts: PaginatedQueryOpts);
+  constructor(client: BaseClient, route: string, opts: PaginatedQueryOpts, listKey: string);
 
   /** Fetches the current page */
   fetch(): Promise<T[]>;

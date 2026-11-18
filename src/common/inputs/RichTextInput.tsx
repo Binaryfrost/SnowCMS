@@ -112,11 +112,11 @@ const input: Input<JSONContent, RichTextInputSettings> = {
         if (required && length === 0) {
           return `${name} is required`;
         }
-  
+
         if (settings.maxLength > 0 && length > settings.maxLength) {
           return `Max length is ${settings.maxLength}`;
         }
-  
+
         return null;
       },
       registerValidator,

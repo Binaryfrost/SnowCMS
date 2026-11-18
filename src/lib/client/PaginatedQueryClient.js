@@ -20,10 +20,18 @@ export class PaginatedQueryClient {
   #route;
   /** @type {import('./PaginatedQueryClient').PaginatedQueryOpts} */
   #opts;
+  /** @type {string} */
+  #listKey;
   /** @type {number} */
   #pages;
 
-  constructor(client, route, opts) {
+  /**
+   * @param {import('./BaseClient').default} client
+   * @param {string} route
+   * @param {import('./PaginatedQueryClient').PaginatedQueryOpts} opts
+   * @param {string} listKey The property of the paginated response that holds the list
+   */
+  constructor(client, route, opts, listKey) {
     if (route.includes('?')) {
       throw new Error('Do not add query parameters to the route for paginated requests. ' +
         'Pass them in the opts instead');
@@ -35,6 +43,7 @@ export class PaginatedQueryClient {
       ...DEFAULT_OPTS,
       ...opts
     };
+    this.#listKey = listKey || 'data';
   }
 
   async fetch() {
@@ -48,10 +57,10 @@ export class PaginatedQueryClient {
     /** @type {import('./types/PaginatedResponse').PaginatedResponse} */
     const resp = await this.#client.fetchFromCms(`${this.#route}?${stringifyParams(params)}`);
 
-    this.#opts.page = resp.page;
-    this.#pages = resp.pages;
+    this.#opts.page = resp._metadata.page;
+    this.#pages = resp._metadata.pages;
 
-    return resp.data;
+    return resp[this.#listKey];
   }
 
   get currentPage() {

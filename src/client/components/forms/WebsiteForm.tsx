@@ -1,11 +1,11 @@
 import { ActionFunctionArgs, Form } from 'react-router-dom';
 import { Button, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import type { Website } from '../../../common/types/Website';
+import type WebsiteDTO from '../../../lib/client/dto/website/WebsiteDTO';
 import { formDataToObject, onSubmit } from '../../util/form';
 
 interface Props {
-  website?: Website
+  website?: WebsiteDTO
 }
 
 export default function WebsiteForm({ website }: Props) {

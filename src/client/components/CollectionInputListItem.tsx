@@ -1,18 +1,18 @@
 import { ActionIcon, Box, Group, Paper, Text } from '@mantine/core';
 import { IconSettings, IconTrash } from '@tabler/icons-react';
-import type { CollectionInput } from '../../common/types/CollectionInputs';
+import type CollectionInputDTO from '../../lib/client/dto/collection/input/CollectionInputDTO';
 import InputRegistry from '../../common/InputRegistry';
 import IconButton from './IconButton';
-import { Collection } from '../../common/types/Collection';
-import { Website } from '../../common/types/Website';
+import type CollectionDTO from '../../lib/client/dto/collection/CollectionDTO';
+import type WebsiteDTO from '../../lib/client/dto/website/WebsiteDTO';
 import { showDeleteModal } from '../util/modals';
 import useRefresh from '../util/refresh';
 import ShortUuid from './ShortUuid';
 
 interface Props {
-  collection: Collection
-  website: Website
-  input: CollectionInput
+  collection: CollectionDTO
+  website: WebsiteDTO
+  input: CollectionInputDTO
   openSettings: () => void
 }
 

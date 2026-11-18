@@ -4,23 +4,31 @@ import { type UseListStateHandlers } from '@mantine/hooks';
 import InputRegistry, {
   ValidateFunctionErrorObject, ValidatorFunction
 } from '../../../common/InputRegistry';
-import type { CollectionInput, CollectionInputSettings } from '../../../common/types/CollectionInputs';
+import type CollectionInputDTO from '../../../lib/client/dto/collection/input/CollectionInputDTO';
+
+interface CollectionInputSettings {
+  name: string
+  fieldName: string
+  description: string
+  required: boolean
+  inputConfig: Record<string, any>
+}
 
 interface Props {
-  collectionInput: CollectionInput
+  collectionInput: CollectionInputDTO
   close: () => void
-  update: (item: Parameters<UseListStateHandlers<CollectionInput>['applyWhere']>[1]) => void
+  update: (item: Parameters<UseListStateHandlers<CollectionInputDTO>['applyWhere']>[1]) => void
 }
 
 export default function CollectionInputSettingsForm({ collectionInput, close, update }: Props) {
   const settingsInput = InputRegistry.getInput(collectionInput.input);
-  const [errors, setErrors] = useState<ValidateFunctionErrorObject<CollectionInput>>({});
+  const [errors, setErrors] = useState<ValidateFunctionErrorObject<CollectionInputSettings>>({});
   const [settings, setSettings] = useState<CollectionInputSettings>({
     name: collectionInput.name || '',
     fieldName: collectionInput.fieldName || '',
     description: collectionInput.description || '',
     inputConfig: collectionInput.inputConfig || {},
-    required: collectionInput.required ?? (settingsInput.isVisualOnly ? false : true)
+    required: collectionInput.required ?? (!settingsInput.isVisualOnly)
   });
   const validator = useRef<ValidatorFunction<any>>();
 
@@ -34,7 +42,7 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
     const errors: ValidateFunctionErrorObject<CollectionInputSettings> = {
       name: !settings.name ? 'Name is required' : null,
       fieldName: !settings.fieldName ? 'Field name is required' : null
-    }
+    };
     return errors;
   }
 
@@ -51,7 +59,7 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
     if (commonSettingsHasError || inputSettingsHasError) return;
 
     const { name, fieldName, description, inputConfig, required } = settings;
-    
+
     update((input) => ({
       ...input,
       name,
@@ -59,9 +67,9 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
       description,
       required,
       inputConfig
-    }));
+    }) as CollectionInputDTO);
   }
-  
+
   function onChange(setting: keyof CollectionInputSettings, value: any) {
     setSettings((settings) => ({
       ...settings,
@@ -70,7 +78,7 @@ export default function CollectionInputSettingsForm({ collectionInput, close, up
   }
 
   function onChangeInput(setting: keyof CollectionInputSettings, e: ChangeEvent<HTMLInputElement>) {
-    onChange(setting, e.target.value)
+    onChange(setting, e.target.value);
   }
 
   function onChangeConfig(value: Record<string, any>) {

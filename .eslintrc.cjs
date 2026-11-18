@@ -6,7 +6,11 @@ module.exports = {
     browser: true
   },
   ignorePatterns: [
-    '**/dist/**'
+    '**/dist/**',
+    // Legacy implementation kept as a reference; no longer compiled or mounted
+    'src/server/routes/**',
+    'src/server/cookie.ts',
+    'src/server/email/**'
   ],
   rules: {
     'comma-dangle': 'off',

@@ -1,8 +1,8 @@
-import type { Role, UserWithWebsites } from '../common/types/User';
+import type UserDTO from '../lib/client/dto/user/UserDTO';
+import { hasAccess, type Role } from '../common/users';
 import ExpressError from '../common/errors/base/ExpressError';
-import { hasAccess } from '../common/users';
 
-export default function handleAccessControl(user: UserWithWebsites,
+export default function handleAccessControl(user: UserDTO,
   requiredRole: Role, websiteId?: string) {
   if (hasAccess(user, requiredRole, websiteId)) return;
 

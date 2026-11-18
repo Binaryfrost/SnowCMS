@@ -1,4 +1,4 @@
-import DTO from '../DTO';
+import DTO from '../DTO.js';
 
 export default class CollectionDTO extends DTO {
   #id;

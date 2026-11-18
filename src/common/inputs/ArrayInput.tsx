@@ -72,18 +72,18 @@ const input: Input<Value, ArrayInputSettings> = {
     const selectedInput = getInput(settings.input);
     const RenderedInput = selectedInput?.renderInput;
     const internalValue: Value = selectedInput ? (value || [])
-        .map(([id, value]) => [
-          id,
-          selectedInput.isVisualOnly ? null : selectedInput.deserialize(value)
-        ]) : [];
+      .map(([id, value]) => [
+        id,
+        selectedInput.isVisualOnly ? null : selectedInput.deserialize(value)
+      ]) : [];
 
     function updateValue() {
       onChange(
         internalValue
-        .map(([id, value]) => [
-          id,
-          selectedInput.isVisualOnly ? null : selectedInput.serialize(value)
-        ])
+          .map(([id, value]) => [
+            id,
+            selectedInput.isVisualOnly ? null : selectedInput.serialize(value)
+          ])
       );
     }
 
@@ -157,7 +157,7 @@ const input: Input<Value, ArrayInputSettings> = {
               label: `${i.name} (${i.id})`,
               value: i.id
             }))} error={errors?.input} value={settings.input}
-            onChange={(v) => setSetting('input', v)} />
+          onChange={(v) => setSetting('input', v)} />
 
         <NumberInput label="Max Inputs" required description="Set to 0 to disable limit"
           allowDecimal={false} allowNegative={false} value={settings.maxInputs}

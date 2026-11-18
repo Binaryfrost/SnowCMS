@@ -27,7 +27,12 @@ export default class UserRepository extends Repository {
     const query = this.db<UsersTable>(this.table)
       .select('id', 'email', 'password', 'role', 'active');
 
-    return new PaginatedQuery<UserModel>(this.db, query, opts);
+    return new PaginatedQuery<UserModel>(
+      this.db,
+      query,
+      opts,
+      (row) => new UserModel(row.id, row.email, row.password, row.role, Boolean(row.active))
+    );
   }
 
   async getUserById(id: string): Promise<UserModel | null> {
@@ -39,7 +44,7 @@ export default class UserRepository extends Repository {
 
     if (!query) return null;
     const { email, password, role, active } = query;
-    return new UserModel(id, email, password, role, active);
+    return new UserModel(id, email, password, role, Boolean(active));
   }
 
   async getUserByEmail(email: string): Promise<UserModel | null> {
@@ -51,7 +56,7 @@ export default class UserRepository extends Repository {
 
     if (!query) return null;
     const { id, password, role, active } = query;
-    return new UserModel(id, email, password, role, active);
+    return new UserModel(id, email, password, role, Boolean(active));
   }
 
   async create(user: UserModel) {
@@ -88,14 +93,58 @@ export default class UserRepository extends Repository {
       });
   }
 
-  async delete(id: string) {
+  async updatePassword(id: string, passwordHash: string) {
     if (!(await this.exists(id))) {
       throw new NotFoundError('User not found');
     }
 
     await this.db<UsersTable>(this.table)
+      .update({
+        password: passwordHash
+      })
       .where({
-        id
+        id,
+        active: true
+      });
+  }
+
+  async delete(id: string) {
+    if (!(await this.exists(id))) {
+      throw new NotFoundError('User not found');
+    }
+
+    await this.db.transaction(async (trx) => {
+      await trx<UserWebsitesTable>('user_websites')
+        .where({
+          userId: id
+        })
+        .delete();
+
+      await trx('apikey_websites')
+        .innerJoin('apikeys', 'apikeys.id', 'apikey_websites.apikeyId')
+        .where({
+          userId: id
+        })
+        .delete();
+
+      await trx('apikeys')
+        .where({
+          userId: id
+        })
+        .delete();
+
+      await trx<UsersTable>(this.table)
+        .where({
+          id
+        })
+        .delete();
+    });
+  }
+
+  async removeWebsiteAccess(websiteId: string) {
+    await this.db<UserWebsitesTable>('user_websites')
+      .where({
+        websiteId
       })
       .delete();
   }

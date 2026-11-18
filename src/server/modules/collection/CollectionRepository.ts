@@ -29,7 +29,20 @@ export default class CollectionRepository extends Repository {
         websiteId
       });
 
-    return new PaginatedQuery<CollectionModel>(this.db, query, opts);
+    return new PaginatedQuery<CollectionModel>(
+      this.db,
+      query,
+      opts,
+      (row) => new CollectionModel(
+        row.id,
+        row.websiteId,
+        row.name,
+        Boolean(row.callHook),
+        row.title,
+        row.slug,
+        Boolean(row.backdatingEnabled)
+      )
+    );
   }
 
   async getCollection(collectionId: string) {
@@ -41,7 +54,15 @@ export default class CollectionRepository extends Repository {
 
     if (!query) return null;
     const { id, websiteId, name, callHook, title, slug, backdatingEnabled } = query;
-    return new CollectionModel(id, websiteId, name, callHook, title, slug, backdatingEnabled);
+    return new CollectionModel(
+      id,
+      websiteId,
+      name,
+      Boolean(callHook),
+      title,
+      slug,
+      Boolean(backdatingEnabled)
+    );
   }
 
   async create(collection: CollectionModel) {
@@ -100,10 +121,46 @@ export default class CollectionRepository extends Repository {
       throw new NotFoundError('Collection not found');
     }
 
-    await this.db<CollectionsTable>(this.table)
-      .delete()
-      .where({
-        id
-      });
+    await this.db.transaction(async (trx) => {
+      await trx<{ inputId: string }>('collection_entry_inputs')
+        .innerJoin('collection_inputs', 'collection_inputs.id', 'collection_entry_inputs.inputId')
+        .where({
+          collectionId: id
+        })
+        .delete();
+
+      await trx('collection_entries')
+        .where({
+          collectionId: id
+        })
+        .delete();
+
+      await trx('collection_entry_drafts')
+        .where({
+          collectionId: id
+        })
+        .delete();
+
+      await trx<CollectionsTable>(this.table)
+        .update({
+          title: null,
+          slug: null
+        })
+        .where({
+          id
+        });
+
+      await trx('collection_inputs')
+        .where({
+          collectionId: id
+        })
+        .delete();
+
+      await trx<CollectionsTable>(this.table)
+        .delete()
+        .where({
+          id
+        });
+    });
   }
 }

@@ -64,7 +64,10 @@ export default class CollectionService extends Service {
       false
     );
 
-    this.collectionRepo.create(collection);
+    const dto = this.adaptCollection(collection);
+    await this.callHook('beforeCollectionCreateHook', { collection: dto });
+    await this.collectionRepo.create(collection);
+    await this.callHook('afterCollectionCreateHook', { collection: dto });
     return collection.getId();
   }
 
@@ -81,12 +84,19 @@ export default class CollectionService extends Service {
       update.backdatingEnabled
     );
 
-    this.collectionRepo.update(updated);
+    const dto = this.adaptCollection(updated);
+    await this.callHook('beforeCollectionModifyHook', { collection: dto });
+    await this.collectionRepo.update(updated);
+    await this.callHook('afterCollectionModifyHook', { collection: dto });
   }
 
   async delete(id: string) {
     const collection = await this.collectionRepo.getCollection(id);
     if (!collection) throw new NotFoundError('Collection not found');
+
+    const dto = this.adaptCollection(collection);
+    await this.callHook('beforeCollectionDeleteHook', { collection: dto });
     await this.collectionRepo.delete(id);
+    await this.callHook('afterCollectionDeleteHook', { collection: dto });
   }
 }

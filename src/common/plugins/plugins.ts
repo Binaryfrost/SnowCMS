@@ -69,12 +69,15 @@ interface Opts {
  * const respData = await resp.json();
  * // Use response data
  * ```
+ * @param req
+ * @param apiPath
+ * @param opts
  */
 export async function serverInputFetch<R extends RequestContext<any>>(req: R, apiPath: string, opts: Opts = { method: 'GET' }) {
   const port = req._localPort;
   const url = new URL(apiPath, `http://localhost:${port}`);
 
-  const auth = req.auth;
+  const { auth } = req;
   const headers = new Headers({
     accept: 'application/json'
   });
@@ -96,27 +99,34 @@ export async function serverInputFetch<R extends RequestContext<any>>(req: R, ap
 }
 
 interface Paginated<T> {
-  data: T[]
-  page: number
-  pages: number
+  _metadata: {
+    page: number
+    pages: number
+  }
+  [listKey: string]: T[] | { page: number, pages: number }
 }
 
-export async function serverGetAllPagesFetch<T, R extends RequestContext<any> = RequestContext<any>>(req: R, apiPath: string): Promise<T[]> {
+export async function serverGetAllPagesFetch<T, R extends RequestContext<any> = RequestContext<any>>(
+  req: R,
+  apiPath: string,
+  listKey: string
+): Promise<T[]> {
   const result: T[][] = [];
-  const query = `limit=100&page=`
+  const query = 'limit=100&page=';
 
   let page = 0;
-  let pages = null;
+  let pages: number | null = null;
 
   while (page !== pages) {
-    page++;
+    page += 1;
 
-    const resp: Paginated<T> = await (
-      await serverInputFetch(req, `${apiPath}?${query}${page}`)
-    ).json();
+    // eslint-disable-next-line no-await-in-loop
+    const resp = await serverInputFetch(req, `${apiPath}?${query}${page}`);
+    // eslint-disable-next-line no-await-in-loop
+    const body = await resp.json() as Paginated<T>;
 
-    pages = resp.pages;
-    result.push(resp.data);
+    pages = body._metadata.pages;
+    result.push(body[listKey] as T[]);
   }
 
   return result.flat();

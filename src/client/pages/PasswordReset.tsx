@@ -1,20 +1,20 @@
 import { Anchor, Button, Divider, Flex, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
-import { LoginConfig } from '../../common/types/User';
+import { Link } from 'react-router-dom';
+import { useField, useForm } from '@mantine/form';
+import { useState } from 'react';
+import type LoginConfigDTO from '../../lib/client/dto/login/LoginConfigDTO';
 import DataGetter from '../components/DataGetter';
 import FormSkeleton from '../components/FormSkeleton';
-import { Link } from 'react-router-dom';
 import Page from '../components/Page';
 import Logo from '../components/Logo';
-import { useField, useForm } from '@mantine/form';
 import { post } from '../util/api';
-import { useState } from 'react';
 
 function InitPasswordResetForm() {
   const [response, setResponse] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const field = useField({
     initialValue: '',
-    validate: (value) => !value || !value.includes('@') ? 'Invalid email address' : null,
+    validate: (value) => (!value || !value.includes('@') ? 'Invalid email address' : null),
     validateOnChange: true
   });
 
@@ -51,7 +51,7 @@ function InitPasswordResetForm() {
     </>
   ) : (
     <Text>{response}</Text>
-  )
+  );
 }
 
 function ResetPasswordForm({ token }: { token? : string }) {
@@ -63,8 +63,8 @@ function ResetPasswordForm({ token }: { token? : string }) {
       confirmPassword: ''
     },
     validate: {
-      password: (value) => !value ? 'Password is required' : null,
-      confirmPassword: (value, values) => value != values.password ? 'Passwords must match' : null
+      password: (value) => (!value ? 'Password is required' : null),
+      confirmPassword: (value, values) => (value != values.password ? 'Passwords must match' : null)
     },
     validateInputOnChange: true
   });
@@ -92,7 +92,7 @@ function ResetPasswordForm({ token }: { token? : string }) {
   }
 
   return !response ? (
-    <DataGetter<LoginConfig> url={`/api/login/password-reset/${token}`}
+    <DataGetter<LoginConfigDTO> url={`/api/login/password-reset/${token}`}
       skeletonComponent={<FormSkeleton inputs={2} />}>
       {() => (
         <>
@@ -112,14 +112,14 @@ function ResetPasswordForm({ token }: { token? : string }) {
     </DataGetter>
   ) : (
     <Text>{response}</Text>
-  )
+  );
 }
 
 function RenderForm({ token }: { token? : string }) {
   return token ? <ResetPasswordForm token={token} /> : <InitPasswordResetForm />;
 }
 
-function isEnabled(config: LoginConfig) {
+function isEnabled(config: LoginConfigDTO) {
   return config.smtp && !config.sso?.forced;
 }
 
@@ -134,7 +134,7 @@ export function Component() {
             <Logo noLink mx="auto" />
             <Title ta="center">Reset Password</Title>
 
-            <DataGetter<LoginConfig> url="/api/login/config"
+            <DataGetter<LoginConfigDTO> url="/api/login/config"
               skeletonComponent={<FormSkeleton inputs={1} />}>
               {({ data: config }) => (
                 <>

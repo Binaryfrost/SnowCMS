@@ -1,11 +1,11 @@
 import { Group, Stack, Text, Title, TypographyStylesProvider } from '@mantine/core';
+import { useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import SearchInput from '../../../components/SearchInput';
-import { useState } from 'react';
 import DataGetter from '../../../components/DataGetter';
-import { PaginatedResponse } from '../../../../common/types/PaginatedResponse';
-import { Link, useParams } from 'react-router-dom';
-import { CollectionEntryDraftSummary } from '../../../../common/types/CollectionEntry';
+import type { PaginatedResponse } from '../../../../lib/client/types/PaginatedResponse';
+import type CollectionEntryDraftSummaryDTO from '../../../../lib/client/dto/collection/entry/draft/CollectionEntryDraftSummaryDTO';
 import ListEntry from '../../../components/ListEntry';
 import { formatDate } from '../../../util/data';
 import useRefresh from '../../../util/refresh';
@@ -24,16 +24,16 @@ export function Component() {
         <SearchInput setSearch={setSearch} />
       </Group>
 
-      <DataGetter<PaginatedResponse<CollectionEntryDraftSummary>> key={collectionId} paginate
+      <DataGetter<PaginatedResponse<CollectionEntryDraftSummaryDTO>> key={collectionId} paginate
         url={`/api/websites/${websiteId}/collections/${collectionId}/drafts`} sort="desc"
         search={search}>
         {({ data: entries, setPage }) => (
           <Stack>
-            {entries.page === 1 && entries.data.length === 0 ? (
+            {entries._metadata.page === 1 && entries.drafts.length === 0 ? (
               <Text>No drafts exist yet or search returned empty result</Text>
             ) : (
               <>
-                {entries.data
+                {entries.drafts
                   .map((entry) => (
                     <ListEntry key={entry.id} id={entry.id} name={entry.title || 'Unnamed Entry'}
                       additional={(
@@ -66,12 +66,13 @@ export function Component() {
                       }} />
                   ))}
 
-                <Pagination page={entries.page} pages={entries.pages} setPage={setPage} />
+                <Pagination page={entries._metadata.page} pages={entries._metadata.pages}
+                  setPage={setPage} />
               </>
             )}
           </Stack>
         )}
       </DataGetter>
     </Page>
-  )
+  );
 }

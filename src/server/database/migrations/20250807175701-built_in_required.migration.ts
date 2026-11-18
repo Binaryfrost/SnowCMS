@@ -1,5 +1,5 @@
 import { Migration } from '.';
-import type { DatabaseCollectionInput } from '../../../common/types/CollectionInputs';
+import type { CollectionInputTable } from '../../modules/collection/input/CollectionInputRepository';
 import { db } from '../db';
 
 const MIGRATION_NAME = '20250807175701-built_in_required';
@@ -14,7 +14,7 @@ const migration: Migration = {
         table.boolean(COLUMN).notNullable().defaultTo(false);
       });
 
-      const collectionInputs = await trx<DatabaseCollectionInput>(TABLE).select('id', 'inputConfig');
+      const collectionInputs = await trx<CollectionInputTable>(TABLE).select('id', 'inputConfig');
 
       for await (const input of collectionInputs) {
         const { id, inputConfig } = input;
@@ -24,7 +24,7 @@ const migration: Migration = {
             REQURIED_CONFIG_FIELD in inputConfig &&
             typeof inputConfig[REQURIED_CONFIG_FIELD] === 'boolean'
           ) {
-            await trx<DatabaseCollectionInput>(TABLE).update({
+            await trx<CollectionInputTable>(TABLE).update({
               required: Boolean(inputConfig[REQURIED_CONFIG_FIELD])
             }).where({
               id

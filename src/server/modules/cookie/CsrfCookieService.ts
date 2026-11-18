@@ -1,3 +1,4 @@
+import type { Request, Response } from 'express';
 import InvalidCsrfTokenError from '../../../common/errors/InvalidCsrfTokenError';
 import Cookie from './Cookie';
 import CookieService from './CookieService';
@@ -19,6 +20,14 @@ export default class CsrfCookieService extends CookieService {
     });
   }
 
+  get(req: Request) {
+    return super.getCookie(req, CsrfCookieService.COOKIE_NAME);
+  }
+
+  clear(res: Response) {
+    super.clearCookie(res, CsrfCookieService.COOKIE_NAME);
+  }
+
   /**
    * Verifies that this CSRF cookie is valid, is linked to the current session,
    * and matches the user-provided CSRF token. It is recommended to generate a
@@ -38,6 +47,10 @@ export default class CsrfCookieService extends CookieService {
     if (!validHmac) return false;
 
     return this.encryption.secureEquals(cookie, token);
+  }
+
+  private getDefaultSecure() {
+    return false;
   }
 
   private formatHmacPayload(sessionId: string, random: string) {

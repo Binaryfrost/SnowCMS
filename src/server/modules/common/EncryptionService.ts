@@ -35,7 +35,8 @@ export default class EncryptionService extends Service {
   }
 
   async encryptAsString(payload: string) {
-    return Buffer.from(JSON.stringify(this.encrypt(payload)), 'utf8')
+    const encrypted = await this.encrypt(payload);
+    return Buffer.from(JSON.stringify(encrypted), 'utf8')
       .toString('base64');
   }
 

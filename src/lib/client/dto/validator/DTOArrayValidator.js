@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/reject-any-type */
 /* eslint-disable jsdoc/no-undefined-types */
-import ValidationError from '../errors/ValidationError';
-import DTOTypedValidator from './DTOTypedValidator';
+import ValidationError from '../errors/ValidationError.js';
+import DTOTypedValidator from './DTOTypedValidator.js';
 
 /**
  * @template [T=any]
@@ -63,11 +63,7 @@ export default class DTOArrayValidator extends DTOTypedValidator {
     /** @type {any[]} */
     const array = this.getValue();
     for (let i = 0; i < array.length; i++) {
-      const elem = array[i];
-
-      for (let j = 0; j < validators.length; j++) {
-        fn(elem, `${this.getName()}[${i}]`);
-      }
+      fn(array[i], `${this.getName()}[${i}]`);
     }
 
     return this;

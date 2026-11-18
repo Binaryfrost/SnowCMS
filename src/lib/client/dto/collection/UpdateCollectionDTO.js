@@ -1,4 +1,4 @@
-import DTO from '../DTO';
+import DTO from '../DTO.js';
 
 export default class UpdateCollectionDTO extends DTO {
   /** @type {string} */
@@ -57,7 +57,7 @@ export default class UpdateCollectionDTO extends DTO {
   }
 
   set slug(slug) {
-    this.#slug = this.validator(slug, 'slug').required().string().getValue();
+    this.#slug = this.validator(slug, 'slug').string().getValue();
   }
 
   get backdatingEnabled() {

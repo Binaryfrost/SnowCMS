@@ -2,9 +2,12 @@ import { basename, extname } from 'path';
 import slug from 'slug';
 import NotFoundError from '../../../common/errors/base/NotFoundError';
 import ConfirmMediaUploadDTO from '../../../lib/client/dto/media/ConfirmMediaUploadDTO';
+import MediaConfigDTO from '../../../lib/client/dto/media/MediaConfigDTO';
 import MediaDTO from '../../../lib/client/dto/media/MediaDTO';
 import MediaListDTO from '../../../lib/client/dto/media/MediaListDTO';
+import MediaWithUrlsDTO from '../../../lib/client/dto/media/MediaWithUrlsDTO';
 import UploadMediaDTO from '../../../lib/client/dto/media/UploadMediaDTO';
+import UploadMediaResponseDTO from '../../../lib/client/dto/media/UploadMediaResponseDTO';
 import PaginatedQuery, { PaginatedQueryOpts } from '../../database/PaginatedQuery';
 import Service from '../Service';
 import MediaModel from './MediaModel';
@@ -12,23 +15,25 @@ import MediaRepository from './MediaRepository';
 import EncryptionService from '../common/EncryptionService';
 import MediaConfigProvider from '../config/MediaConfigProvider';
 import { BLOCKED_MIME_TYPES } from '../../../common/blocked-mime-types';
-import UploadMediaResponseDTO from '../../../lib/client/dto/media/UploadMediaResponseDTO';
 import TimeService from '../common/TimeService';
 import BadRequestError from '../../../common/errors/base/BadRequestError';
 import InvalidHmacError from '../../../common/errors/InvalidHmacError';
-import { IS3Service } from './S3Service';
+import type { IS3Service } from './S3Service';
 
 export interface IMediaService {
+  isEnabled(): boolean
   getAllMedia(
     websiteId: string,
     search?: string,
     mime?: string,
     opts?: PaginatedQueryOpts
   ): Promise<MediaListDTO>;
-  getMedia(id: string): Promise<MediaDTO>
+  getMedia(id: string): Promise<MediaWithUrlsDTO>
+  getMediaConfig(websiteId: string): Promise<MediaConfigDTO>
   uploadMedia(websiteId: string, upload: UploadMediaDTO): Promise<UploadMediaResponseDTO>
   confirmUploadMedia(websiteId: string, confirm: ConfirmMediaUploadDTO): Promise<string>
   deleteMedia(websiteId: string, id: string): Promise<void>
+  deleteAllMediaForWebsite(websiteId: string): Promise<void>
 }
 
 export default class MediaService extends Service implements IMediaService {
@@ -53,6 +58,10 @@ export default class MediaService extends Service implements IMediaService {
     this.time = time;
   }
 
+  isEnabled() {
+    return true;
+  }
+
   async getAllMedia(
     websiteId: string,
     search?: string,
@@ -68,7 +77,36 @@ export default class MediaService extends Service implements IMediaService {
     if (!media) {
       throw new NotFoundError('Media not found');
     }
-    return this.adaptMedium(media);
+    return this.adaptMediumWithUrls(media);
+  }
+
+  async getMediaConfig(websiteId: string) {
+    return new MediaConfigDTO(
+      this.config.getMaxSize(),
+      this.config.getMaxStorage(),
+      await this.mediaRepo.getUsedStorage(websiteId)
+    );
+  }
+
+  private generateMediaUrl(websiteId: string, fileName: string) {
+    const publicUrl = this.config.getS3PublicUrl();
+    return new URL(`/media/${websiteId}/${fileName}`, publicUrl).toString();
+  }
+
+  private adaptMediumWithUrls(media: MediaModel): MediaWithUrlsDTO {
+    return new MediaWithUrlsDTO(
+      media.getId(),
+      media.getWebsiteId(),
+      media.getOrigFileName(),
+      media.getFileName(),
+      media.getFileSize(),
+      media.getFileType(),
+      media.getThumbName(),
+      media.getTimestamp(),
+      this.generateMediaUrl(media.getWebsiteId(), media.getFileName()),
+      media.getThumbName() ?
+        this.generateMediaUrl(media.getWebsiteId(), media.getThumbName()!) : null
+    );
   }
 
   private adaptMedium(media: MediaModel): MediaDTO {
@@ -91,7 +129,7 @@ export default class MediaService extends Service implements IMediaService {
     return new MediaListDTO(
       page,
       pages,
-      media.map((medium) => this.adaptMedium(medium))
+      media.map((medium) => this.adaptMediumWithUrls(medium))
     );
   }
 
@@ -154,7 +192,7 @@ export default class MediaService extends Service implements IMediaService {
       thumbName
     );
 
-    return new UploadMediaResponseDTO(
+    const response = new UploadMediaResponseDTO(
       id,
       {
         name: upload.name,
@@ -172,6 +210,26 @@ export default class MediaService extends Service implements IMediaService {
       } : null,
       hmac
     );
+
+    const mediaData = {
+      id,
+      websiteId,
+      origFileName: upload.name,
+      fileName: newFileName,
+      fileSize: upload.size,
+      fileType: upload.type,
+      thumbName
+    };
+
+    await this.callHook('beforeMediaCreateHook', {
+      media: mediaData as any
+    });
+
+    await this.callHook('afterMediaCreateHook', {
+      media: mediaData as any
+    });
+
+    return response;
   }
 
   async confirmUploadMedia(websiteId: string, confirm: ConfirmMediaUploadDTO) {
@@ -203,6 +261,10 @@ export default class MediaService extends Service implements IMediaService {
 
     await this.mediaRepo.createMedia(media);
 
+    await this.callHook('afterMediaConfirmHook', {
+      media: this.adaptMediumWithUrls(media)
+    });
+
     return id;
   }
 
@@ -211,6 +273,9 @@ export default class MediaService extends Service implements IMediaService {
     if (!media) {
       throw new NotFoundError('Media not found');
     }
+
+    const dto = this.adaptMedium(media);
+    await this.callHook('beforeMediaDeleteHook', { media: dto });
 
     const toDelete = [
       this.generateMediaUrlPath(websiteId, media.getFileName()),
@@ -222,5 +287,11 @@ export default class MediaService extends Service implements IMediaService {
     );
 
     await this.mediaRepo.deleteMedia(id);
+    await this.callHook('afterMediaDeleteHook', { media: dto });
+  }
+
+  async deleteAllMediaForWebsite(websiteId: string) {
+    await this.s3.deleteFolder(`media/${websiteId}/`);
+    await this.mediaRepo.deleteAllMediaForWebsite(websiteId);
   }
 }

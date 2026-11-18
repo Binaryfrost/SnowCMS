@@ -1,10 +1,10 @@
-import DTO from '../../DTO';
+import DTO from '../../DTO.js';
 
 export default class CollectionInputListDTO extends DTO {
   #inputs;
 
   /**
-   * @param {import('./CollectionInput').CollectionInput[]} inputs
+   * @param {import('./CollectionInputDTO').default[]} inputs
    */
   constructor(inputs) {
     super();
@@ -16,7 +16,7 @@ export default class CollectionInputListDTO extends DTO {
   }
 
   clone() {
-    return new CollectionInputListDTO(this.#inputs);
+    return new CollectionInputListDTO(this.#inputs.map((input) => input.clone()));
   }
 
   static fromJSON(json) {
@@ -25,7 +25,7 @@ export default class CollectionInputListDTO extends DTO {
 
   toJSON() {
     return {
-      inputs: this.#inputs
+      inputs: this.#inputs.map((input) => input.toJSON())
     };
   }
 }

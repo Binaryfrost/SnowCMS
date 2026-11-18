@@ -1,5 +1,5 @@
 import { Migration } from '.';
-import { DatabaseCollectionInput } from '../../../common/types/CollectionInputs';
+import type { CollectionInputTable } from '../../modules/collection/input/CollectionInputRepository';
 import { db } from '../db';
 
 const TABLE = 'collection_inputs';

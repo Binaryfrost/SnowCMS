@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/reject-any-type */
-import DTO from '../../DTO';
+import DTO from '../../DTO.js';
 
 export default class CollectionInputDTO extends DTO {
   #id;

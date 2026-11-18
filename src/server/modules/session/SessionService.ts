@@ -5,6 +5,11 @@ import RedisCacheService from '../common/RedisCacheService';
 import UserCacheService from '../user/UserCacheService';
 import UserService from '../user/UserService';
 
+export interface SessionData {
+  user: string
+  sso: boolean
+}
+
 export default class SessionService extends Service {
   private userService: UserService;
   private userCacheService: UserCacheService;
@@ -19,17 +24,32 @@ export default class SessionService extends Service {
     this.redisService = redisService;
   }
 
-  async getSession(token: string) {
-    const userId = await this.redisService.getCache(this.getRedisKey(token));
-    if (!userId) return null;
-    const cachedUser = await this.userCacheService.getCachedUser(userId);
-    if (cachedUser) return cachedUser;
-    return this.userService.getUser(userId);
+  async getSession(token: string): Promise<SessionData | null> {
+    const data = await this.redisService.getCache(this.getRedisKey(token));
+    if (!data) return null;
+
+    try {
+      return JSON.parse(data);
+    } catch {
+      return null;
+    }
   }
 
-  async createSession(user: UserDTO) {
-    const token = this.generateToken(user.id, secureRandom(32, 'base64url'));
-    await this.redisService.setCache(this.getRedisKey(token), user.id, 86400);
+  async getSessionUser(token: string): Promise<UserDTO | null> {
+    const session = await this.getSession(token);
+    if (!session) return null;
+    const cachedUser = await this.userCacheService.getCachedUser(session.user);
+    if (cachedUser) return cachedUser;
+    return this.userService.getUser(session.user);
+  }
+
+  async createSession(userId: string, sso: boolean = false) {
+    const token = this.generateToken(userId, secureRandom(32, 'base64url'));
+    const session: SessionData = {
+      user: userId,
+      sso
+    };
+    await this.redisService.setCache(this.getRedisKey(token), JSON.stringify(session), 86400);
     return token;
   }
 

@@ -13,14 +13,14 @@ export default class UserCacheService extends Service {
   async getCachedUser(id: string): Promise<UserDTO | null> {
     const key = this.getCacheKey(id);
     const data = await this.redisService.getCache(key);
-    if (data) return JSON.parse(data);
+    if (data) return UserDTO.fromJSON(JSON.parse(data));
     return null;
   }
 
   async setCachedUser(user: UserDTO) {
     const key = this.getCacheKey(user.id);
     const ttl = 10 * 60;
-    await this.redisService.setCache(key, JSON.stringify(user), ttl);
+    await this.redisService.setCache(key, JSON.stringify(user.toJSON()), ttl);
   }
 
   async invalidateCachedUser(id: string) {

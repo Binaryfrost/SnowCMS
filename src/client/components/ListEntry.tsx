@@ -1,11 +1,11 @@
 import { ActionIcon, Box, Group, Paper, Text } from '@mantine/core';
 import { IconArrowRight, IconSettings } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
+import { ReactNode } from 'react';
 import ShortUuid from './ShortUuid';
 import IconButton from './IconButton';
-import type { Role } from '../../common/types/User';
+import type { Role } from '../../common/users';
 import DeleteButton from './DeleteButton';
-import { ReactNode } from 'react';
 
 interface Props {
   name: string

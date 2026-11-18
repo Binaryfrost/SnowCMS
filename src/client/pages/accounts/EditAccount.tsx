@@ -4,7 +4,8 @@ import { Stack, Tabs, Text, Title, rem } from '@mantine/core';
 import { IconPlus, IconUser, IconUserCode } from '@tabler/icons-react';
 import Page from '../../components/Page';
 import DataGetter from '../../components/DataGetter';
-import { ApiKeyWithWebsites, UserWithWebsites } from '../../../common/types/User';
+import type ApiKeyDTO from '../../../lib/client/dto/user/api-key/ApiKeyDTO';
+import type UserDTO from '../../../lib/client/dto/user/UserDTO';
 import FormSkeleton from '../../components/FormSkeleton';
 import AccountForm, { prepareRequest } from '../../components/forms/AccountForm';
 import { type HttpResponse, put } from '../../util/api';
@@ -12,7 +13,7 @@ import { handleFormResponseNotification } from '../../util/form';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import ListEntry from '../../components/ListEntry';
 import useRefresh from '../../util/refresh';
-import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
+import type { PaginatedResponse } from '../../../lib/client/types/PaginatedResponse';
 import Pagination from '../../components/Pagination';
 
 export function Component() {
@@ -54,7 +55,7 @@ export function Component() {
         <Tabs.Panel value="account">
           <Title order={2}>Edit Account</Title>
 
-          <DataGetter<UserWithWebsites> url={`/api/accounts/${accountId}`}
+          <DataGetter<UserDTO> url={`/api/accounts/${accountId}`}
             skeletonComponent={<FormSkeleton />}>
             {({ data: user }) => (
               <AccountForm user={user} />
@@ -77,14 +78,14 @@ export function Component() {
             once after creating the API key.
           </Text>
 
-          <DataGetter<PaginatedResponse<ApiKeyWithWebsites>> url={`/api/accounts/${accountId}/keys`}
+          <DataGetter<PaginatedResponse<ApiKeyDTO>> url={`/api/accounts/${accountId}/keys`}
             paginate skeletonProps={{ h: 85 }} skeletonNum={3}>
             {({ data: keys, setPage }) => (
-              keys.page === 1 && keys.data.length === 0 ? (
+              keys._metadata.page === 1 && keys.apiKeys.length === 0 ? (
                 <Text>No API keys exist yet</Text>
               ) : (
                 <Stack>
-                  {keys.data.map((k) => (
+                  {keys.apiKeys.map((k) => (
                     <ListEntry key={k.id} type="API Key"
                       name={k.name} id={k.id}
                       additional={`Role: ${k.role}`} buttons={{
@@ -103,7 +104,8 @@ export function Component() {
                       }} />
                   ))}
 
-                  <Pagination page={keys.page} pages={keys.pages} setPage={setPage} />
+                  <Pagination page={keys._metadata.page} pages={keys._metadata.pages}
+                    setPage={setPage} />
                 </Stack>
               )
             )}

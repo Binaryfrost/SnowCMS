@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useState, useRef } from 'react';
 import { Text } from '@mantine/core';
 import { get } from '../util/api';
 import GenericSkeleton, { type GenericSkeletonProps } from './GenericSkeleton';
-import { PaginatedResponse } from '../../common/types/PaginatedResponse';
+import type { PaginatedResponse } from '../../lib/client/types/PaginatedResponse';
 
 interface CommonProps extends GenericSkeletonProps {
   skeletonComponent?: ReactNode
@@ -125,6 +125,7 @@ interface AllPagesDataGetterProps<T> extends CommonProps {
   url: string
   children: (data: T[]) => ReactNode
   paginate?: never
+  listKey: string
 }
 
 function AllPagesDataGetter<T>(props: AllPagesDataGetterProps<T>) {
@@ -154,13 +155,13 @@ function AllPagesDataGetter<T>(props: AllPagesDataGetterProps<T>) {
     type PagesType = PaginatedResponse<T>;
     const pages: (PagesType | Promise<PagesType>)[] = [first];
 
-    if (first.pages > 1) {
-      for (let i = 2; i <= first.pages; i++) {
+    if (first._metadata.pages > 1) {
+      for (let i = 2; i <= first._metadata.pages; i++) {
         pages.push(getPaginatedRecords(route, i));
       }
     }
 
-    return (await Promise.all(pages)).flatMap((e) => e.data);
+    return (await Promise.all(pages)).flatMap((e) => e[props.listKey]);
   }
 
   useEffect(() => {

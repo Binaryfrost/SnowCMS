@@ -1,5 +1,5 @@
-import PaginatedDTO from '../PaginatedDTO';
-import CollectionDTO from './CollectionDTO';
+import PaginatedDTO from '../PaginatedDTO.js';
+import CollectionDTO from './CollectionDTO.js';
 
 export default class CollectionListDTO extends PaginatedDTO {
   #collections;

@@ -16,8 +16,8 @@ export default function KeyValueInputArray({
   value, labels = ['Key', 'Value'], maxKeyLength, maxValueLength, onChange, ...inputArrayProps
 }: KeyValueInputArrayProps) {
   const KEY_VALUE_POSITIONS = {
-    'key': 0,
-    'value': 1
+    key: 0,
+    value: 1
   };
 
   function update(index: number, input: keyof typeof KEY_VALUE_POSITIONS, v: string) {

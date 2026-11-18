@@ -3,7 +3,7 @@ import type { Input } from '../InputRegistry';
 import ExpressError from '../errors/base/ExpressError';
 import { useInputValidator, useSettingsHandler } from './hooks';
 import { serverInputFetch } from '../plugins/plugins';
-import { SafeUrlResult } from '../types/SafeUrlResult';
+import type SafeUrlResultDTO from '../../lib/client/dto/security/SafeUrlResultDTO';
 import { UNSAFE_SOURCE_HEADER } from '../constants';
 
 interface RemoteDataSettings {
@@ -81,7 +81,7 @@ const input: Input<string, RemoteDataSettings> = {
     const url = value || settings.url;
     if (!url) return null;
 
-    const { websiteId, collectionId, id } = req.params;
+    const { websiteId, collectionId, id } = req.params as any;
     const urlWithPlaceholdersReplaced = url
       .replace(/\{website\}/g, websiteId)
       .replace(/\{collection\}/g, collectionId)
@@ -93,7 +93,7 @@ const input: Input<string, RemoteDataSettings> = {
         url: urlWithPlaceholdersReplaced
       })
     });
-    const safeUrlResult: SafeUrlResult = await safeUrlResp.json();
+    const safeUrlResult: SafeUrlResultDTO = await safeUrlResp.json();
     if (!safeUrlResult.safe) {
       console.log(`RemoteDataInput request to ${safeUrlResult.hostname || 'unparseable URL'} for Collection Entry ${id}, Collection ${collectionId}, website ${websiteId} blocked by SSRF filter`);
       return null;

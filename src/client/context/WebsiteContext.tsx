@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { Website } from '../../common/types/Website';
+import type WebsiteDTO from '../../lib/client/dto/website/WebsiteDTO';
 import { type CommonWebsiteDataContext } from './CommonWebsiteDataProvider';
 
-export const WebsiteContext = createContext<CommonWebsiteDataContext<Website>>(null);
+export const WebsiteContext = createContext<CommonWebsiteDataContext<WebsiteDTO>>(null);

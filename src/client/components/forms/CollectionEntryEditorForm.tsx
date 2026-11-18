@@ -2,25 +2,25 @@ import { useContext, useRef, useState } from 'react';
 import { Button, Grid, Modal, Stack, Text } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
-import { CollectionInput } from '../../../common/types/CollectionInputs';
+import { IconCalendarMinus } from '@tabler/icons-react';
+import { useDisclosure } from '@mantine/hooks';
+import { DateTimePicker } from '@mantine/dates';
+import type CollectionInputDTO from '../../../lib/client/dto/collection/input/CollectionInputDTO';
 import InputRegistry, {
   InputProps, RegisterValidatorFunction, type Input
 } from '../../../common/InputRegistry';
 import { HttpResponse, del, patch, post, put } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 import { UserContext } from '../../context/UserContext';
-import { IconCalendarMinus } from '@tabler/icons-react';
 import IconButton from '../IconButton';
 import { formatDate } from '../../util/data';
-import { useDisclosure } from '@mantine/hooks';
-import { DateTimePicker } from '@mantine/dates';
 import { BlockingConfirmModalResult, showBlockingConfirmModal } from '../../util/modals';
 
 interface Props {
   entryId?: string
   draftId?: string
   backdatingEnabled: boolean
-  inputs: CollectionInput[]
+  inputs: CollectionInputDTO[]
   data?: {
     inputId: string
     data: string
@@ -109,7 +109,7 @@ export default function CollectionEntryEditorForm({
       .reduce((a, [id, value]) => ({
         ...a,
         [getInputFieldName(id)]: serialize(id, value)
-      }), {})
+      }), {});
   }
 
   async function save(draft: boolean = false) {
@@ -242,25 +242,25 @@ export default function CollectionEntryEditorForm({
               <Button.Group>
                 <Button onClick={() => save(false)} loading={submitting} fullWidth
                   disabled={user.role === 'VIEWER'}>
-                    {draftId ? 'Publish draft' : 'Save'}
-                  </Button>
+                  {draftId ? 'Publish draft' : 'Save'}
+                </Button>
 
-                  {!entryId && backdatingEnabled && (
-                    <Button style={{
-                      borderLeft: '1px solid var(--mantine-color-default-border)'
-                    }} onClick={open}>
-                      <IconButton label="Backdate Collection Entry">
-                        <IconCalendarMinus />
-                      </IconButton>
-                    </Button>
-                  )}
-                </Button.Group>
+                {!entryId && backdatingEnabled && (
+                <Button style={{
+                  borderLeft: '1px solid var(--mantine-color-default-border)'
+                }} onClick={open}>
+                  <IconButton label="Backdate Collection Entry">
+                    <IconCalendarMinus />
+                  </IconButton>
+                </Button>
+                )}
+              </Button.Group>
             </Grid.Col>
             <Grid.Col span={{ base: 12, lg: 6 }}>
               <Button onClick={() => save(true)} loading={submitting} fullWidth variant="light"
                 disabled={user.role === 'VIEWER'}>
-                  {draftId ? 'Update draft' : 'Save as draft'}
-                </Button>
+                {draftId ? 'Update draft' : 'Save as draft'}
+              </Button>
             </Grid.Col>
           </Grid>
         </>

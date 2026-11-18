@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { FunctionComponent } from 'react';
 import { Falsy } from 'utility-types';
-import WebsiteDTO from '../lib/client/dto/website/WebsiteDTO';
-import CollectionDTO from '../lib/client/dto/collection/CollectionDTO';
+import type WebsiteDTO from '../lib/client/dto/website/WebsiteDTO';
+import type CollectionDTO from '../lib/client/dto/collection/CollectionDTO';
 import RequestContext, { CollectionRequestContext } from './RequestContext';
 
 export type ValidatorFunction<T> = (value: T) => boolean

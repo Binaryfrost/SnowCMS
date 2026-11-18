@@ -6,7 +6,7 @@ import WebsiteForm, { prepareRequest } from '../../components/forms/WebsiteForm'
 import { type HttpResponse, put } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 import DataGetter from '../../components/DataGetter';
-import { type Website } from '../../../common/types/Website';
+import type WebsiteDTO from '../../../lib/client/dto/website/WebsiteDTO';
 import FormSkeleton from '../../components/FormSkeleton';
 
 export function Component() {
@@ -27,7 +27,7 @@ export function Component() {
   return (
     <Page title="Edit Website">
       <Title>Edit Website</Title>
-      <DataGetter<Website> url={`/api/websites/${websiteId}`}
+      <DataGetter<WebsiteDTO> url={`/api/websites/${websiteId}`}
         skeletonComponent={<FormSkeleton inputs={2} />}>
         {({ data: website }) => (
           <WebsiteForm website={website} />

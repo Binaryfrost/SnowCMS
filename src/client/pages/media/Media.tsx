@@ -6,7 +6,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconUpload } from '@tabler/icons-react';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import Page from '../../components/Page';
-import type { MediaConfig } from '../../../common/types/Media';
+import type MediaConfigDTO from '../../../lib/client/dto/media/MediaConfigDTO';
 import { get } from '../../util/api';
 import GenericSkeleton from '../../components/GenericSkeleton';
 import { bytesToReadableUnits } from '../../util/media';
@@ -16,8 +16,8 @@ import useRefresh from '../../util/refresh';
 import SearchInput from '../../components/SearchInput';
 import MediaStorageUsage from '../../components/MediaStorageUsage';
 
-export async function getMediaConfig(websiteId: string): Promise<MediaConfig> {
-  const resp = await get<MediaConfig>(`/api/websites/${websiteId}/media/config`);
+export async function getMediaConfig(websiteId: string): Promise<MediaConfigDTO> {
+  const resp = await get<MediaConfigDTO>(`/api/websites/${websiteId}/media/config`);
 
   if (resp.status !== 200) {
     notifications.show({
@@ -34,7 +34,7 @@ export function Component() {
   const { websiteId } = useParams();
   const refresh = useRefresh();
   const [search, setSearch] = useState('');
-  const [config, setConfig] = useState<MediaConfig>(null);
+  const [config, setConfig] = useState<MediaConfigDTO>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [mediaDisabled, setMediaDisabled] = useState(false);
 

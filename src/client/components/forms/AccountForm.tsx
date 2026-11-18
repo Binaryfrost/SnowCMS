@@ -3,16 +3,16 @@ import { ActionFunctionArgs, Form } from 'react-router-dom';
 import { Anchor, Box, Button, Checkbox, MultiSelect, PasswordInput, Select, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
-import type { UserWithWebsites } from '../../../common/types/User';
+import type UserDTO from '../../../lib/client/dto/user/UserDTO';
 import { formDataToObject, onSubmit } from '../../util/form';
 import { ROLE_HIERARCHY } from '../../../common/users';
 import DataGetter from '../DataGetter';
-import { Website } from '../../../common/types/Website';
+import type WebsiteDTO from '../../../lib/client/dto/website/WebsiteDTO';
 import { shortenUuid } from '../ShortUuid';
 import { UserContext } from '../../context/UserContext';
 
 interface Props {
-  user?: UserWithWebsites
+  user?: UserDTO
 }
 
 export default function AccountForm({ user }: Props) {
@@ -117,7 +117,7 @@ export default function AccountForm({ user }: Props) {
           {...form.getInputProps('active', { type: 'checkbox' })} key={form.key('active')} />
 
         {form.getValues().role !== 'ADMIN' && (
-          <DataGetter.AllPages<Website> url="/api/websites" skeletonNum={1}>
+          <DataGetter.AllPages<WebsiteDTO> url="/api/websites" listKey="websites" skeletonNum={1}>
             {(websites) => (
               <MultiSelect label="Websites" name="websites" data={websites.map((w) => ({
                 label: `${w.name} (${shortenUuid(w.id)})`,

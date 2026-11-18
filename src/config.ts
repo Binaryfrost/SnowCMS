@@ -2,7 +2,7 @@ import type { DeepRequired } from 'utility-types';
 import type { RedisClientOptions } from 'redis';
 import type SMTPConnection from 'nodemailer/lib/smtp-connection';
 import type { Plugin } from './common/plugins/plugins';
-import type { Role } from './common/types/User';
+import type { Role } from './common/users';
 import { Input } from './common/InputRegistry';
 import { Hooks } from './server/plugins/hooks';
 import { Route } from './server/plugins/routes';

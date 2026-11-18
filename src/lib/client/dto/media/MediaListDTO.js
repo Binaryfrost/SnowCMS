@@ -1,5 +1,5 @@
-import PaginatedDTO from '../PaginatedDTO';
-import MediaDTO from './MediaDTO';
+import PaginatedDTO from '../PaginatedDTO.js';
+import MediaWithUrlsDTO from './MediaWithUrlsDTO.js';
 
 export default class MediaListDTO extends PaginatedDTO {
   #media;
@@ -7,7 +7,7 @@ export default class MediaListDTO extends PaginatedDTO {
   /**
    * @param {number} page
    * @param {number} pages
-   * @param {MediaDTO[]} media
+   * @param {MediaWithUrlsDTO[]} media
    */
   constructor(page, pages, media) {
     super(page, pages);
@@ -22,16 +22,7 @@ export default class MediaListDTO extends PaginatedDTO {
     return new MediaListDTO(
       json._metadata.page,
       json._metadata.pages,
-      json.media.map((media) => new MediaDTO(
-        media.id,
-        media.websiteId,
-        media.origFileName,
-        media.fileName,
-        media.fileSize,
-        media.fileType,
-        media.thumbName,
-        media.timestamp
-      ))
+      json.media.map((medium) => MediaWithUrlsDTO.fromJSON(medium))
     );
   }
 
@@ -46,7 +37,7 @@ export default class MediaListDTO extends PaginatedDTO {
   toJSON() {
     return {
       ...super.toJSON(),
-      media: this.media.map((media) => media.toJSON())
+      media: this.media.map((medium) => medium.toJSON())
     };
   }
 }

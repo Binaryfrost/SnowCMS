@@ -11,6 +11,7 @@
   },
   "exclude": [
     "./test/test-website-cms/data",
-    "./test/test-website-cms/dist"
+    "./test/test-website-cms/dist",
+    "./src/server/routes"
   ]
 }

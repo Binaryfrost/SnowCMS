@@ -15,21 +15,33 @@ export interface ApiKeysTable {
 }
 
 export interface ApiKeyWebsitesTable {
-  apiKeyId: string
+  apikeyId: string
   websiteId: string
 }
 
 export default class ApiKeyRepository extends Repository {
   private readonly apiKeyWebsitesTableName = 'apikey_websites';
   constructor(db: Knex) {
-    super(db, 'apiKeys');
+    super(db, 'apikeys');
   }
 
   async getApiKeys(opts?: PaginatedQueryOpts): Promise<PaginatedQuery<ApiKeyModel>> {
     const query = this.db<ApiKeysTable>(this.table)
       .select('id', 'key', 'userId', 'name', 'role', 'active');
 
-    return new PaginatedQuery<ApiKeyModel>(this.db, query, opts);
+    return new PaginatedQuery<ApiKeyModel>(
+      this.db,
+      query,
+      opts,
+      (row) => new ApiKeyModel(
+        row.id,
+        row.key,
+        row.userId,
+        row.name,
+        row.role,
+        Boolean(row.active)
+      )
+    );
   }
 
   async getUserApiKeys(
@@ -41,7 +53,38 @@ export default class ApiKeyRepository extends Repository {
         userId
       });
 
-    return new PaginatedQuery<ApiKeyModel>(this.db, query, opts);
+    return new PaginatedQuery<ApiKeyModel>(
+      this.db,
+      query,
+      opts,
+      (row) => new ApiKeyModel(
+        row.id,
+        row.key,
+        row.userId,
+        row.name,
+        row.role,
+        Boolean(row.active)
+      )
+    );
+  }
+
+  async getApiKeyById(id: string): Promise<ApiKeyModel | null> {
+    const row = await this.db<ApiKeysTable>(this.table)
+      .select('id', 'key', 'userId', 'name', 'role', 'active')
+      .where({
+        id
+      })
+      .first();
+
+    if (!row) return null;
+    return new ApiKeyModel(
+      row.id,
+      row.key,
+      row.userId,
+      row.name,
+      row.role,
+      Boolean(row.active)
+    );
   }
 
   async getApiKeyWebsites(id: string): Promise<string[]> {
@@ -52,7 +95,7 @@ export default class ApiKeyRepository extends Repository {
     const websiteIds = await this.db<ApiKeyWebsitesTable>(this.apiKeyWebsitesTableName)
       .select('websiteId')
       .where({
-        apiKeyId: id
+        apikeyId: id
       });
 
     return websiteIds.map((w) => w.websiteId);
@@ -65,7 +108,7 @@ export default class ApiKeyRepository extends Repository {
 
     await this.db<ApiKeyWebsitesTable>(this.apiKeyWebsitesTableName)
       .whereIn(
-        ['apiKeyId', 'websiteId'],
+        ['apikeyId', 'websiteId'],
         websites.map((website) => [id, website])
       )
       .delete();
@@ -79,7 +122,7 @@ export default class ApiKeyRepository extends Repository {
     await this.db<ApiKeyWebsitesTable>(this.apiKeyWebsitesTableName)
       .insert(
         websites.map((website) => ({
-          apiKeyId: id,
+          apikeyId: id,
           websiteId: website
         }))
       );
@@ -132,9 +175,25 @@ export default class ApiKeyRepository extends Repository {
       throw new NotFoundError('API Key not found');
     }
 
-    await this.db<ApiKeysTable>(this.table)
+    await this.db.transaction(async (trx) => {
+      await trx<ApiKeyWebsitesTable>(this.apiKeyWebsitesTableName)
+        .where({
+          apikeyId: id
+        })
+        .delete();
+
+      await trx<ApiKeysTable>(this.table)
+        .where({
+          id
+        })
+        .delete();
+    });
+  }
+
+  async removeWebsiteAccess(websiteId: string) {
+    await this.db<ApiKeyWebsitesTable>(this.apiKeyWebsitesTableName)
       .where({
-        id
+        websiteId
       })
       .delete();
   }

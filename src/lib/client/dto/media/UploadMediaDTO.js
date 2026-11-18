@@ -1,4 +1,4 @@
-import DTO from '../DTO';
+import DTO from '../DTO.js';
 
 export default class UploadMediaDTO extends DTO {
   #name;
@@ -14,16 +14,16 @@ export default class UploadMediaDTO extends DTO {
    */
   constructor(name, size, type, thumbnail) {
     super();
-    this.#name = name;
+    this.#name = this.validator(name, 'name').required().string().getValue();
     this.#size = this.validator(size, 'size').required().number().getValue();
     this.#type = this.validator(type, 'type').required().string().getValue();
     this.#thumbnail = this.validator(thumbnail, 'thumbnail').object().of({
       name: (v, n) => this.validator(v, n)
         .required().string(),
       size: (v, n) => this.validator(v, n)
-        .required().number().getValue(),
+        .required().number(),
       type: (v, n) => this.validator(v, n)
-        .required().string().getValue(),
+        .required().string()
     }).getValue();
   }
 
@@ -59,5 +59,14 @@ export default class UploadMediaDTO extends DTO {
       json.type,
       json.thumbnail
     );
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      size: this.size,
+      type: this.type,
+      thumbnail: this.thumbnail
+    };
   }
 }

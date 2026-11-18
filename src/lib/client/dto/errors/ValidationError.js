@@ -1,4 +1,6 @@
 export default class ValidationError extends Error {
+  status = 400;
+
   /**
    * Returns an error with a custom message. You should include the name yourself.
    * @param {string} message Error message

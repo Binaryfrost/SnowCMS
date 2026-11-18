@@ -1,16 +1,16 @@
 /* eslint-disable jsdoc/reject-any-type */
 
-import ValidationError from '../errors/ValidationError';
-import DTOArrayValidator from './DTOArrayValidator';
-import DTOBooleanValidator from './DTOBooleanValidator';
-import DTOUnionValidator from './DTOUnionValidator';
-import DTOEnumValidator from './DTOEnumValidator';
-import DTOErrorValidator from './DTOErrorValidator';
-import DTOIntegerValidator from './DTOIntegerValidator';
-import DTONoopValidator from './DTONoopValidator';
-import DTONumberValidator from './DTONumberValidator';
-import DTOObjectValidator from './DTOObjectValidator';
-import DTOStringValidator from './DTOStringValidator';
+import ValidationError from '../errors/ValidationError.js';
+import DTOArrayValidator from './DTOArrayValidator.js';
+import DTOBooleanValidator from './DTOBooleanValidator.js';
+import DTOUnionValidator from './DTOUnionValidator.js';
+import DTOEnumValidator from './DTOEnumValidator.js';
+import DTOErrorValidator from './DTOErrorValidator.js';
+import DTOIntegerValidator from './DTOIntegerValidator.js';
+import DTONoopValidator from './DTONoopValidator.js';
+import DTONumberValidator from './DTONumberValidator.js';
+import DTOObjectValidator from './DTOObjectValidator.js';
+import DTOStringValidator from './DTOStringValidator.js';
 
 /**
  * DTOValidator is a helper class for data validation. If a validation error

@@ -5,17 +5,19 @@ import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
 import { IconCircleCheck, IconExclamationCircle } from '@tabler/icons-react';
 import DataGetter from '../DataGetter';
-import type { ApiKeyWithWebsites, Role, UserWithWebsites } from '../../../common/types/User';
+import type ApiKeyDTO from '../../../lib/client/dto/user/api-key/ApiKeyDTO';
+import type { Role } from '../../../common/users';
+import type UserDTO from '../../../lib/client/dto/user/UserDTO';
 import FormSkeleton from '../FormSkeleton';
 import { ROLE_HIERARCHY } from '../../../common/users';
 import { shortenUuid } from '../ShortUuid';
-import { Website } from '../../../common/types/Website';
+import type WebsiteDTO from '../../../lib/client/dto/website/WebsiteDTO';
 import { formDataToObject, handleFormResponseNotification, onSubmit } from '../../util/form';
 import { HttpResponse, post } from '../../util/api';
 import CopyButton from '../CopyButton';
 
 interface Props {
-  apiKey?: ApiKeyWithWebsites
+  apiKey?: ApiKeyDTO
 }
 
 export default function ApiKeyForm({ apiKey }: Props) {
@@ -72,7 +74,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
           </Group>
         </Alert>
       ) : (
-        <DataGetter<UserWithWebsites> url={`/api/accounts/${accountId}`}
+        <DataGetter<UserDTO> url={`/api/accounts/${accountId}`}
           skeletonComponent={<FormSkeleton inputs={2} />}>
           {({ data: user }) => (
             <Form method="POST" onSubmit={(e) => onSubmit(e, form)}>
@@ -95,7 +97,7 @@ export default function ApiKeyForm({ apiKey }: Props) {
                   {...form.getInputProps('active', { type: 'checkbox' })} key={form.key('active')} />
 
                 {form.values.role !== 'ADMIN' && (
-                  <DataGetter.AllPages<Website> url="/api/websites" skeletonNum={1}>
+                  <DataGetter.AllPages<WebsiteDTO> url="/api/websites" listKey="websites" skeletonNum={1}>
                     {(websites) => (
                       <MultiSelect label="Websites" name="websites" data={websites
                         .filter((w) => (user.role === 'ADMIN' ? true : user.websites.includes(w.id)))

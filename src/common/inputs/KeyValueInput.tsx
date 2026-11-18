@@ -22,8 +22,10 @@ function convertToArray(v: LegacyValue | Value): Value {
 
 function LengthInput({ ...p }: NumberInputProps) {
   const lengthLimitDescription = 'Set to 0 to disable length limit';
-  return <NumberInput description={lengthLimitDescription} required
-    allowNegative={false} allowDecimal={false} {...p} />
+  return (
+    <NumberInput description={lengthLimitDescription} required
+      allowNegative={false} allowDecimal={false} {...p} />
+  );
 }
 
 const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
@@ -71,7 +73,7 @@ const input: Input<LegacyValue | Value, KeyValueInputSettings> = {
             onChange(v);
           }
         }} />
-    )
+    );
   },
 
   defaultSettings: {

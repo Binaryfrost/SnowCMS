@@ -2,7 +2,8 @@ import { Box, Modal, Progress, Stack, Text, rem } from '@mantine/core';
 import { Dropzone, MIME_TYPES } from '@mantine/dropzone';
 import { IconFileUpload, IconUpload, IconX } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
-import { FileUploadConfirmation, FileUploadResponse, type FileMetadata, type MediaConfig } from '../../../common/types/Media';
+import type UploadMediaResponseDTO from '../../../lib/client/dto/media/UploadMediaResponseDTO';
+import type MediaConfigDTO from '../../../lib/client/dto/media/MediaConfigDTO';
 import { bytesToReadableUnits, generateThumbnail } from '../../util/media';
 import { post, s3Upload } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
@@ -11,7 +12,7 @@ import MediaStorageUsage from '../MediaStorageUsage';
 
 export interface MediaUploadFormProps {
   websiteId: string
-  config: MediaConfig
+  config: MediaConfigDTO
   opened: boolean
   mimeTypes?: string[]
   close: () => void
@@ -35,8 +36,7 @@ function calculateUploadProgress(
   const uploadThumbnailBytes = uploadProgress.thumbnail || 0;
 
   const combinedSize = fileSize + thumbnailSize;
-  const calculatePercentage = (file: number, progress: number) =>
-      Math.min((file / combinedSize) * progress, 1);
+  const calculatePercentage = (file: number, progress: number) => Math.min((file / combinedSize) * progress, 1);
   const fileSizePercentage = calculatePercentage(fileSize, uploadFileBytes);
   const thumbnailSizePercentage = calculatePercentage(thumbnailSize, uploadThumbnailBytes);
   return Math.min(fileSizePercentage + thumbnailSizePercentage, 1) * 100;
@@ -88,7 +88,7 @@ export default function MediaUploadForm({
               const thumbnail = generateThumbnailFor.includes(fileType as any) &&
                 await generateThumbnail(file);
 
-              const metadata: FileMetadata = {
+              const metadata = {
                 name: file.name,
                 size: file.size,
                 type: fileType,
@@ -98,7 +98,7 @@ export default function MediaUploadForm({
                 }
               };
 
-              const resp = await post<FileUploadResponse>(
+              const resp = await post<UploadMediaResponseDTO>(
                 `/api/websites/${websiteId}/media/upload`, metadata
               );
 
@@ -115,13 +115,13 @@ export default function MediaUploadForm({
 
               const uploads = [
                 s3Upload(
-                  resp.body.upload.image.url,
+                  resp.body.image.url,
                   fileType,
                   file,
                   (p) => handleUploadProgress('file', p)
                 ),
                 thumbnail && s3Upload(
-                  resp.body.upload.thumbnail.url,
+                  resp.body.thumbnail.url,
                   thumbnail.type,
                   thumbnail,
                   (p) => handleUploadProgress('thumbnail', p)
@@ -138,17 +138,17 @@ export default function MediaUploadForm({
                 throw new Error('Failed to upload file');
               }
 
-              const confirmData: FileUploadConfirmation = {
+              const confirmData = {
                 id: resp.body.id,
                 data: {
                   image: {
                     name: file.name,
-                    s3Name: resp.body.upload.image.name,
+                    s3Name: resp.body.image.name,
                     size: file.size,
                     type: fileType
                   },
                   thumbnail: thumbnail && {
-                    s3Name: resp.body.upload.thumbnail.name
+                    s3Name: resp.body.thumbnail.name
                   }
                 },
                 hmac: resp.body.hmac

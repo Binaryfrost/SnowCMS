@@ -2,8 +2,8 @@ import { randomBytes } from 'crypto';
 import { Knex } from 'knex';
 import { v7 as uuid } from 'uuid';
 import bcrypt from 'bcrypt';
-import { DatabaseUser, User } from '../../common/types/User';
 import { LAST_MIGRATION_METADATA_KEY, getMigrationTimestamp, runMigrations } from './migrations';
+import type { UsersTable } from '../modules/user/UserRepository';
 
 export default async function init(knex: Knex) {
   // See comments below about migrations
@@ -129,14 +129,14 @@ export default async function init(knex: Knex) {
     });
   }
 
-  const userCount = await knex<User>('users')
+  const userCount = await knex<UsersTable>('users')
     .count({ count: '*' })
     .first();
   if (userCount.count === 0) {
     const email = 'admin@snowcms';
     const password = randomBytes(12).toString('base64url');
 
-    await knex<DatabaseUser>('users')
+    await knex<UsersTable>('users')
       .insert({
         id: uuid(),
         email,

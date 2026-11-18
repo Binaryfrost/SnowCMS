@@ -1,4 +1,4 @@
-import DTO from '../../DTO';
+import DTO from '../../DTO.js';
 
 export default class CreateUpdateCollectionInputDTO extends DTO {
   #name;
@@ -26,7 +26,7 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   ) {
     super();
     this.#name = this.validator(name, 'name').required().string().getValue();
-    this.#description = this.validator(description, 'description').required().string().getValue();
+    this.#description = this.validator(description, 'description').string().getValue();
     this.#fieldName = this.validator(fieldName, 'fieldName').required().string().getValue();
     this.#input = this.validator(input, 'input').required().string().getValue();
     this.#inputConfig = this.validator(inputConfig, 'inputConfig').required().object().getValue();
@@ -82,7 +82,7 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   clone() {
-    return new CreateCollectionInputDTO(
+    return new CreateUpdateCollectionInputDTO(
       this.#name,
       this.#description,
       this.#fieldName,
@@ -93,7 +93,7 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   static fromJSON(json) {
-    return new CreateCollectionInputDTO(
+    return new CreateUpdateCollectionInputDTO(
       json.name,
       json.description,
       json.fieldName,

@@ -10,7 +10,8 @@ export default class SnowCMSClient extends BaseClient {
     return new PaginatedQueryClient(
       this,
       `/collections/${collection}/entries`,
-      opts
+      opts,
+      'entries'
     );
   }
 

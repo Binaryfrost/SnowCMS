@@ -18,6 +18,9 @@ export default class WebsiteRepository extends Repository {
   async getWebsite(id: string): Promise<WebsiteModel | null> {
     const query = await this.db<WebsitesTable>(this.table)
       .select('id', 'name', 'hook')
+      .where({
+        id
+      })
       .first();
     if (!query) return null;
     const { name, hook } = query;
@@ -28,7 +31,12 @@ export default class WebsiteRepository extends Repository {
     const query = this.db<WebsitesTable>(this.table)
       .select('id', 'name', 'hook');
 
-    return new PaginatedQuery<WebsiteModel>(this.db, query, opts);
+    return new PaginatedQuery<WebsiteModel>(
+      this.db,
+      query,
+      opts,
+      (row) => new WebsiteModel(row.id, row.name, row.hook)
+    );
   }
 
   async getWebsitesWithIds(ids: string[], opts?: PaginatedQueryOpts) {
@@ -36,7 +44,12 @@ export default class WebsiteRepository extends Repository {
       .select('id', 'name', 'hook')
       .whereIn('id', ids);
 
-    return new PaginatedQuery<WebsiteModel>(this.db, query, opts);
+    return new PaginatedQuery<WebsiteModel>(
+      this.db,
+      query,
+      opts,
+      (row) => new WebsiteModel(row.id, row.name, row.hook)
+    );
   }
 
   async create(website: WebsiteModel) {
@@ -54,11 +67,11 @@ export default class WebsiteRepository extends Repository {
     }
 
     await this.db<WebsitesTable>(this.table)
-      .insert({
+      .update({
         name: website.getName(),
         hook: website.getHook()
       })
-      .update({
+      .where({
         id: website.getId()
       });
   }

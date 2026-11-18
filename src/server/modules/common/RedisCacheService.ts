@@ -19,6 +19,15 @@ export default class RedisCacheService extends CacheService {
     });
   }
 
+  async exists(key: string) {
+    const result = await this.redis.exists(key);
+    return result > 0;
+  }
+
+  async expire(key: string, ttl: number) {
+    await this.redis.expire(key, ttl, 'GT');
+  }
+
   async clearCache(key: string) {
     await this.redis.del(key);
   }
@@ -34,7 +43,7 @@ export default class RedisCacheService extends CacheService {
       MATCH: `${prefix}*`,
       COUNT: BATCH_SIZE
     })) {
-      if (!filter?.(key)) {
+      if (filter && !filter(key)) {
         continue;
       }
 

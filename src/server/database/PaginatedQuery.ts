@@ -15,13 +15,20 @@ export default class PaginatedQuery<T extends Model> {
   private limit: number;
   private sort: 'asc' | 'desc';
   private sortBy: string;
+  private mapRow: (row: any) => T;
 
-  constructor(db: Knex, query: Knex.QueryBuilder, opts?: PaginatedQueryOpts) {
+  constructor(
+    db: Knex,
+    query: Knex.QueryBuilder,
+    opts?: PaginatedQueryOpts,
+    mapRow?: (row: any) => T
+  ) {
     this.db = db;
     this.query = query;
     this.limit = opts?.limit || 10;
     this.sort = opts?.sort || 'asc';
     this.sortBy = opts?.sortBy || 'id';
+    this.mapRow = mapRow || ((row) => row as T);
 
     // TODO: Replace ExpressErrors with dedicated error classes
     if (this.limit < 1 || this.limit > 100) {
@@ -48,9 +55,11 @@ export default class PaginatedQuery<T extends Model> {
   }
 
   async getPage(page: number): Promise<T[]> {
-    return this.query
+    const rows = await this.query
       .orderBy(this.sortBy, this.sort)
       .limit(this.limit)
       .offset((page - 1) * this.limit);
+
+    return rows.map((row) => this.mapRow(row));
   }
 }

@@ -3,10 +3,10 @@ import { IconPlus } from '@tabler/icons-react';
 import Page from '../../components/Page';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import DataGetter from '../../components/DataGetter';
-import { UserWithWebsites } from '../../../common/types/User';
+import type UserDTO from '../../../lib/client/dto/user/UserDTO';
 import ListEntry from '../../components/ListEntry';
 import useRefresh from '../../util/refresh';
-import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
+import type { PaginatedResponse } from '../../../lib/client/types/PaginatedResponse';
 import Pagination from '../../components/Pagination';
 
 export function Component() {
@@ -22,14 +22,14 @@ export function Component() {
           children: <IconPlus />
         }} tooltipLabel="Create Account" />
 
-      <DataGetter<PaginatedResponse<UserWithWebsites>> url="/api/accounts" paginate
+      <DataGetter<PaginatedResponse<UserDTO>> url="/api/accounts" paginate
         skeletonProps={{ h: 85 }} skeletonNum={3}>
         {({ data: users, setPage }) => (
-          users.page === 1 && users.data.length === 0 ? (
+          users._metadata.page === 1 && users.users.length === 0 ? (
             <Text>No accounts exist</Text>
           ) : (
             <Stack>
-              {users.data.map((user) => (
+              {users.users.map((user) => (
                 <ListEntry key={user.id} type="User" name={user.email} id={user.id} buttons={{
                   delete: {
                     role: 'ADMIN',
@@ -45,7 +45,8 @@ export function Component() {
                 }} />
               ))}
 
-              <Pagination page={users.page} pages={users.pages} setPage={setPage} />
+              <Pagination page={users._metadata.page} pages={users._metadata.pages}
+                setPage={setPage} />
             </Stack>
           )
         )}

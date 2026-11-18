@@ -5,13 +5,13 @@ import { IconDeviceFloppy, IconPlus } from '@tabler/icons-react';
 import HeaderWithAddButton from '../../components/HeaderWithAddButton';
 import Page from '../../components/Page';
 import DataGetter from '../../components/DataGetter';
-import { CollectionEntryWithMetadata } from '../../../common/types/CollectionEntry';
+import type CollectionEntryWithMetadataDTO from '../../../lib/client/dto/collection/entry/CollectionEntryWithMetadataDTO';
 import ListEntry from '../../components/ListEntry';
 import { formatDate } from '../../util/data';
 import useRefresh from '../../util/refresh';
 import SearchInput from '../../components/SearchInput';
-import { Collection } from '../../../common/types/Collection';
-import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
+import type CollectionDTO from '../../../lib/client/dto/collection/CollectionDTO';
+import type { PaginatedResponse } from '../../../lib/client/types/PaginatedResponse';
 import Pagination from '../../components/Pagination';
 import IconButton from '../../components/IconButton';
 
@@ -21,7 +21,7 @@ export function Component() {
   const [search, setSearch] = useState('');
 
   return (
-    <DataGetter<Collection> url={`/api/websites/${websiteId}/collections/${collectionId}`}
+    <DataGetter<CollectionDTO> url={`/api/websites/${websiteId}/collections/${collectionId}`}
       key={collectionId}>
       {({ data: collection }) => (
         <Page title={`Collection Entries: ${collection.name}`}>
@@ -49,16 +49,16 @@ export function Component() {
             <SearchInput setSearch={setSearch} />
           </Group>
 
-          <DataGetter<PaginatedResponse<CollectionEntryWithMetadata>> key={collectionId} paginate
+          <DataGetter<PaginatedResponse<CollectionEntryWithMetadataDTO>> key={collectionId} paginate
             url={`/api/websites/${websiteId}/collections/${collectionId}/entries`} sort="desc"
             search={search}>
             {({ data: entries, setPage }) => (
               <Stack>
-                {entries.page === 1 && entries.data.length === 0 ? (
+                {entries._metadata.page === 1 && entries.entries.length === 0 ? (
                   <Text>No Collection Entries exist yet or search returned empty result</Text>
                 ) : (
                   <>
-                    {entries.data
+                    {entries.entries
                       .map((entry) => (
                         <ListEntry key={entry.id} id={entry.id} name={entry.title || 'Unnamed Entry'}
                           additional={`Created At: ${formatDate(
@@ -81,7 +81,8 @@ export function Component() {
                           }} />
                       ))}
 
-                    <Pagination page={entries.page} pages={entries.pages} setPage={setPage} />
+                    <Pagination page={entries._metadata.page} pages={entries._metadata.pages}
+                      setPage={setPage} />
                   </>
                 )}
               </Stack>

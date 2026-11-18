@@ -1,6 +1,8 @@
 import { compare } from 'bcrypt';
 import InvalidCredentialsError from '../../../common/errors/InvalidCredentialsError';
+import BadRequestError from '../../../common/errors/base/BadRequestError';
 import NotFoundError from '../../../common/errors/base/NotFoundError';
+import { ROLE_HIERARCHY } from '../../../common/users';
 import Service from '../Service';
 import UserCacheService from './UserCacheService';
 import UserModel from './UserModel';
@@ -73,9 +75,15 @@ export default class UserService extends Service {
     return user.websites.includes(websiteId);
   }
 
+  async getActiveUserIfExists(email: string) {
+    const user = await this.getUserByEmail(email);
+    if (!user || !user.active) return null;
+    return user;
+  }
+
   async getUserIfCredentialsCorrect(email: string, password: string) {
     const user = await this.userRepo.getUserByEmail(email);
-    if (!user) {
+    if (!user || !user.isActive()) {
       throw new InvalidCredentialsError();
     }
 
@@ -100,7 +108,26 @@ export default class UserService extends Service {
     }
   }
 
+  async emailIsInUse(email: string, exceptUserId?: string) {
+    const user = await this.userRepo.getUserByEmail(email);
+    if (!user) return false;
+    if (exceptUserId && user.getId() === exceptUserId) return false;
+    return true;
+  }
+
   async create(user: CreateUserDTO) {
+    if (!user.email.includes('@')) {
+      throw new BadRequestError('Invalid email');
+    }
+
+    if (!(user.role in ROLE_HIERARCHY)) {
+      throw new BadRequestError('Invalid role');
+    }
+
+    if (await this.emailIsInUse(user.email)) {
+      throw new BadRequestError('User with that email address already exists');
+    }
+
     const model = new UserModel(
       UserModel.generateId(),
       user.email,
@@ -109,14 +136,27 @@ export default class UserService extends Service {
       user.active
     );
     await this.userRepo.create(model);
+    await this.changeUserWebsites(model.getId(), user.websites);
     return model.getId();
   }
 
   async update(id: string, user: UpdateUserDTO) {
+    if (!user.email.includes('@')) {
+      throw new BadRequestError('Invalid email');
+    }
+
+    if (!(user.role in ROLE_HIERARCHY)) {
+      throw new BadRequestError('Invalid role');
+    }
+
+    if (await this.emailIsInUse(user.email, id)) {
+      throw new BadRequestError('User with that email address already exists');
+    }
+
     const model = new UserModel(
       id,
       user.email,
-      // @ts-expect-error Usually password wouldn't be nullable, but there's special handling for updates
+      // Usually password wouldn't be nullable, but there's special handling for updates
       user.password ? await UserModel.hashPassword(user.password) : null,
       user.role as Role,
       user.active
@@ -129,5 +169,24 @@ export default class UserService extends Service {
   async delete(id: string) {
     await this.userRepo.delete(id);
     await this.userCacheService.invalidateCachedUser(id);
+  }
+
+  async setPassword(id: string, password: string) {
+    const user = await this.userRepo.getUserById(id);
+    if (!user || !user.isActive()) throw new NotFoundError('User not found');
+
+    const model = new UserModel(
+      id,
+      user.getEmail(),
+      await UserModel.hashPassword(password),
+      user.getRole(),
+      true
+    );
+    await this.userRepo.updatePassword(id, model.getPasswordHash());
+    await this.userCacheService.invalidateCachedUser(id);
+  }
+
+  async removeWebsiteAccess(websiteId: string) {
+    await this.userRepo.removeWebsiteAccess(websiteId);
   }
 }

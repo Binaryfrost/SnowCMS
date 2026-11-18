@@ -1,5 +1,4 @@
 import type UserDTO from './lib/client/dto/user/UserDTO';
-import type { SessionCookie } from './server/cookie';
 
 declare global {
   /* eslint-disable no-underscore-dangle */
@@ -15,10 +14,10 @@ declare global {
     interface Request {
       user?: UserDTO
       /**
-       * The session cookie used to authenticate this request. Null if an API key was
-       * used or the user is unauthenticated.
+       * The session token used to authenticate this request. Undefined if an API
+       * key was used or the user is unauthenticated.
        */
-      sessionCookie?: SessionCookie
+      sessionToken?: string
     }
   }
 }

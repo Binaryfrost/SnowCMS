@@ -1,4 +1,4 @@
-import DTO from '../DTO';
+import DTO from '../DTO.js';
 
 export default class ConfirmMediaUploadDTO extends DTO {
   #id;
@@ -23,7 +23,7 @@ export default class ConfirmMediaUploadDTO extends DTO {
           type: (v, n) => this.validator(v, n).required().string()
         }),
       thumbnail: (value, name) => this.validator(value, name)
-        .required().object().of({
+        .object().of({
           s3Name: (v, n) => this.validator(v, n).required().string()
         })
     })

@@ -1,6 +1,6 @@
-import BadRequestError from '../../../common/errors/base/BadRequestError';
+import NotImplementedError from '../../../common/errors/base/NotImplementedError';
 import Service from '../Service';
-import { IS3Service } from './S3Service';
+import type { IS3Service } from './S3Service';
 
 export default class DisabledS3Service extends Service implements IS3Service {
   createPreSignedUrl(): Promise<string> {
@@ -11,7 +11,11 @@ export default class DisabledS3Service extends Service implements IS3Service {
     throw this.error();
   }
 
+  deleteFolder(): Promise<void> {
+    throw this.error();
+  }
+
   private error() {
-    return new BadRequestError('S3 features disabled');
+    return new NotImplementedError('S3 features disabled');
   }
 }

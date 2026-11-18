@@ -4,16 +4,37 @@ import Service from '../Service';
 import { UnsafeIpFunction } from '../../ssrf';
 import { lookup } from '../../dns';
 
+const DEFAULT_BLOCKLIST = [{
+  type: 'cidr',
+  ip: '127.0.0.0',
+  prefix: 8,
+  family: 'ipv4'
+}, {
+  type: 'ip',
+  ip: '0.0.0.0',
+  family: 'ipv4'
+}, {
+  type: 'ip',
+  ip: '::',
+  family: 'ipv6'
+}, {
+  type: 'ip',
+  ip: '::1',
+  family: 'ipv6'
+}];
+
 export default class SecurityService extends Service {
-  private securityConfigProvider;
+  private securityConfigProvider: SecurityConfigProvider | null;
   private ipBlocklist = new BlockList();
   private unsafeIpFunctions: UnsafeIpFunction[] = [];
 
-  constructor(securityConfigProvider: SecurityConfigProvider) {
+  constructor(securityConfigProvider: SecurityConfigProvider | null) {
     super();
     this.securityConfigProvider = securityConfigProvider;
 
-    this.securityConfigProvider.getSsrfIps().forEach((ip) => {
+    const ssrfIps = securityConfigProvider?.getSsrfIps() || DEFAULT_BLOCKLIST;
+
+    ssrfIps.forEach((ip) => {
       if (typeof ip === 'function') {
         this.unsafeIpFunctions.push(ip);
       } else if (ip.type === 'ip') {
@@ -25,7 +46,7 @@ export default class SecurityService extends Service {
   }
 
   async shouldBlockUrl(url: string) {
-    if (!this.securityConfigProvider.isSsrfEnabled()) {
+    if (this.securityConfigProvider && !this.securityConfigProvider.isSsrfEnabled()) {
       return {
         safe: true
       };

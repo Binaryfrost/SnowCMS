@@ -1,16 +1,25 @@
-import BadRequestError from '../../../common/errors/base/BadRequestError';
-import MediaDTO from '../../../lib/client/dto/media/MediaDTO';
+import NotImplementedError from '../../../common/errors/base/NotImplementedError';
+import MediaConfigDTO from '../../../lib/client/dto/media/MediaConfigDTO';
 import MediaListDTO from '../../../lib/client/dto/media/MediaListDTO';
+import MediaWithUrlsDTO from '../../../lib/client/dto/media/MediaWithUrlsDTO';
 import UploadMediaResponseDTO from '../../../lib/client/dto/media/UploadMediaResponseDTO';
 import Service from '../Service';
-import { IMediaService } from './MediaService';
+import type { IMediaService } from './MediaService';
 
 export default class DisabledMediaService extends Service implements IMediaService {
+  isEnabled() {
+    return false;
+  }
+
   async getAllMedia(): Promise<MediaListDTO> {
     throw this.error();
   }
 
-  async getMedia(): Promise<MediaDTO> {
+  async getMedia(): Promise<MediaWithUrlsDTO> {
+    throw this.error();
+  }
+
+  async getMediaConfig(): Promise<MediaConfigDTO> {
     throw this.error();
   }
 
@@ -26,7 +35,11 @@ export default class DisabledMediaService extends Service implements IMediaServi
     throw this.error();
   }
 
+  async deleteAllMediaForWebsite(): Promise<void> {
+    throw this.error();
+  }
+
   private error() {
-    return new BadRequestError('Media features are disabled');
+    return new NotImplementedError('Media features are disabled');
   }
 }

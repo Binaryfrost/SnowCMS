@@ -3,12 +3,12 @@ import { ActionIcon, Group, Image, Paper, Stack, Text, Tooltip, useComputedColor
 import { IconDownload, IconEye, IconFile } from '@tabler/icons-react';
 import ShortUuid from './ShortUuid';
 import { bytesToReadableUnits } from '../util/media';
-import type { MediaWithUrls } from '../../common/types/Media';
+import type MediaWithUrlsDTO from '../../lib/client/dto/media/MediaWithUrlsDTO';
 import IconButton from './IconButton';
 import GenericSkeleton, { GenericSkeletonProps } from './GenericSkeleton';
 
 interface Props {
-  file: MediaWithUrls
+  file: MediaWithUrlsDTO
   children?: ReactNode
 }
 
@@ -49,7 +49,7 @@ function FilePreview({ file, children }: Props) {
 }
 
 interface ViewButtonProps {
-  file: MediaWithUrls
+  file: MediaWithUrlsDTO
 }
 
 function ViewButton({ file }: ViewButtonProps) {
