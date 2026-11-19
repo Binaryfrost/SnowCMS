@@ -1,70 +1,48 @@
-import type { RequestHandler } from 'express';
 import { getContainer } from './container';
-import Route, { HttpMethod } from './router/Route';
+import Route from './router/Route';
 import Router from './router/Router';
-import { CSRF_METHODS } from '../../common/constants';
+import { route } from './router/routeFactory';
 
 // Route table formatting is intentionally inconsistent to keep entries compact
 /* eslint-disable function-call-argument-newline */
 
-interface AuthorizeOpts {
-  role: 'VIEWER' | 'USER' | 'SUPERUSER' | 'ADMIN'
-  websiteId?: string | ((req) => string)
-}
-
-interface RouteOpts {
-  authorize?: AuthorizeOpts
-  csrf?: boolean
-}
-
 export default function router() {
   const {
-    controllers,
-    middleware
+    controllers
   } = getContainer();
-
-  const route = (
-    method: HttpMethod,
-    path: string,
-    controller: any,
-    methodName: string,
-    opts: RouteOpts = {}
-  ) => {
-    const mws: RequestHandler[] = [middleware.security.authenticate];
-
-    if (opts.authorize) {
-      mws.push(middleware.security.authorize(opts.authorize.role, opts.authorize.websiteId));
-    }
-
-    if (opts.csrf !== false && CSRF_METHODS.includes(method)) {
-      mws.push(middleware.security.csrf);
-    }
-
-    return new Route<any>(method, path)
-      .middleware(...mws)
-      .handler(controller, methodName);
-  };
 
   const websiteId = (req) => req.params.websiteId;
 
   const routes: Route<any>[] = [
-    route('GET', '/api/healthcheck', controllers.healthcheck, 'healthcheck', { csrf: false }),
+    route('GET', '/api/healthcheck', controllers.healthcheck, 'healthcheck', { authenticate: false, csrf: false }),
 
     // Login
-    route('POST', '/api/login', controllers.login, 'login', { csrf: false }),
-    route('GET', '/api/login/config', controllers.login, 'getConfig', { csrf: false }),
-    route('GET', '/api/login/logout', controllers.login, 'logout', { csrf: false }),
-    route('GET', '/api/login/sso', controllers.login, 'sso', { csrf: false }),
-    route('GET', '/api/login/sso/callback', controllers.login, 'ssoCallback', { csrf: false }),
-    route('POST', '/api/login/password-reset', controllers.login, 'requestPasswordReset', {
-      csrf: false
-    }),
-    route('GET', '/api/login/password-reset/:token', controllers.login, 'validatePasswordResetToken', {
-      csrf: false
-    }),
-    route('POST', '/api/login/password-reset/:token', controllers.login, 'resetPassword', {
-      csrf: false
-    }),
+    route('POST', '/api/login', controllers.login, 'login', { authenticate: false, csrf: false }),
+    route('GET', '/api/login/config', controllers.login, 'getConfig', { authenticate: false, csrf: false }),
+    route('GET', '/api/login/logout', controllers.login, 'logout', { authenticate: false, csrf: false }),
+    route('GET', '/api/login/sso', controllers.login, 'sso', { authenticate: false, csrf: false }),
+    route('GET', '/api/login/sso/callback', controllers.login, 'ssoCallback', { authenticate: false, csrf: false }),
+    route(
+      'POST',
+      '/api/login/password-reset',
+      controllers.login,
+      'requestPasswordReset',
+      { authenticate: false, csrf: false }
+    ),
+    route(
+      'GET',
+      '/api/login/password-reset/:token',
+      controllers.login,
+      'validatePasswordResetToken',
+      { authenticate: false, csrf: false }
+    ),
+    route(
+      'POST',
+      '/api/login/password-reset/:token',
+      controllers.login,
+      'resetPassword',
+      { authenticate: false, csrf: false }
+    ),
 
     // Config
     route('GET', '/api/config/timezones', controllers.config, 'getTimezones', {
@@ -81,7 +59,7 @@ export default function router() {
     }),
 
     // Assets
-    route('GET', '/api/assets/email-logo', controllers.asset, 'getEmailLogo', { csrf: false }),
+    route('GET', '/api/assets/email-logo', controllers.asset, 'getEmailLogo', { authenticate: false, csrf: false }),
 
     // Accounts
     route('GET', '/api/accounts', controllers.user, 'getAll', {
