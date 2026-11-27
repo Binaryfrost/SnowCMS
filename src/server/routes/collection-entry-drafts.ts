@@ -5,7 +5,7 @@ import handleAccessControl from '../handleAccessControl';
 import { exists, getCollection, getCollectionInputs, getWebsite } from '../database/util';
 import InputRegistry from '../../common/InputRegistry';
 import { asyncRouteFix, paginate, pagination } from '../util';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { callHook } from '../plugins/hooks';
 import type { PaginatedResponse } from '../../common/types/PaginatedResponse';
 import { CollectionEntry, CollectionEntryDraft, CollectionEntryDraftSummary, CollectionEntryDraftWithData } from '../../common/types/CollectionEntry';

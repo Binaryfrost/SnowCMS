@@ -8,6 +8,7 @@ import { ExpressError } from '../lib';
 import { db } from './database/db';
 import { SessionCookie } from './cookie';
 
+// TODO: Remove after upgrade to Express v5
 export function asyncRouteFix<T extends RequestHandler>(callback: T): RequestHandler {
   return (req, res, next) => {
     new Promise((resolve) => {
@@ -16,6 +17,7 @@ export function asyncRouteFix<T extends RequestHandler>(callback: T): RequestHan
   };
 }
 
+// TODO: Remove
 export function getAuthToken(req: Request) {
   const { authorization } = req.headers;
 
@@ -44,6 +46,7 @@ export function getAuthToken(req: Request) {
   return null;
 }
 
+// TODO: Remove all following functions and replace all usages with EncryptionService
 export function secureRandomBytes(bytes: number = 32) {
   return crypto.randomBytes(bytes);
 }
@@ -69,6 +72,7 @@ export function secureEquals(a: string, b: string) {
   return crypto.timingSafeEqual(bufferA, bufferB);
 }
 
+// TODO: Move to utility service
 export function isNumber(num: string) {
   return num.match(/^[0-9]+$/);
 }
@@ -83,6 +87,7 @@ export function parseNumber(num: string, def: number) {
   return parseInt(num, 10);
 }
 
+// TODO: Remove pagination from this file
 type PaginationFunctionReturnType = Promise<{
   limit: number
   page: number
@@ -137,6 +142,7 @@ export function paginate<T extends Knex.QueryBuilder>(query: T,
     .offset((page - 1) * limit);
 }
 
+// TODO: Replace with TimeService
 let timezones: string[];
 export function getTimezones() {
   if (timezones) return timezones;

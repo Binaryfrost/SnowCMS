@@ -2,7 +2,7 @@ import { ActionIcon } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 import IconButton from './IconButton';
 import { type DeleteModalOpts, showDeleteModal } from '../util/modals';
-import type { Role } from '../../common/types/User';
+import type { Role } from '../../common/users';
 
 interface Props extends DeleteModalOpts {
   keepTypeCase?: boolean

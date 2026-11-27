@@ -1,4 +1,3 @@
-import { User } from '../../../../src/common/types/User';
 import { defineRoutePlugin } from '../../../../src/config';
 import { ExpressError } from '../../../../src/lib';
 import { db } from '../../../../src/lib/server';
@@ -36,7 +35,7 @@ export default defineRoutePlugin({
     }));
 
     router.get('/users', asyncRouteFix(async (req, res) => {
-      const users = await db()<User>('users')
+      const users = await db()<{ id: string }>('users')
         .select('id');
 
       res.json({

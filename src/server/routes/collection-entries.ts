@@ -7,7 +7,7 @@ import { CollectionEntry, CollectionEntryDraft, CollectionEntryInputs, Collectio
 import { CollectionInput } from '../../common/types/CollectionInputs';
 import InputRegistry, { type Input } from '../../common/InputRegistry';
 import { asyncRouteFix, isNumber, paginate, pagination, parseNumber } from '../util';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../plugins/hooks';
 import { PaginatedResponse } from '../../common/types/PaginatedResponse';
 

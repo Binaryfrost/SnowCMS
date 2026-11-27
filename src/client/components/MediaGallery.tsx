@@ -1,10 +1,10 @@
 import { Group, Stack } from '@mantine/core';
-import { MediaWithUrls } from '../../common/types/Media';
+import type MediaWithUrlsDTO from '../../lib/client/dto/media/MediaWithUrlsDTO';
 import DataGetter from './DataGetter';
 import GalleryFile from './GalleryFile';
 import FilePreview from './FilePreview';
 import { useIsMobile } from '../util/mobile';
-import { PaginatedResponse } from '../../common/types/PaginatedResponse';
+import type { PaginatedResponse } from '../../lib/client/types/PaginatedResponse';
 import Pagination from './Pagination';
 
 export interface MediaGalleryProps {
@@ -12,7 +12,7 @@ export interface MediaGalleryProps {
   search?: string
   mimeTypes?: string[]
   refresh: () => void
-  select?: (file: MediaWithUrls) => void
+  select?: (file: MediaWithUrlsDTO) => void
 }
 
 export default function MediaGallery({ websiteId, search, mimeTypes,
@@ -20,7 +20,7 @@ export default function MediaGallery({ websiteId, search, mimeTypes,
   const isMobile = useIsMobile();
 
   return (
-    <DataGetter<PaginatedResponse<MediaWithUrls>> url={`/api/websites/${websiteId}/media`}
+    <DataGetter<PaginatedResponse<MediaWithUrlsDTO>> url={`/api/websites/${websiteId}/media`}
       skeletonComponent={(
         <FilePreview.Skeleton horizontal skeletonNum={7} skeletonProps={{
           mx: isMobile && 'auto'
@@ -36,12 +36,12 @@ export default function MediaGallery({ websiteId, search, mimeTypes,
       {({ data: media, setPage }) => (
         <Stack>
           <Group align="stretch" justify={isMobile && 'center'}>
-            {media.data
+            {media.media
               .map((file) => (
                 <GalleryFile key={file.id} file={file} select={select} refresh={refresh} />
               ))}
           </Group>
-          <Pagination page={media.page} pages={media.pages} setPage={setPage} />
+          <Pagination page={media._metadata.page} pages={media._metadata.pages} setPage={setPage} />
         </Stack>
       )}
     </DataGetter>

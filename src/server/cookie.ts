@@ -4,6 +4,8 @@ import { getConfig } from './config/config';
 import { hmac, secureEquals, secureRandom, secureRandomBytes } from './util';
 import { CSRF_COOKIE } from '../common/constants';
 
+// TODO: Simply file to helper methods for getting/setting cookie provided by CookieService
+
 interface EncryptedCookiePayload {
   iv: string
   enc: string

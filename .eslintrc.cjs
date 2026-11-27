@@ -1,12 +1,16 @@
 /** @type {import('eslint').ESLint.ConfigData} */
 module.exports = {
   root: true,
-  extends: ['airbnb', 'airbnb/hooks'],
+  extends: ['airbnb', 'airbnb/hooks', 'plugin:jsdoc/recommended'],
   env: {
     browser: true
   },
   ignorePatterns: [
-    '**/dist/**'
+    '**/dist/**',
+    // Legacy implementation kept as a reference; no longer compiled or mounted
+    'src/server/routes/**',
+    'src/server/cookie.ts',
+    'src/server/email/**'
   ],
   rules: {
     'comma-dangle': 'off',
@@ -64,15 +68,43 @@ module.exports = {
         blankLine: 'never',
         prev: 'field',
         next: 'field'
-      }]
-    }]
+      }],
+    },
+    {
+      exceptAfterSingleLine: true
+    }],
+    'jsdoc/require-jsdoc': 'off',
+    // Some class methods are purely utility methods
+    'class-methods-use-this': 'off',
+    'no-use-before-define': ['error', {
+      functions: false,
+      classes: false
+    }],
+    'jsdoc/require-returns-description': 'off',
+    'jsdoc/require-param-description': 'off',
+    // SnowCMS is mostly TypeScript, so the types are already available
+    'jsdoc/require-returns': 'off',
+    'jsdoc/require-param-type': 'off',
+    'import/no-relative-packages': 'off',
+    'max-classes-per-file': 'off',
+    'no-underscore-dangle': 'off',
+    'no-dupe-class-members': 'off',
+    '@typescript-eslint/no-dupe-class-members': 'error',
   },
   plugins: [
-    '@typescript-eslint'
+    '@typescript-eslint',
+    'jsdoc'
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module',
     tsconfigRootDir: __dirname
+  },
+  settings: {
+    jsdoc: {
+      tagNamePreference: {
+        augments: 'extends'
+      }
+    }
   }
 };

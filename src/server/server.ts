@@ -7,30 +7,16 @@ import devServer from './dev-server';
 import { getManifest } from './manifest';
 import initDb from './database/db';
 import { initConfig } from './config/config';
-import { getApiKey, getSession, getUser } from './database/util';
 import initRedis from './database/redis';
-import { asyncRouteFix, getAuthToken } from './util';
-import { UserWithWebsites } from '../common/types/User';
-import { ROLE_HIERARCHY } from '../common/users';
-import ExpressError from '../common/ExpressError';
+import { asyncRouteFix } from './util';
+import ExpressError from '../common/errors/base/ExpressError';
 import { loadPlugins } from './plugins/plugins';
 import { initExpressSentry } from './sentry';
-import { initSmtp } from './email/smtp';
-import { CsrfCookie, SessionCookie } from './cookie';
-import { CSRF_HEADER, CSRF_METHODS, UNSAFE_SOURCE_HEADER } from '../common/constants';
+import { UNSAFE_SOURCE_HEADER, CSRF_METHODS } from '../common/constants';
 
-import websiteRouter from './routes/website';
-import collectionRouter from './routes/collections';
-import collectionInputsRouter from './routes/collection-inputs';
-import collectionEntriesRouter from './routes/collection-entries';
-import collectionEntryDraftsRouter from './routes/collection-entry-drafts';
-import mediaRouter from './routes/media';
-import accountRouter from './routes/accounts';
-import loginRouter from './routes/login';
-import configRouter from './routes/config';
-import assetRouter from './routes/assets';
-import securityRouter from './routes/security';
 import { router as pluginRouter } from './plugins/routes';
+import appRouter from './modules/router';
+import { getContainer } from './modules/container';
 
 export async function start(config: NormalizedConfig) {
   initConfig(config);
@@ -42,6 +28,9 @@ export async function start(config: NormalizedConfig) {
 
   console.log('Connecting to Redis');
   await initRedis();
+
+  const { services, middleware } = getContainer();
+  await services.email.initialize();
 
   const app = express();
 
@@ -71,114 +60,26 @@ export async function start(config: NormalizedConfig) {
     limit: '16MB'
   }));
 
-  async function getAuthedUser(token: string): Promise<UserWithWebsites> {
-    if (!token) return null;
-
-    const isApiKey = token.startsWith('a:');
-
-    if (!isApiKey) {
-      const sessionUser = await getSession(token);
-      if (!sessionUser) return null;
-
-      const user = await getUser(sessionUser.user);
-      return user;
-    }
-
-    if (!token.includes('.')) return null;
-
-    const apiToken = token.replace(/^a:/, '');
-    const [id, key] = apiToken.split('.');
-
-    const apiKey = await getApiKey(id, key);
-    if (!apiKey) return null;
-
-    const apiKeyUser = await getUser(apiKey.userId);
-    if (!apiKeyUser) return null;
-
-    if (ROLE_HIERARCHY[apiKey.role] > ROLE_HIERARCHY[apiKeyUser.role]) {
-      apiKey.role = apiKeyUser.role;
-    }
-
-    if (apiKeyUser.role !== 'ADMIN') {
-      apiKey.websites = apiKeyUser.websites.filter((w) => apiKey.websites.includes(w));
-    }
-
-    return {
-      id: apiKey.id,
-      email: 'apikey@snowcms',
-      role: apiKey.role,
-      active: apiKey.active && apiKeyUser.active,
-      websites: apiKey.websites
-    };
-  }
-
   // Block requests that originated from user-controlled sources (e.g. webhooks, RemoteDataInput)
   app.use(asyncRouteFix(async (req, res, next) => {
     if (req.get(UNSAFE_SOURCE_HEADER)) throw new ExpressError('Forbidden', 403);
     next();
   }));
 
-  app.use(asyncRouteFix(async (req, res, next) => {
-    const token = getAuthToken(req);
-    // If a session cookie exists, but is invalid, remove it.
-    if (!token && req.cookies[SessionCookie.COOKIE_NAME]) {
-      SessionCookie.clearCookie(res);
-    }
+  app.use('/', appRouter()._getRouter());
 
-    const user = await getAuthedUser(token);
-    if (user && user.active) {
-      req.user = user;
-      req.sessionCookie = !req.headers.authorization ?
-        SessionCookie.fromReadOnly(SessionCookie.get(req)) : null;
-    }
-
-    next();
+  // Plugin routes
+  app.use('/c', asyncRouteFix(async (req, res, next) => {
+    await middleware.security.authenticate(req, res, next);
   }));
-
-  app.use(asyncRouteFix(async (req, res, next) => {
-    const CHECK_PREFIXES = ['/api', '/c'];
-    const BYPASS_PREFIXES = ['/api/login'];
-
-    if (!CHECK_PREFIXES.some((e) => req.url.startsWith(e))) return next();
-    if (BYPASS_PREFIXES.some((e) => req.url.startsWith(e))) return next();
-
-    if (CSRF_METHODS.includes(req.method)) {
-      const sessionCookie = req.sessionCookie;
-      const sessionId = sessionCookie?.getData();
-      // Authenticated with API key or unauthenticated which will be caught by in-route auth check
-      if (!sessionId) return next();
-      
-      const csrfToken = req.header(CSRF_HEADER);
-      if (!csrfToken) {
-        throw new ExpressError('CSRF token error: No token provided');
-      }
-
-      const csrfCookie = CsrfCookie.get(req);
-      if (!csrfCookie) {
-        sessionCookie.setCsrfCookie(res);
-        throw new ExpressError('CSRF token error: No CSRF cookie');
-      }
-
-      if (!csrfCookie.verify(sessionId, csrfToken)) {
-        sessionCookie.setCsrfCookie(res);
-        throw new ExpressError('CSRF token error: Token mismatch');
-      }
+  app.use('/c', asyncRouteFix(async (req, res, next) => {
+    if (!CSRF_METHODS.includes(req.method)) {
+      next();
+      return;
     }
 
-    next();
+    await middleware.security.csrf(req, res, next);
   }));
-
-  app.use('/api/websites', websiteRouter);
-  app.use('/api/websites/:websiteId/collections', collectionRouter);
-  app.use('/api/websites/:websiteId/collections/:collectionId/inputs', collectionInputsRouter);
-  app.use('/api/websites/:websiteId/collections/:collectionId/entries', collectionEntriesRouter);
-  app.use('/api/websites/:websiteId/collections/:collectionId/drafts', collectionEntryDraftsRouter);
-  app.use('/api/websites/:websiteId/media', mediaRouter);
-  app.use('/api/accounts', accountRouter);
-  app.use('/api/login', await loginRouter(config.sso));
-  app.use('/api/config', configRouter);
-  app.use('/api/assets', assetRouter);
-  app.use('/api/security', securityRouter);
   app.use('/c', pluginRouter);
 
   if (!__SNOWCMS_IS_PRODUCTION__) {
@@ -247,7 +148,6 @@ export async function start(config: NormalizedConfig) {
   });
 
   initExpressSentry(app);
-  initSmtp();
 
   // Express expects error handling middleware to have 4 arguments
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

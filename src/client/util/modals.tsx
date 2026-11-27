@@ -3,14 +3,14 @@ import { ActionIcon, Box, Button, Group, Paper, Stack, Text } from '@mantine/cor
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconPlus } from '@tabler/icons-react';
+import { OpenConfirmModal } from '@mantine/modals/lib/context';
 import ShortUuid, { shortenUuid } from '../components/ShortUuid';
 import { del } from './api';
 import InputRegistry, { Input } from '../../common/InputRegistry';
 import IconButton from '../components/IconButton';
-import type { Website } from '../../common/types/Website';
-import type { Collection } from '../../common/types/Collection';
+import type WebsiteDTO from '../../lib/client/dto/website/WebsiteDTO';
+import type CollectionDTO from '../../lib/client/dto/collection/CollectionDTO';
 import SelectMedia, { SelectMediaProps } from '../components/SelectMedia';
-import { OpenConfirmModal } from '@mantine/modals/lib/context';
 
 export interface DeleteModalOpts {
   url: string
@@ -74,8 +74,8 @@ export function showDeleteModal(opts: DeleteModalOpts) {
 }
 
 interface AddInputModalOpts {
-  website: Website
-  collection: Collection
+  website: WebsiteDTO
+  collection: CollectionDTO
   addInput: (input: Input<any>) => void
 }
 
@@ -126,8 +126,8 @@ export function showSelectMediaModal({ ...props }: SelectMediaProps) {
 export enum BlockingConfirmModalResult {
   CONFIRM,
   CANCEL
-};
-export function showBlockingConfirmModal({ ... props }: Omit<OpenConfirmModal, 'onCancel' | 'onConfirm'>) {
+}
+export function showBlockingConfirmModal({ ...props }: Omit<OpenConfirmModal, 'onCancel' | 'onConfirm'>) {
   return new Promise((resolve) => {
     modals.openConfirmModal({
       ...props,

@@ -10,7 +10,7 @@ export interface AlertProps {
 function styleAttrsToString(attrs: Record<string, any>) {
   return Object.entries(attrs).map(([k, v]) => {
     const name = k.replaceAll(/([A-Z])/g, (m) => `-${m.toLowerCase()}`);
-    return `${name}: ${v}`
+    return `${name}: ${v}`;
   }).join(';');
 }
 
@@ -37,7 +37,7 @@ const Alert = Node.create({
     const alertId = randomHex(8);
 
     return [
-      'div', { 'data-alert': alertId},
+      'div', { 'data-alert': alertId },
       ['div', HTMLAttributes.text],
       // Workaround for https://github.com/ueberdosis/tiptap/issues/7408
       ['style', {}, `div[data-alert="${alertId}"] div { ${styleAttrs} }`]

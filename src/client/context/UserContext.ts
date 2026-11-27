@@ -1,8 +1,8 @@
 import { createContext } from 'react';
-import { UserWithWebsites } from '../../common/types/User';
+import type UserDTO from '../../lib/client/dto/user/UserDTO';
 
 interface UserContextType {
-  user: UserWithWebsites
+  user: UserDTO
   refresh: () => void
 }
 

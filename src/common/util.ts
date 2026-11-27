@@ -21,6 +21,7 @@ export function mimeTypeMatch(imageMime: string, filterMime: string) {
   return filterMime === imageMime;
 }
 
+// TODO: Remove
 export function convertMimeTypeForSqlQuery(mime: string) {
   if (mime.endsWith('/*')) {
     return mime.replace('/*', '/%');

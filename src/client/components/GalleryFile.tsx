@@ -1,14 +1,14 @@
 import { ActionIcon, Paper, Stack } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
-import { MediaWithUrls } from '../../common/types/Media';
+import type MediaWithUrlsDTO from '../../lib/client/dto/media/MediaWithUrlsDTO';
 import IconButton from './IconButton';
 import DeleteButton from './DeleteButton';
 import FilePreview from './FilePreview';
 
 interface Props {
-  file: MediaWithUrls
+  file: MediaWithUrlsDTO
   refresh: () => void
-  select?: (file: MediaWithUrls) => void
+  select?: (file: MediaWithUrlsDTO) => void
 }
 
 export default function GalleryFile({ file, refresh, select }: Props) {

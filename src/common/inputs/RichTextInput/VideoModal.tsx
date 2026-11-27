@@ -1,8 +1,8 @@
 import { Alert, Button, Checkbox, Group, NumberInput, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { modals } from '@mantine/modals';
-import type { VideoProps } from './Video';
 import { IconAlertCircle } from '@tabler/icons-react';
+import type { VideoProps } from './Video';
 
 interface Props {
   src?: string

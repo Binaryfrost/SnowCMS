@@ -1,20 +1,31 @@
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { UNSAFE_SOURCE_HEADER } from '../../common/constants';
 import { loadPlugins } from '../../common/plugins/plugins';
-import type { Collection } from '../../common/types/Collection';
-import type { CollectionEntryDraft, CollectionEntryWithData } from '../../common/types/CollectionEntry';
-import type { CollectionInput } from '../../common/types/CollectionInputs';
-import type { Media, MediaWithUrls } from '../../common/types/Media';
-import type { Website } from '../../common/types/Website';
 import { PluginConfig } from '../../config';
+import WebsiteDTO from '../../lib/client/dto/website/WebsiteDTO';
+import CollectionDTO from '../../lib/client/dto/collection/CollectionDTO';
+import CollectionInputDTO from '../../lib/client/dto/collection/input/CollectionInputDTO';
+import CollectionEntryWithDataDTO from '../../lib/client/dto/collection/entry/CollectionEntryWithDataDTO';
+import CollectionEntryDraftDTO from '../../lib/client/dto/collection/entry/draft/CollectionEntryDraftDTO';
+import MediaDTO from '../../lib/client/dto/media/MediaDTO';
+import MediaCreateDTO from '../../lib/client/dto/media/MediaCreateDTO';
+import MediaWithUrlsDTO from '../../lib/client/dto/media/MediaWithUrlsDTO';
 import { isSafeUrl } from '../ssrf';
 
 interface ServerStartHook {
   port: number
 }
 
-interface BeforeAfterMediaHook<T = Media> {
-  media: T
+interface BeforeAfterMediaCreateHook {
+  media: MediaCreateDTO
+}
+
+interface BeforeAfterMediaDeleteHook {
+  media: MediaDTO
+}
+
+interface AfterMediaConfirmHook {
+  media: MediaWithUrlsDTO
 }
 
 export enum WebsiteHookCallReasons {
@@ -40,8 +51,8 @@ interface BeforeWebsiteHookCalledHook {
     };
     reason: WebsiteHookCallReasons;
   };
-  website: Website;
-  collection: Collection;
+  website: WebsiteDTO;
+  collection: CollectionDTO;
   /** Prevents the POST request from being sent */
   cancel(): void;
 }
@@ -61,23 +72,21 @@ type BeforeAfterHook<K extends string, H> = {
 };
 
 type AllBeforeAfterHooks =
-  BeforeAfterHook<'Website', { website: Website; }> &
-  BeforeAfterHook<'Collection', { collection: Collection; }> &
-  BeforeAfterHook<'CollectionInput', { collectionInput: CollectionInput; }> &
-  BeforeAfterHook<'CollectionEntry', { collectionEntry: CollectionEntryWithData; }> & 
-  BeforeAfterHook<'CollectionEntryDraft', { collectionEntryDraft: CollectionEntryDraft; }>;
+  BeforeAfterHook<'Website', { website: WebsiteDTO; }> &
+  BeforeAfterHook<'Collection', { collection: CollectionDTO; }> &
+  BeforeAfterHook<'CollectionInput', { collectionInput: CollectionInputDTO; }> &
+  BeforeAfterHook<'CollectionEntry', { collectionEntry: CollectionEntryWithDataDTO; }> &
+  BeforeAfterHook<'CollectionEntryDraft', { collectionEntryDraft: CollectionEntryDraftDTO; }>;
 
 // TODO: Move doc comments to docs site
 export interface Hooks extends AllBeforeAfterHooks {
   /** Called server-side */
   serverStart?: (hook: ServerStartHook) => void | Promise<void>;
-  beforeMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) =>
-    void | Promise<void>;
-  afterMediaCreateHook?: (hook: BeforeAfterMediaHook<Omit<Media, 'timestamp'>>) =>
-    void | Promise<void>;
-  afterMediaConfirmHook?: (hook: BeforeAfterMediaHook<MediaWithUrls>) => void | Promise<void>;
-  beforeMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void | Promise<void>;
-  afterMediaDeleteHook?: (hook: BeforeAfterMediaHook) => void | Promise<void>;
+  beforeMediaCreateHook?: (hook: BeforeAfterMediaCreateHook) => void | Promise<void>;
+  afterMediaCreateHook?: (hook: BeforeAfterMediaCreateHook) => void | Promise<void>;
+  afterMediaConfirmHook?: (hook: AfterMediaConfirmHook) => void | Promise<void>;
+  beforeMediaDeleteHook?: (hook: BeforeAfterMediaDeleteHook) => void | Promise<void>;
+  afterMediaDeleteHook?: (hook: BeforeAfterMediaDeleteHook) => void | Promise<void>;
   /** Called server-side before a POST request is sent to the website hook */
   beforeWebsiteHookCalled?: (hook: BeforeWebsiteHookCalledHook) => void | Promise<void>;
 }
@@ -108,11 +117,15 @@ export async function callHook<T extends keyof Hooks>(name: T, data: Parameters<
   }
 }
 
-const httpHookFetchError = (website: Website) =>
-  `Failed to send POST request to website ${website.id}`;
+function httpHookFetchError(website: WebsiteDTO) {
+  return `Failed to send POST request to website ${website.id}`;
+}
 
-export async function callHttpHook(website: Website, collection: Collection,
-  reason: BeforeWebsiteHookCalledHook['reason']) {
+export async function callHttpHook(
+  website: WebsiteDTO,
+  collection: CollectionDTO,
+  reason: BeforeWebsiteHookCalledHook['reason']
+) {
   if (!website.hook || !collection.callHook) return;
 
   const safeUrlResult = await isSafeUrl(website.hook);

@@ -1,7 +1,7 @@
 import { Alert, Text, Title } from '@mantine/core';
+import { useParams } from 'react-router-dom';
 import Page from '../../../components/Page';
 import CollectionEntryForm from '../../../components/forms/CollectionEntryForm';
-import { useParams } from 'react-router-dom';
 import LazyLoadedCollectionSetup from '../../../components/forms/LazyLoadedCollectionSetup';
 
 export function Component() {
@@ -25,5 +25,5 @@ export function Component() {
         <CollectionEntryForm draftId={draftId} />
       </LazyLoadedCollectionSetup>
     </Page>
-  )
+  );
 }

@@ -6,12 +6,12 @@ import {
 import { modals } from '@mantine/modals';
 import { IconPhoto, IconPhotoOff } from '@tabler/icons-react';
 import { type Input } from '../InputRegistry';
-import type { MediaWithUrls } from '../types/Media';
+import type MediaWithUrlsDTO from '../../lib/client/dto/media/MediaWithUrlsDTO';
 import { SELECT_MEDIA_MODAL_ID, showSelectMediaModal } from '../../client/util/modals';
 import FilePreview from '../../client/components/FilePreview';
 import { get } from '../../client/util/api';
 import { mimeTypeMatch } from '../util';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { serverInputFetch } from '../plugins/plugins';
 import { useInputValidator, useSettingsHandler } from './hooks';
 
@@ -32,7 +32,7 @@ const input: Input<string, MediaInputSettings> = {
     name, description, value, required, settings, onChange, registerValidator, unregisterValidator
   }) => {
     const { websiteId } = useParams();
-    const [media, setMedia] = useState<MediaWithUrls>(null);
+    const [media, setMedia] = useState<MediaWithUrlsDTO>(null);
     const [mediaError, setMediaError] = useState(null);
 
     const error = useInputValidator(
@@ -47,7 +47,7 @@ const input: Input<string, MediaInputSettings> = {
 
     useEffect(() => {
       if (value) {
-        get<MediaWithUrls>(`/api/websites/${websiteId}/media/${value}`).then((resp) => {
+        get<MediaWithUrlsDTO>(`/api/websites/${websiteId}/media/${value}`).then((resp) => {
           if (resp.status !== 200) {
             setMediaError(resp.body.error || 'An error occurred');
             return;
@@ -143,14 +143,14 @@ const input: Input<string, MediaInputSettings> = {
     if (required && !stringifiedValue) {
       throw new ExpressError('Required Media Input does not have a value');
     }
-    
+
     const value = input.deserialize(stringifiedValue);
     if (!value) return;
     if (settings.mimeTypes?.length === 0) return;
 
     const resp = await serverInputFetch(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/media/${value}`
+      `/api/websites/${req.params.websiteId}/media/${value}`
     );
 
     if (resp.status === 404) {
@@ -159,7 +159,7 @@ const input: Input<string, MediaInputSettings> = {
 
     if (resp.status !== 200) return;
 
-    const media: MediaWithUrls = await resp.json();
+    const media: MediaWithUrlsDTO = await resp.json();
 
     if (!settings.mimeTypes.some((type) => mimeTypeMatch(media.fileType, type))) {
       throw new ExpressError('Media Input image is an invalid type');
@@ -185,12 +185,12 @@ const input: Input<string, MediaInputSettings> = {
 
     const resp = await serverInputFetch(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/media/${value}`
+      `/api/websites/${req.params.websiteId}/media/${value}`
     );
 
     if (resp.status !== 200) return null;
 
-    const media: MediaWithUrls = await resp.json();
+    const media: MediaWithUrlsDTO = await resp.json();
     return media.url;
   }
 };

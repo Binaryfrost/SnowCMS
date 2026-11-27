@@ -35,7 +35,7 @@ import Youtube from './RichTextInput/Youtube';
 import './RichTextInput/RichTextInput.css';
 import { showYoutubeModal } from './RichTextInput/YoutubeModal';
 import { showVideoModal } from './RichTextInput/VideoModal';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { showAlertModal } from './RichTextInput/AlertModal';
 import Alert, { AlertProps } from './RichTextInput/Alert';
 import { useInputValidator, useSettingsHandler } from './hooks';
@@ -112,11 +112,11 @@ const input: Input<JSONContent, RichTextInputSettings> = {
         if (required && length === 0) {
           return `${name} is required`;
         }
-  
+
         if (settings.maxLength > 0 && length > settings.maxLength) {
           return `Max length is ${settings.maxLength}`;
         }
-  
+
         return null;
       },
       registerValidator,

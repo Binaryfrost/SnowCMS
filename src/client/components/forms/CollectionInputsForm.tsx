@@ -8,8 +8,8 @@ import { DragDropContext, Draggable, DropResult, Droppable } from '@hello-pangea
 import HeaderWithAddButton from '../HeaderWithAddButton';
 import { ADD_INPUT_MODAL_ID, showAddInputModal } from '../../util/modals';
 import { WebsiteContext } from '../../context/WebsiteContext';
-import type { Collection } from '../../../common/types/Collection';
-import type { CollectionInput } from '../../../common/types/CollectionInputs';
+import type CollectionDTO from '../../../lib/client/dto/collection/CollectionDTO';
+import type CollectionInputDTO from '../../../lib/client/dto/collection/input/CollectionInputDTO';
 import { CollectionInputListItem, isTemporaryInput } from '../CollectionInputListItem';
 import { randomHex } from '../../../common/util';
 import { getById } from '../../util/data';
@@ -18,19 +18,19 @@ import { patch, post, put } from '../../util/api';
 import { handleFormResponseNotification } from '../../util/form';
 
 interface Props {
-  collection: Collection
-  inputs: CollectionInput[]
-  inputsHandlers: UseListStateHandlers<CollectionInput>
+  collection: CollectionDTO
+  inputs: CollectionInputDTO[]
+  inputsHandlers: UseListStateHandlers<CollectionInputDTO>
 }
 
 export default function CollectionInputsForm({ collection, inputs, inputsHandlers }: Props) {
   const websiteContext = useContext(WebsiteContext);
   const [settingsModal, setSettingsModal] = useState<string>(null);
-  const settingsInput = getById<CollectionInput>(inputs, settingsModal);
+  const settingsInput = getById<CollectionInputDTO>(inputs, settingsModal);
   const [saving, setSaving] = useState(false);
   const apiRoot = `/api/websites/${websiteContext.data.id}/collections/${collection.id}/inputs`;
 
-  function inputWithFieldNameExists(input: CollectionInput) {
+  function inputWithFieldNameExists(input: CollectionInputDTO) {
     return inputs
       .filter((i) => i.fieldName === input.fieldName)
       .filter((i) => i.id !== input.id)
@@ -46,10 +46,10 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
   }
 
   function updateInput(id: string) {
-    return async (cb: Parameters<UseListStateHandlers<CollectionInput>['applyWhere']>[1]) => {
+    return async (cb: Parameters<UseListStateHandlers<CollectionInputDTO>['applyWhere']>[1]) => {
       setSaving(true);
 
-      const cbData = cb(getById<CollectionInput>(inputs, id));
+      const cbData = cb(getById<CollectionInputDTO>(inputs, id));
       if (inputWithFieldNameExists(cbData)) {
         notifications.show({
           message: `Input with field name ${cbData.fieldName} already exists`,
@@ -69,7 +69,7 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
             (item, index) => ({
               ...cb(item, index),
               id: resp.body.id,
-            })
+            }) as CollectionInputDTO
           );
 
           closeSettingsModal();
@@ -130,8 +130,8 @@ export default function CollectionInputsForm({ collection, inputs, inputsHandler
               fieldName: '',
               input: input.id,
               inputConfig: {},
-              required: input.isVisualOnly ? false : true
-            });
+              required: !input.isVisualOnly
+            } as CollectionInputDTO);
 
             modals.close(ADD_INPUT_MODAL_ID);
             setSettingsModal(id);

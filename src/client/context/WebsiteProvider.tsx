@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Website } from '../../common/types/Website';
+import type WebsiteDTO from '../../lib/client/dto/website/WebsiteDTO';
 import { WebsiteContext } from './WebsiteContext';
 import CommonWebsiteDataProvider from './CommonWebsiteDataProvider';
 
@@ -9,7 +9,7 @@ interface Props {
 
 export default function WebsiteProvider({ children }: Props) {
   return (
-    <CommonWebsiteDataProvider<Website> defaultData={null} url="/api/websites/{websiteId}"
+    <CommonWebsiteDataProvider<WebsiteDTO> defaultData={null} url="/api/websites/{websiteId}"
       context={WebsiteContext}>
       {children}
     </CommonWebsiteDataProvider>

@@ -2,15 +2,15 @@ import { Form } from 'react-router-dom';
 import { Button, Checkbox, Select, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconDeviceFloppy } from '@tabler/icons-react';
-import type { Collection } from '../../../common/types/Collection';
+import type CollectionDTO from '../../../lib/client/dto/collection/CollectionDTO';
 import { onSubmit } from '../../util/form';
 import IconButton from '../IconButton';
-import { CollectionInput } from '../../../common/types/CollectionInputs';
+import type CollectionInputDTO from '../../../lib/client/dto/collection/input/CollectionInputDTO';
 import { isTemporaryInput } from '../CollectionInputListItem';
 
 interface Props {
-  collection?: Collection
-  collectionInputs?: CollectionInput[]
+  collection?: CollectionDTO
+  collectionInputs?: CollectionInputDTO[]
 }
 
 export default function CollectionForm({ collection, collectionInputs }: Props) {

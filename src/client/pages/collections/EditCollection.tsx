@@ -8,21 +8,21 @@ import { type HttpResponse, put } from '../../util/api';
 import { formDataToObject, handleFormResponseNotification } from '../../util/form';
 import { CollectionsContext } from '../../context/CollectionsContext';
 import DataGetter from '../../components/DataGetter';
-import type { Collection } from '../../../common/types/Collection';
+import type CollectionDTO from '../../../lib/client/dto/collection/CollectionDTO';
 import FormSkeleton from '../../components/FormSkeleton';
 import useRefresh from '../../util/refresh';
 import CollectionInputsForm from '../../components/forms/CollectionInputsForm';
-import type { CollectionInput } from '../../../common/types/CollectionInputs';
+import type CollectionInputDTO from '../../../lib/client/dto/collection/input/CollectionInputDTO';
 import LazyLoadedCollectionSetup from '../../components/forms/LazyLoadedCollectionSetup';
 
 interface EditCollectionPageProps {
-  collection: Collection
-  collectionInputs: CollectionInput[]
+  collection: CollectionDTO
+  collectionInputs: CollectionInputDTO[]
 }
 
 function EditCollectionPage({ collection, collectionInputs }:
   EditCollectionPageProps) {
-  const [inputs, inputsHandlers] = useListState<CollectionInput>(collectionInputs);
+  const [inputs, inputsHandlers] = useListState<CollectionInputDTO>(collectionInputs);
 
   return (
     <Stack>
@@ -56,13 +56,13 @@ export function Component() {
   return (
     <Page title="Edit Collection">
       <Title>Edit Collection</Title>
-      <DataGetter.Multiple<[Collection, CollectionInput[]]> urls={[
+      <DataGetter.Multiple<[CollectionDTO, { inputs: CollectionInputDTO[] }]> urls={[
         `/api/websites/${websiteId}/collections/${collectionId}`,
         `/api/websites/${websiteId}/collections/${collectionId}/inputs`
       ]}
         key={collectionId} skeletonComponent={<FormSkeleton inputs={1} />}>
         {({ data: [collection, inputs] }) => (
-          <EditCollectionPage collection={collection} collectionInputs={inputs} />
+          <EditCollectionPage collection={collection} collectionInputs={inputs.inputs} />
         )}
       </DataGetter.Multiple>
     </Page>

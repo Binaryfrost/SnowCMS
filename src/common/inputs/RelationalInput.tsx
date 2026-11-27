@@ -1,12 +1,12 @@
 import { useParams } from 'react-router-dom';
 import { Checkbox, Select, Text } from '@mantine/core';
 import type { Input } from '../InputRegistry';
-import type { Collection } from '../types/Collection';
-import type { CollectionEntryWithMetadata } from '../types/CollectionEntry';
+import type CollectionDTO from '../../lib/client/dto/collection/CollectionDTO';
+import type CollectionEntryWithMetadataDTO from '../../lib/client/dto/collection/entry/CollectionEntryWithMetadataDTO';
 import DataGetter from '../../client/components/DataGetter';
 import { shortenUuid } from '../../client/components/ShortUuid';
 import FormSkeleton from '../../client/components/FormSkeleton';
-import ExpressError from '../ExpressError';
+import ExpressError from '../errors/base/ExpressError';
 import { serverGetAllPagesFetch, serverInputFetch } from '../plugins/plugins';
 import { useInputValidator, useSettingsHandler } from './hooks';
 
@@ -38,8 +38,9 @@ const input: Input<string, RelationalInputSettings> = {
     );
 
     return settings.collectionId ? (
-      <DataGetter.AllPages<CollectionEntryWithMetadata>
+      <DataGetter.AllPages<CollectionEntryWithMetadataDTO>
         skeletonComponent={<FormSkeleton inputs={1} withButton={false} />}
+        listKey="entries"
         url={`/api/websites/${websiteId}/collections/${settings.collectionId}/entries`}>
         {(entries) => (
           <Select label={name} description={description}
@@ -47,7 +48,7 @@ const input: Input<string, RelationalInputSettings> = {
               value: e.id,
               label: `${e.title || 'Untitled Entry'} (${shortenUuid(e.id)})`
             }))} required={required} error={error}
-              value={value} onChange={onChange} />
+            value={value} onChange={onChange} />
         )}
       </DataGetter.AllPages>
     ) : (
@@ -72,19 +73,18 @@ const input: Input<string, RelationalInputSettings> = {
     const setSetting = useSettingsHandler(settings, onChange);
 
     return (
-      <DataGetter.AllPages<Collection> url={`/api/websites/${websiteId}/collections`}
+      <DataGetter.AllPages<CollectionDTO> url={`/api/websites/${websiteId}/collections`}
+        listKey="collections"
         skeletonNum={1}>
         {(collections) => (
-          <>
-            <Select label="Collection" required data={collections
-              .filter((c) => c.id !== collectionId)
-              .map((c) => ({
-                value: c.id,
-                label: `${c.name} (${shortenUuid(c.id)})`
-              }))} searchable nothingFoundMessage="No collection found with that name"
-                error={errors?.collectionId} value={settings.collectionId}
-                onChange={(v) => setSetting('collectionId', v)} />
-          </>
+          <Select label="Collection" required data={collections
+            .filter((c) => c.id !== collectionId)
+            .map((c) => ({
+              value: c.id,
+              label: `${c.name} (${shortenUuid(c.id)})`
+            }))} searchable nothingFoundMessage="No collection found with that name"
+            error={errors?.collectionId} value={settings.collectionId}
+            onChange={(v) => setSetting('collectionId', v)} />
         )}
       </DataGetter.AllPages>
     );
@@ -95,12 +95,12 @@ const input: Input<string, RelationalInputSettings> = {
       throw new Error('Required Relational Input does not have a value');
     }
 
-    const value = input.deserialize(stringifiedValue);
-    if (!value || !settings.collectionId) return;
+    const value = input.deserialize?.(stringifiedValue);
+    if (!value || !settings?.collectionId) return;
 
     const resp = await serverInputFetch(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/collections` +
+      `/api/websites/${req.params.websiteId}/collections` +
       `/${settings.collectionId}/entries/${value}`);
 
     if (resp.status !== 200) {
@@ -121,9 +121,10 @@ const input: Input<string, RelationalInputSettings> = {
       throw new ExpressError('Cannot reference same Collection');
     }
 
-    const collections = await serverGetAllPagesFetch<Collection>(
+    const collections = await serverGetAllPagesFetch<CollectionDTO>(
       req,
-      ({ websiteId }) => `/api/websites/${websiteId}/collections`
+      `/api/websites/${req.params.websiteId}/collections`,
+      'collections'
     );
 
     if (collections.filter((c) => c.id === settings.collectionId).length === 0) {
@@ -132,7 +133,7 @@ const input: Input<string, RelationalInputSettings> = {
   },
 
   renderHtml: async (value, settings, req) => {
-    if (!value || !settings.collectionId) return null;
+    if (!value || !settings?.collectionId) return null;
 
     return {
       collection: settings.collectionId,

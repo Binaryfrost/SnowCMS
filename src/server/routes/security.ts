@@ -2,7 +2,7 @@ import express from 'express';
 import { asyncRouteFix } from '../util';
 import handleAccessControl from '../handleAccessControl';
 import { isSafeUrl } from '../ssrf';
-import { ExpressError } from '../../lib';
+import ExpressError from '../../common/errors/base/ExpressError';
 
 const router = express.Router({ mergeParams: true });
 

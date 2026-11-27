@@ -24,8 +24,7 @@ const Youtube = DefaultYoutube.extend({
       height: 'auto',
       'aspect-ratio': `${attrs.width} / ${attrs.height}`
     }).map(([k, v]) => `${k}: ${v}`)
-    .join(';')
-
+      .join(';');
 
     return html;
   }

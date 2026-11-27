@@ -1,22 +1,28 @@
 import { isIP, BlockList } from 'net';
 import { lookup } from './dns';
-import type { SafeUrlResult } from '../common/types/SafeUrlResult';
+
+export interface SafeUrlResult {
+  safe: boolean
+  hostname?: string
+}
+
+// TODO: Remove all non-types
 
 interface UnsafeIpBase {
   family: 'ipv4' | 'ipv6'
   ip: string
 }
 
-interface UnsafeIpAddr extends UnsafeIpBase {
+export interface UnsafeIpAddr extends UnsafeIpBase {
   type: 'ip'
 }
 
-interface UnsafeSubnet extends UnsafeIpBase {
+export interface UnsafeSubnet extends UnsafeIpBase {
   type: 'cidr',
   prefix: number
 }
 
-type UnsafeIpFunction = (ip: string) => boolean
+export type UnsafeIpFunction = (ip: string) => boolean
 
 export type UnsafeIp = UnsafeIpAddr | UnsafeSubnet | UnsafeIpFunction
 

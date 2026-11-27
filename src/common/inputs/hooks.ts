@@ -27,8 +27,11 @@ export function useInputValidator<T>(
  * A hook that registers your validator function, runs it as needed,
  * and returns any errors either as a string or object, depending on
  * your validation function's return type.
- * 
+ *
  * The error returned will be null if there are no errors.
+ * @param validate
+ * @param registerValidator
+ * @param unregisterValidator
  */
 export function useInputValidator<T>(
   validate: ValidateFunction<T, StringError> | ValidateFunction<T, ObjectError<T>>,
@@ -55,18 +58,19 @@ export function useInputValidator<T>(
 /**
  * A hook that handles settings changes and merges
  * the initial and current settings.
- * 
+ *
  * Returns a helper function to change individual settings.
+ * @param settings
+ * @param onChange
  */
 export function useSettingsHandler<T>(
   settings: T,
   onChange: (v: T) => void):
   <K extends keyof T>(setting: K, value: T[K]) => void {
-
   return (setting, value) => {
     onChange({
       ...settings,
       [setting]: value
     });
-  }
+  };
 }

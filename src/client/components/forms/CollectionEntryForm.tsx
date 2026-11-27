@@ -1,13 +1,15 @@
 import { Link, useParams } from 'react-router-dom';
-import DataGetter from '../DataGetter';
-import { CollectionInput } from '../../../common/types/CollectionInputs';
-import FormSkeleton from '../FormSkeleton';
-import { CollectionEntryDraftSummary, CollectionEntryDraftWithData, CollectionEntryWithData } from '../../../common/types/CollectionEntry';
-import CollectionEntryEditorForm from './CollectionEntryEditorForm';
-import { PaginatedResponse } from '../../../common/types/PaginatedResponse';
 import { Alert } from '@mantine/core';
+import DataGetter from '../DataGetter';
+import type CollectionInputDTO from '../../../lib/client/dto/collection/input/CollectionInputDTO';
+import FormSkeleton from '../FormSkeleton';
+import type CollectionEntryDraftSummaryDTO from '../../../lib/client/dto/collection/entry/draft/CollectionEntryDraftSummaryDTO';
+import type CollectionEntryDraftWithDataDTO from '../../../lib/client/dto/collection/entry/draft/CollectionEntryDraftWithDataDTO';
+import type CollectionEntryWithDataDTO from '../../../lib/client/dto/collection/entry/CollectionEntryWithDataDTO';
+import CollectionEntryEditorForm from './CollectionEntryEditorForm';
+import type { PaginatedResponse } from '../../../lib/client/types/PaginatedResponse';
 import { formatDate } from '../../util/data';
-import { Collection } from '../../../common/types/Collection';
+import type CollectionDTO from '../../../lib/client/dto/collection/CollectionDTO';
 
 interface Props {
   entryId?: string
@@ -19,10 +21,10 @@ export default function CollectionEntryForm({ entryId, draftId }: Props) {
 
   return (
     <DataGetter.Multiple<[
-      Collection,
-      CollectionInput[],
-      CollectionEntryWithData | CollectionEntryDraftWithData,
-      PaginatedResponse<CollectionEntryDraftSummary>
+      CollectionDTO,
+      CollectionInputDTO[],
+      CollectionEntryWithDataDTO | CollectionEntryDraftWithDataDTO,
+      PaginatedResponse<CollectionEntryDraftSummaryDTO>
     ]>
       skeletonComponent={<FormSkeleton />}
       urls={[
@@ -35,16 +37,16 @@ export default function CollectionEntryForm({ entryId, draftId }: Props) {
           `/api/websites/${websiteId}/collections/${collectionId}/drafts?entry=${entryId}` : null
       ].filter(Boolean)}>
       {({ data: [collection, inputs, data, drafts] }) => {
-        const draftEntryId = draftId ? (data as CollectionEntryDraftWithData).entryId : null;
+        const draftEntryId = draftId ? (data as CollectionEntryDraftWithDataDTO).entryId : null;
 
         return (
           <>
-            {drafts && drafts.data.length !== 0 && (
+            {drafts && drafts.drafts.length !== 0 && (
               <Alert mb="sm">
-                A draft for this Collection Entry was created 
-                at {formatDate(new Date(drafts.data[0].createdAt * 1000))}.
+                A draft for this Collection Entry was created
+                at {formatDate(new Date(drafts.drafts[0].createdAt * 1000))}.
                 Would you like to <Link
-                  to={`/websites/${websiteId}/collections/${collectionId}/drafts/${drafts.data[0].id}`}>
+                  to={`/websites/${websiteId}/collections/${collectionId}/drafts/${drafts.drafts[0].id}`}>
                   edit that one instead
                 </Link>?
               </Alert>
@@ -52,7 +54,7 @@ export default function CollectionEntryForm({ entryId, draftId }: Props) {
             <CollectionEntryEditorForm entryId={draftEntryId || entryId} draftId={draftId}
               inputs={inputs} data={data?.data} backdatingEnabled={collection.backdatingEnabled} />
           </>
-        )
+        );
       }}
     </DataGetter.Multiple>
   );

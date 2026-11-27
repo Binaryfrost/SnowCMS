@@ -6,7 +6,7 @@ import { v7 as uuid } from 'uuid';
 import useragent from 'useragent';
 import { db } from '../database/db';
 import { asyncRouteFix, getAuthToken } from '../util';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { DatabaseUser, LoginConfig, User } from '../../common/types/User';
 import { redis } from '../database/redis';
 import { NormalizedConfig } from '../../config';

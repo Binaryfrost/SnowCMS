@@ -18,7 +18,7 @@ function YoutubeModal({ close, src, height, width }: Props) {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      src: src,
+      src,
       height: height || 480,
       width: width || 640
     },

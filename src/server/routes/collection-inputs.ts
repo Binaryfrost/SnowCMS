@@ -8,7 +8,7 @@ import InputRegistry from '../../common/InputRegistry';
 import { asyncRouteFix } from '../util';
 import { CollectionEntryInputs } from '../../common/types/CollectionEntry';
 import { WebsiteHookCallReasons, WebsiteHookCallTargets, callHook, callHttpHook } from '../plugins/hooks';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { Collection } from '../../common/types/Collection';
 
 const router = express.Router({ mergeParams: true });

@@ -8,7 +8,7 @@ import { ROLE_HIERARCHY } from '../../common/users';
 import handleAccessControl from '../handleAccessControl';
 import { exists, getUserFromDatabase, handleUserBooleanConversion, removeRedisKeysMatching } from '../database/util';
 import { asyncRouteFix, getAuthToken, paginate, pagination } from '../util';
-import ExpressError from '../../common/ExpressError';
+import ExpressError from '../../common/errors/base/ExpressError';
 import { ApiKey, ApiKeyWebsite, ApiKeyWithWebsites, DatabaseApiKey, DatabaseUser,
   User, UserWebsite, UserWithWebsites } from '../../common/types/User';
 import { redis } from '../database/redis';
