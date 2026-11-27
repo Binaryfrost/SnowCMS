@@ -130,22 +130,24 @@ export default class CollectionInputService extends Service {
 
     await this.callHook('beforeCollectionInputCreateHook', { collectionInput: dto });
 
-    await this.collectionInputRepo.create(
-      new CollectionInputModelWithoutOrder(
-        id,
-        collectionId,
-        collectionInput.input,
-        collectionInput.name,
-        collectionInput.fieldName,
-        collectionInput.description || '',
-        collectionInput.required,
-        mergedConfig
-      )
-    );
+    await this.collectionInputRepo.create(this.toModel(dto));
 
     await this.callHook('afterCollectionInputCreateHook', { collectionInput: dto });
 
-    return id;
+    return dto.id;
+  }
+
+  private toModel(dto: CollectionInputDTO) {
+    return new CollectionInputModelWithoutOrder(
+      dto.id,
+      dto.collectionId,
+      dto.input,
+      dto.name,
+      dto.fieldName,
+      dto.description,
+      dto.required,
+      dto.inputConfig
+    );
   }
 
   async update(
@@ -179,18 +181,7 @@ export default class CollectionInputService extends Service {
 
     await this.callHook('beforeCollectionInputModifyHook', { collectionInput: dto });
 
-    await this.collectionInputRepo.update(
-      new CollectionInputModelWithoutOrder(
-        inputId,
-        collectionId,
-        collectionInput.input,
-        collectionInput.name,
-        collectionInput.fieldName,
-        collectionInput.description || '',
-        collectionInput.required,
-        mergedConfig
-      )
-    );
+    await this.collectionInputRepo.update(this.toModel(dto));
 
     await this.callHook('afterCollectionInputModifyHook', { collectionInput: dto });
 
@@ -199,7 +190,7 @@ export default class CollectionInputService extends Service {
       await this.callHttpHook(website, collection, {
         reason: WebsiteHookCallReasons.COLLETION_INPUT_MODIFIED,
         target: {
-          id: inputId,
+          id: dto.id,
           type: WebsiteHookCallTargets.COLLECTION_INPUT
         }
       });

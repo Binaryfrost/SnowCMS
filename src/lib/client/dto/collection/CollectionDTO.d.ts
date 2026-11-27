@@ -1,11 +1,16 @@
 export default class CollectionDTO {
-  readonly id: string;
-  readonly websiteId: string;
-  readonly name: string;
-  readonly callHook: boolean;
-  readonly title: string | null;
-  readonly slug: string | null;
-  readonly backdatingEnabled: boolean;
+  get id(): string;
+  get websiteId(): string;
+  get name(): string;
+  set name(value: string);
+  get callHook(): boolean;
+  set callHook(value: boolean);
+  get title(): string | null;
+  set title(value: string | null);
+  get slug(): string | null;
+  set slug(value: string | null);
+  get backdatingEnabled(): boolean;
+  set backdatingEnabled(value: boolean);
 
   constructor(
     id: string,

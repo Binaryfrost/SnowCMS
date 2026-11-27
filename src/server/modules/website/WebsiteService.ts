@@ -71,17 +71,16 @@ export default class WebsiteService extends Service {
   }
 
   async create(website: CreateUpdateWebsiteDTO) {
-    const model = new WebsiteModel(
+    const dto = new WebsiteDTO(
       WebsiteModel.generateId(),
       website.name,
       website.hook
     );
 
-    const dto = new WebsiteDTO(model.getId(), model.getName(), model.getHook());
     await this.callHook('beforeWebsiteCreateHook', { website: dto });
-    await this.websiteRepo.create(model);
+    await this.websiteRepo.create(this.toModel(dto));
     await this.callHook('afterWebsiteCreateHook', { website: dto });
-    return model.getId();
+    return dto.id;
   }
 
   async update(id: string, website: CreateUpdateWebsiteDTO) {
@@ -90,15 +89,14 @@ export default class WebsiteService extends Service {
       throw new NotFoundError('Website not found');
     }
 
-    const model = new WebsiteModel(
-      id,
-      website.name,
-      website.hook
-    );
-    const dto = new WebsiteDTO(id, model.getName(), model.getHook());
+    const dto = new WebsiteDTO(id, website.name, website.hook);
     await this.callHook('beforeWebsiteModifyHook', { website: dto });
-    await this.websiteRepo.update(model);
+    await this.websiteRepo.update(this.toModel(dto));
     await this.callHook('afterWebsiteModifyHook', { website: dto });
+  }
+
+  private toModel(dto: WebsiteDTO) {
+    return new WebsiteModel(dto.id, dto.name, dto.hook);
   }
 
   async delete(id: string) {

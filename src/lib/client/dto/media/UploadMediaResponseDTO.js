@@ -8,24 +8,30 @@ export default class UploadMediaResponseDTO extends DTO {
 
   /**
    * @param {string} id
-   * @param {import('./Media').S3PreSignedUrl} image
+   * @param {import('./Media').UploadMediaImage} image
    * @param {import('./Media').S3PreSignedUrl | null} thumbnail
    * @param {string} hmac
    */
   constructor(id, image, thumbnail, hmac) {
     super();
 
-    const presignedUrlShape = {
+    const imageShape = {
+      name: (v, n) => this.validator(v, n).required().string(),
+      origFileName: (v, n) => this.validator(v, n).required().string(),
+      url: (v, n) => this.validator(v, n).required().string()
+    };
+
+    const thumbnailShape = {
       name: (v, n) => this.validator(v, n).required().string(),
       url: (v, n) => this.validator(v, n).required().string()
     };
 
     this.#id = this.validator(id, 'id').required().string().getValue();
     this.#image = this.validator(image, 'image').required().object()
-      .of(presignedUrlShape)
+      .of(imageShape)
       .getValue();
     this.#thumbnail = this.validator(thumbnail, 'thumbnail').object()
-      .of(presignedUrlShape)
+      .of(thumbnailShape)
       .getValue();
     this.#hmac = this.validator(hmac, 'hmac').required().string().getValue();
   }

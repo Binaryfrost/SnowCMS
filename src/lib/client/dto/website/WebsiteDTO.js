@@ -13,9 +13,10 @@ export default class WebsiteDTO extends DTO {
   constructor(id, name, hook) {
     super();
 
+    // ID is not mutable, so validation is done here
     this.#id = this.validator(id, 'id').required().string().getValue();
-    this.#name = this.validator(name, 'name').required().string().getValue();
-    this.#hook = this.validator(hook, 'hook').string().getValue();
+    this.name = name;
+    this.hook = hook;
   }
 
   get id() {
@@ -26,8 +27,16 @@ export default class WebsiteDTO extends DTO {
     return this.#name;
   }
 
+  set name(name) {
+    this.#name = this.validator(name, 'name').required().string().getValue();
+  }
+
   get hook() {
     return this.#hook;
+  }
+
+  set hook(hook) {
+    this.#hook = this.validator(hook, 'hook').string().getValue();
   }
 
   clone() {

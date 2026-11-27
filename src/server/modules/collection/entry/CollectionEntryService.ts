@@ -288,6 +288,22 @@ export default class CollectionEntryService extends Service {
     );
   }
 
+  private toModels(dto: CollectionEntryWithDataDTO) {
+    const entry = new CollectionEntryModel(
+      dto.id,
+      dto.collectionId,
+      dto.createdAt,
+      dto.updatedAt
+    );
+    const inputs = dto.data.map((input) => new CollectionEntryInputModel(
+      input.entryId || dto.id,
+      input.inputId,
+      input.data
+    ));
+
+    return { entry, inputs };
+  }
+
   async create(
     collectionId: string,
     websiteId: string,
@@ -305,18 +321,21 @@ export default class CollectionEntryService extends Service {
     const payload = this.adaptWithData(entry, inputs);
 
     await this.callHook('beforeCollectionEntryCreateHook', { collectionEntry: payload });
-    await this.collectionEntryRepo.create(entry, inputs);
+
+    const { entry: finalEntry, inputs: finalInputs } = this.toModels(payload);
+    await this.collectionEntryRepo.create(finalEntry, finalInputs);
+
     await this.callHook('afterCollectionEntryCreateHook', { collectionEntry: payload });
 
     await this.callHttpHookForEntry(
       websiteId,
       collectionId,
-      id,
+      payload.id,
       WebsiteHookCallReasons.COLLECTION_ENTRY_CREATED,
       WebsiteHookCallTargets.COLLECTION_ENTRY
     );
 
-    return id;
+    return payload.id;
   }
 
   async update(
@@ -338,13 +357,16 @@ export default class CollectionEntryService extends Service {
     const payload = this.adaptWithData(entry, inputs);
 
     await this.callHook('beforeCollectionEntryModifyHook', { collectionEntry: payload });
-    await this.collectionEntryRepo.update(entry, inputs);
+
+    const { entry: finalEntry, inputs: finalInputs } = this.toModels(payload);
+    await this.collectionEntryRepo.update(finalEntry, finalInputs);
+
     await this.callHook('afterCollectionEntryModifyHook', { collectionEntry: payload });
 
     await this.callHttpHookForEntry(
       websiteId,
       collectionId,
-      entryId,
+      payload.id,
       WebsiteHookCallReasons.COLLECTION_ENTRY_MODIFIED,
       WebsiteHookCallTargets.COLLECTION_ENTRY
     );

@@ -1,14 +1,14 @@
-import type { S3PreSignedUrl } from './Media';
+import type { S3PreSignedUrl, UploadMediaImage } from './Media';
 
 export default class UploadMediaResponseDTO {
   readonly id: string;
-  readonly image: S3PreSignedUrl;
+  readonly image: UploadMediaImage;
   readonly thumbnail: S3PreSignedUrl | null;
   readonly hmac: string;
 
   constructor(
     id: string,
-    image: S3PreSignedUrl,
+    image: UploadMediaImage,
     thumbnail: S3PreSignedUrl | null,
     hmac: string
   );
@@ -17,7 +17,7 @@ export default class UploadMediaResponseDTO {
   clone(): UploadMediaResponseDTO;
   toJSON(): {
     id: string
-    image: S3PreSignedUrl
+    image: UploadMediaImage
     thumbnail: S3PreSignedUrl | null
     hmac: string
   };

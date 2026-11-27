@@ -3,6 +3,7 @@ import slug from 'slug';
 import NotFoundError from '../../../common/errors/base/NotFoundError';
 import ConfirmMediaUploadDTO from '../../../lib/client/dto/media/ConfirmMediaUploadDTO';
 import MediaConfigDTO from '../../../lib/client/dto/media/MediaConfigDTO';
+import MediaCreateDTO from '../../../lib/client/dto/media/MediaCreateDTO';
 import MediaDTO from '../../../lib/client/dto/media/MediaDTO';
 import MediaListDTO from '../../../lib/client/dto/media/MediaListDTO';
 import MediaWithUrlsDTO from '../../../lib/client/dto/media/MediaWithUrlsDTO';
@@ -152,7 +153,7 @@ export default class MediaService extends Service implements IMediaService {
     newFileName: string,
     size: number,
     type: string,
-    thumbnailName: string | undefined) {
+    thumbnailName: string | null | undefined) {
     return this.encrypt.hmac([
       id, origFileName, newFileName, size, type, thumbnailName
     ].join('.'));
@@ -181,10 +182,11 @@ export default class MediaService extends Service implements IMediaService {
     const imgBaseName = `${shortId}-${imgSlug}${extension}`;
     const newFileName = `${this.getUrlTimePart()}/${imgBaseName}`;
     const thumbName = upload.thumbnail ?
-      `${this.getUrlTimePart()}/thumb-${imgBaseName}` : undefined;
+      `${this.getUrlTimePart()}/thumb-${imgBaseName}` : null;
 
-    const hmac = await this.generateHmac(
+    const media = new MediaCreateDTO(
       id,
+      websiteId,
       upload.name,
       newFileName,
       upload.size,
@@ -192,42 +194,44 @@ export default class MediaService extends Service implements IMediaService {
       thumbName
     );
 
+    await this.callHook('beforeMediaCreateHook', { media });
+
+    // Re-read the DTO after the before-hook so hook modifications take effect.
+    // A thumbnail is only usable if the upload included thumbnail metadata.
+    const hasThumbnail = !!media.thumbName && !!upload.thumbnail;
+
+    const hmac = await this.generateHmac(
+      media.id,
+      media.origFileName,
+      media.fileName,
+      media.fileSize,
+      media.fileType,
+      hasThumbnail ? media.thumbName : null
+    );
+
     const response = new UploadMediaResponseDTO(
-      id,
+      media.id,
       {
-        name: upload.name,
+        name: media.fileName,
+        origFileName: media.origFileName,
         url: await this.s3.createPreSignedUrl(
-          this.generateMediaUrlPath(websiteId, newFileName), upload.type, upload.size
-        ),
+          this.generateMediaUrlPath(websiteId, media.fileName),
+          media.fileType,
+          media.fileSize
+        )
       },
-      upload.thumbnail ? {
-        name: thumbName!,
+      hasThumbnail ? {
+        name: media.thumbName!,
         url: await this.s3.createPreSignedUrl(
-          this.generateMediaUrlPath(websiteId, thumbName!),
-          upload.thumbnail.type,
-          upload.thumbnail.size
+          this.generateMediaUrlPath(websiteId, media.thumbName!),
+          upload.thumbnail!.type,
+          upload.thumbnail!.size
         )
       } : null,
       hmac
     );
 
-    const mediaData = {
-      id,
-      websiteId,
-      origFileName: upload.name,
-      fileName: newFileName,
-      fileSize: upload.size,
-      fileType: upload.type,
-      thumbName
-    };
-
-    await this.callHook('beforeMediaCreateHook', {
-      media: mediaData as any
-    });
-
-    await this.callHook('afterMediaCreateHook', {
-      media: mediaData as any
-    });
+    await this.callHook('afterMediaCreateHook', { media });
 
     return response;
   }

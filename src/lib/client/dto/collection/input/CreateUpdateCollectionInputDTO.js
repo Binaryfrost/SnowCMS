@@ -25,12 +25,12 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
     required
   ) {
     super();
-    this.#name = this.validator(name, 'name').required().string().getValue();
-    this.#description = this.validator(description, 'description').string().getValue();
-    this.#fieldName = this.validator(fieldName, 'fieldName').required().string().getValue();
-    this.#input = this.validator(input, 'input').required().string().getValue();
-    this.#inputConfig = this.validator(inputConfig, 'inputConfig').required().object().getValue();
-    this.#required = this.validator(required, 'required').required().boolean().getValue();
+    this.name = name;
+    this.description = description;
+    this.fieldName = fieldName;
+    this.input = input;
+    this.inputConfig = inputConfig;
+    this.required = required;
   }
 
   get name() {
@@ -38,7 +38,7 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   set name(name) {
-    this.#name = name;
+    this.#name = this.validator(name, 'name').required().string().getValue();
   }
 
   get description() {
@@ -46,7 +46,7 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   set description(description) {
-    this.#description = description;
+    this.#description = this.validator(description, 'description').string().getValue();
   }
 
   get fieldName() {
@@ -54,7 +54,7 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   set fieldName(fieldName) {
-    this.#fieldName = fieldName;
+    this.#fieldName = this.validator(fieldName, 'fieldName').required().string().getValue();
   }
 
   get input() {
@@ -62,7 +62,7 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   set input(input) {
-    this.#input = input;
+    this.#input = this.validator(input, 'input').required().string().getValue();
   }
 
   get inputConfig() {
@@ -70,7 +70,8 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   set inputConfig(inputConfig) {
-    this.#inputConfig = inputConfig;
+    this.#inputConfig = this.validator(inputConfig, 'inputConfig').required()
+      .object().getValue();
   }
 
   get required() {
@@ -78,17 +79,17 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
   }
 
   set required(required) {
-    this.#required = required;
+    this.#required = this.validator(required, 'required').required().boolean().getValue();
   }
 
   clone() {
     return new CreateUpdateCollectionInputDTO(
-      this.#name,
-      this.#description,
-      this.#fieldName,
-      this.#input,
-      this.#inputConfig,
-      this.#required
+      this.name,
+      this.description,
+      this.fieldName,
+      this.input,
+      this.inputConfig,
+      this.required
     );
   }
 
@@ -105,12 +106,12 @@ export default class CreateUpdateCollectionInputDTO extends DTO {
 
   toJSON() {
     return {
-      name: this.#name,
-      description: this.#description,
-      fieldName: this.#fieldName,
-      input: this.#input,
-      inputConfig: this.#inputConfig,
-      required: this.#required
+      name: this.name,
+      description: this.description,
+      fieldName: this.fieldName,
+      input: this.input,
+      inputConfig: this.inputConfig,
+      required: this.required
     };
   }
 }

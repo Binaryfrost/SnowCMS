@@ -120,7 +120,7 @@ export default function MediaUploadForm({
                   file,
                   (p) => handleUploadProgress('file', p)
                 ),
-                thumbnail && s3Upload(
+                thumbnail && resp.body.thumbnail && s3Upload(
                   resp.body.thumbnail.url,
                   thumbnail.type,
                   thumbnail,
@@ -130,7 +130,7 @@ export default function MediaUploadForm({
 
               uploadBytes.current = {
                 file: file.size,
-                thumbnail: thumbnail.size
+                thumbnail: thumbnail ? thumbnail.size : 0
               };
 
               const uploaded = await Promise.all(uploads);
@@ -142,12 +142,12 @@ export default function MediaUploadForm({
                 id: resp.body.id,
                 data: {
                   image: {
-                    name: file.name,
+                    name: resp.body.image.origFileName,
                     s3Name: resp.body.image.name,
                     size: file.size,
                     type: fileType
                   },
-                  thumbnail: thumbnail && {
+                  thumbnail: thumbnail && resp.body.thumbnail && {
                     s3Name: resp.body.thumbnail.name
                   }
                 },

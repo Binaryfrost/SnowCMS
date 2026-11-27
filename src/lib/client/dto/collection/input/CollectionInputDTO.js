@@ -32,14 +32,17 @@ export default class CollectionInputDTO extends DTO {
     inputConfig
   ) {
     super();
+    // ID, collection ID, and input are not mutable, so validation is done here
     this.#id = this.validator(id, 'id').required().string().getValue();
-    this.#collectionId = this.validator(collectionId, 'collectionId').required().string().getValue();
+    this.#collectionId = this.validator(collectionId, 'collectionId').required()
+      .string().getValue();
     this.#input = this.validator(input, 'input').required().string().getValue();
-    this.#name = this.validator(name, 'name').required().string().getValue();
-    this.#fieldName = this.validator(fieldName, 'fieldName').required().string().getValue();
-    this.#description = this.validator(description, 'description').required().string().getValue();
-    this.#required = this.validator(required, 'required').required().boolean().getValue();
-    this.#inputConfig = this.validator(inputConfig, 'inputConfig').required().object().getValue();
+
+    this.name = name;
+    this.fieldName = fieldName;
+    this.description = description;
+    this.required = required;
+    this.inputConfig = inputConfig;
   }
 
   get id() {
@@ -58,20 +61,41 @@ export default class CollectionInputDTO extends DTO {
     return this.#name;
   }
 
+  set name(name) {
+    this.#name = this.validator(name, 'name').required().string().getValue();
+  }
+
   get fieldName() {
     return this.#fieldName;
+  }
+
+  set fieldName(fieldName) {
+    this.#fieldName = this.validator(fieldName, 'fieldName').required().string().getValue();
   }
 
   get description() {
     return this.#description;
   }
 
+  set description(description) {
+    this.#description = this.validator(description, 'description').string().getValue();
+  }
+
   get required() {
     return this.#required;
   }
 
+  set required(required) {
+    this.#required = this.validator(required, 'required').required().boolean().getValue();
+  }
+
   get inputConfig() {
     return this.#inputConfig;
+  }
+
+  set inputConfig(inputConfig) {
+    this.#inputConfig = this.validator(inputConfig, 'inputConfig').required()
+      .object().getValue();
   }
 
   clone() {

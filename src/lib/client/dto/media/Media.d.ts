@@ -13,10 +13,14 @@ export interface S3PreSignedUrl {
   name: string
 }
 
+export interface UploadMediaImage extends S3PreSignedUrl {
+  origFileName: string
+}
+
 export interface FileUploadResponse {
   id: string
   upload: {
-    image: S3PreSignedUrl
+    image: UploadMediaImage
     thumbnail?: S3PreSignedUrl
   }
   hmac: string

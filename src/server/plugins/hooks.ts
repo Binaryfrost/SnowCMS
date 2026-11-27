@@ -8,6 +8,7 @@ import CollectionInputDTO from '../../lib/client/dto/collection/input/Collection
 import CollectionEntryWithDataDTO from '../../lib/client/dto/collection/entry/CollectionEntryWithDataDTO';
 import CollectionEntryDraftDTO from '../../lib/client/dto/collection/entry/draft/CollectionEntryDraftDTO';
 import MediaDTO from '../../lib/client/dto/media/MediaDTO';
+import MediaCreateDTO from '../../lib/client/dto/media/MediaCreateDTO';
 import MediaWithUrlsDTO from '../../lib/client/dto/media/MediaWithUrlsDTO';
 import { isSafeUrl } from '../ssrf';
 
@@ -16,7 +17,7 @@ interface ServerStartHook {
 }
 
 interface BeforeAfterMediaCreateHook {
-  media: Omit<MediaDTO, 'timestamp'>
+  media: MediaCreateDTO
 }
 
 interface BeforeAfterMediaDeleteHook {

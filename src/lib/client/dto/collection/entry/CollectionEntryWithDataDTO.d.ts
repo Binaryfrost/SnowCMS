@@ -2,7 +2,8 @@ import CollectionEntryDTO from './CollectionEntryDTO';
 import CollectionEntryInputDTO from './CollectionEntryInputDTO';
 
 export default class CollectionEntryWithDataDTO extends CollectionEntryDTO {
-  readonly data: CollectionEntryInputDTO[];
+  get data(): CollectionEntryInputDTO[];
+  set data(value: CollectionEntryInputDTO[]);
 
   constructor(
     id: string,

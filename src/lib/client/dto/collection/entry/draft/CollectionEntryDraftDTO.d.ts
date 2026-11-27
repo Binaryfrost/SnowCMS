@@ -1,10 +1,12 @@
 export default class CollectionEntryDraftDTO {
-  readonly id: string;
-  readonly entryId: string | null;
-  readonly collectionId: string;
-  readonly createdAt: number;
-  readonly updatedAt: number;
-  readonly data: Record<string, string>;
+  get id(): string;
+  get entryId(): string | null;
+  set entryId(value: string | null);
+  get collectionId(): string;
+  get createdAt(): number;
+  get updatedAt(): number;
+  get data(): Record<string, string>;
+  set data(value: Record<string, string>);
 
   constructor(
     id: string,

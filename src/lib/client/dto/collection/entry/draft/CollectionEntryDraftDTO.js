@@ -18,12 +18,15 @@ export default class CollectionEntryDraftDTO extends DTO {
    */
   constructor(id, entryId, collectionId, createdAt, updatedAt, data) {
     super();
+    // ID, collection ID, and timestamps are not mutable, so validation is done here
     this.#id = this.validator(id, 'id').required().string().getValue();
-    this.#entryId = this.validator(entryId, 'entryId').string().getValue();
-    this.#collectionId = this.validator(collectionId, 'collectionId').required().string().getValue();
+    this.#collectionId = this.validator(collectionId, 'collectionId').required()
+      .string().getValue();
     this.#createdAt = this.validator(createdAt, 'createdAt').required().number().getValue();
     this.#updatedAt = this.validator(updatedAt, 'updatedAt').required().number().getValue();
-    this.#data = this.validator(data, 'data').required().object().getValue();
+
+    this.entryId = entryId;
+    this.data = data;
   }
 
   get id() {
@@ -32,6 +35,10 @@ export default class CollectionEntryDraftDTO extends DTO {
 
   get entryId() {
     return this.#entryId;
+  }
+
+  set entryId(entryId) {
+    this.#entryId = this.validator(entryId, 'entryId').string().getValue();
   }
 
   get collectionId() {
@@ -48,6 +55,10 @@ export default class CollectionEntryDraftDTO extends DTO {
 
   get data() {
     return this.#data;
+  }
+
+  set data(data) {
+    this.#data = this.validator(data, 'data').required().object().getValue();
   }
 
   clone() {

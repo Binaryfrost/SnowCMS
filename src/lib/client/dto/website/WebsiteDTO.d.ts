@@ -1,7 +1,9 @@
 export default class WebsiteDTO {
-  readonly id: string;
-  readonly name: string;
-  readonly hook: string | null;
+  get id(): string;
+  get name(): string;
+  set name(value: string);
+  get hook(): string | null;
+  set hook(value: string | null);
 
   constructor(id: string, name: string, hook?: string | null);
 

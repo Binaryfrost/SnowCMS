@@ -60,8 +60,26 @@ To keep code clean, stable, and testable a few rules apply:
   - For disableable services (e.g. media), the service should expose and implement a service interface which the no-op service can implement and consuming services can use as a type.
   - Other types of extending services should not use service interfaces unless there is a clear benefit. This rule ensures that work isn't done in multiple places unnecessarily which could impact developer experience.
 - If an error occurs, an error extending `ExpressError` with a correctly set HTTP status code must be thrown. See `common/errors` for all available errors.
-- DTOs should not contain business logic. DTOs must implement `clone()` and `static fromJSON()`, which both create a new instance of the DTO. It is recommended to use the `validator()` method to validate data when constructing or in setters.
+- DTOs should not contain business logic. DTOs must implement `clone()`, `static fromJSON()`, and `toJSON()`. `clone()` and `static fromJSON()` must both create a new instance of the DTO. It is recommended to use the `validator()` method to validate data when constructing or in setters.
 - DTOs should use private fields with getters/setters (using the `get`/`set` keywords). This ensures that validation runs when a value is updated and that plugins can only set values that are intended to be mutable. Non-mutable values should be validated and set directly to the private field in the constructor.
+- Validation must live in the setter when one exists. In that case, the constructor should assign through the setter so that validation is not duplicated. When no setter exists (i.e. the value is not mutable), validation is done directly in the constructor. For example:
+  ```js
+  class TestDTO extends DTO {
+    #id;
+    #name;
+    constructor(id, name) {
+      // ID is not mutable, so validation is done here
+      this.#id = this.validator(id, 'id').required().string().getValue();
+      // Name is mutable, so let the setter handle validation
+      this.name = name;
+    }
+    get id() { return this.#id; }
+    get name() { return this.#name; }
+    set name(name) {
+      this.#name = this.validator(name, 'name').required().string().getValue();
+    }
+  }
+  ```
 - Separation of concerns is a must:
   - Repositories interface with the database
   - Models are a representation of the database

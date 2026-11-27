@@ -133,10 +133,10 @@ export default class CollectionEntryDraftService extends Service {
 
     const dto = this.adaptToDTO(draft);
     await this.callHook('beforeCollectionEntryDraftCreateHook', { collectionEntryDraft: dto });
-    await this.draftRepo.create(draft);
+    await this.draftRepo.create(this.toModel(dto));
     await this.callHook('afterCollectionEntryDraftCreateHook', { collectionEntryDraft: dto });
 
-    return draft.getId();
+    return dto.id;
   }
 
   async update(
@@ -154,13 +154,29 @@ export default class CollectionEntryDraftService extends Service {
       throw new NotFoundError('Collection Entry Draft not found');
     }
 
-    existing.setData(data.data);
-    existing.setUpdatedAt(this.time.timestampSec());
+    const dto = new CollectionEntryDraftDTO(
+      existing.getId(),
+      existing.getEntryId(),
+      existing.getCollectionId(),
+      existing.getCreatedAt(),
+      this.time.timestampSec(),
+      data.data
+    );
 
-    const dto = this.adaptToDTO(existing);
     await this.callHook('beforeCollectionEntryDraftModifyHook', { collectionEntryDraft: dto });
-    await this.draftRepo.update(existing);
+    await this.draftRepo.update(this.toModel(dto));
     await this.callHook('afterCollectionEntryDraftModifyHook', { collectionEntryDraft: dto });
+  }
+
+  private toModel(dto: CollectionEntryDraftDTO) {
+    return new CollectionEntryDraftModel(
+      dto.id,
+      dto.entryId,
+      dto.collectionId,
+      dto.createdAt,
+      dto.updatedAt,
+      dto.data
+    );
   }
 
   async delete(draftId: string) {

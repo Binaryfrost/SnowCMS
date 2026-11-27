@@ -54,7 +54,7 @@ export default class CollectionService extends Service {
   }
 
   async create(websiteId: string, create: CreateCollectionDTO) {
-    const collection = new CollectionModel(
+    const dto = new CollectionDTO(
       CollectionModel.generateId(),
       websiteId,
       create.name,
@@ -64,17 +64,16 @@ export default class CollectionService extends Service {
       false
     );
 
-    const dto = this.adaptCollection(collection);
     await this.callHook('beforeCollectionCreateHook', { collection: dto });
-    await this.collectionRepo.create(collection);
+    await this.collectionRepo.create(this.toModel(dto));
     await this.callHook('afterCollectionCreateHook', { collection: dto });
-    return collection.getId();
+    return dto.id;
   }
 
   async update(id: string, update: UpdateCollectionDTO) {
     const collection = await this.collectionRepo.getCollection(id);
     if (!collection) throw new NotFoundError('Collection not found');
-    const updated = new CollectionModel(
+    const dto = new CollectionDTO(
       collection.getId(),
       collection.getWebsiteId(),
       update.name,
@@ -84,10 +83,21 @@ export default class CollectionService extends Service {
       update.backdatingEnabled
     );
 
-    const dto = this.adaptCollection(updated);
     await this.callHook('beforeCollectionModifyHook', { collection: dto });
-    await this.collectionRepo.update(updated);
+    await this.collectionRepo.update(this.toModel(dto));
     await this.callHook('afterCollectionModifyHook', { collection: dto });
+  }
+
+  private toModel(dto: CollectionDTO) {
+    return new CollectionModel(
+      dto.id,
+      dto.websiteId,
+      dto.name,
+      dto.callHook,
+      dto.title,
+      dto.slug,
+      dto.backdatingEnabled
+    );
   }
 
   async delete(id: string) {

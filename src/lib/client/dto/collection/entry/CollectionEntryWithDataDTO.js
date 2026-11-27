@@ -13,11 +13,15 @@ export default class CollectionEntryWithDataDTO extends CollectionEntryDTO {
    */
   constructor(id, collectionId, createdAt, updatedAt, data) {
     super(id, collectionId, createdAt, updatedAt);
-    this.#data = this.validator(data, 'data').required().array().getValue();
+    this.data = data;
   }
 
   get data() {
     return this.#data;
+  }
+
+  set data(data) {
+    this.#data = this.validator(data, 'data').required().array().getValue();
   }
 
   clone() {

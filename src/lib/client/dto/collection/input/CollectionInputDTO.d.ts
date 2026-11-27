@@ -1,12 +1,17 @@
 export default class CollectionInputDTO {
-  readonly id: string;
-  readonly collectionId: string;
-  readonly input: string;
-  readonly name: string;
-  readonly fieldName: string;
-  readonly description: string;
-  readonly required: boolean;
-  readonly inputConfig: Record<string, any>;
+  get id(): string;
+  get collectionId(): string;
+  get input(): string;
+  get name(): string;
+  set name(value: string);
+  get fieldName(): string;
+  set fieldName(value: string);
+  get description(): string;
+  set description(value: string);
+  get required(): boolean;
+  set required(value: boolean);
+  get inputConfig(): Record<string, any>;
+  set inputConfig(value: Record<string, any>);
 
   constructor(
     id: string,
